@@ -41,7 +41,9 @@ Componentes básicos, indivisibles y reutilizables. No dependen de otros compone
 **Ejemplo:**
 
 ```tsx
-// src/components/atoms/Button/Button.tsx
+// src/components/atoms/Button/Button.component.tsx
+import "./button.css";
+
 interface ButtonProps {
   variant?: "primary" | "secondary";
   children: React.ReactNode;
@@ -80,7 +82,8 @@ Combinaciones de átomos que forman componentes funcionales simples.
 **Ejemplo:**
 
 ```tsx
-// src/components/molecules/SearchBox/SearchBox.tsx
+// src/components/molecules/SearchBox/SearchBox.component.tsx
+import "./searchbox.css";
 import { Input } from "@/components/atoms/Input";
 import { Button } from "@/components/atoms/Button";
 
@@ -119,7 +122,8 @@ Componentes complejos que forman secciones distintivas de la interfaz.
 **Ejemplo:**
 
 ```tsx
-// src/components/organisms/Header/Header.tsx
+// src/components/organisms/Header/Header.component.tsx
+import "./header.css";
 import { Logo } from "@/components/atoms/Logo";
 import { Navigation } from "@/components/molecules/Navigation";
 import { UserMenu } from "@/components/molecules/UserMenu";
@@ -157,7 +161,8 @@ Layouts que definen la estructura y disposición de una página, sin datos espec
 **Ejemplo:**
 
 ```tsx
-// src/components/templates/DashboardTemplate/DashboardTemplate.tsx
+// src/components/templates/DashboardTemplate/DashboardTemplate.component.tsx
+import "./dashboardtemplate.css";
 import { Header } from "@/components/organisms/Header";
 import { Sidebar } from "@/components/organisms/Sidebar";
 
@@ -216,29 +221,60 @@ export const DashboardPage = () => {
 
 ## Convenciones de Nomenclatura
 
-- **Archivos:** PascalCase para componentes (`Button.tsx`, `SearchBox.tsx`)
-- **Carpetas:** PascalCase que coincida con el nombre del componente
+- **Carpetas:** PascalCase que coincida con el nombre del componente (`Button/`, `SearchBox/`)
+- **Componente:** `ComponentName.component.tsx` (ej: `Button.component.tsx`)
+- **Estilos:** `component.css` en minúsculas (ej: `button.css`)
+- **Tests:** `ComponentName.test.tsx` (opcional)
 - **Exports:** Named exports preferidos (`export const Button`)
 - **Props interfaces:** `ComponentNameProps` (ej: `ButtonProps`)
 
 ## Estructura de Archivo de Componente
 
-Cada componente debe tener su propia carpeta con:
+Cada componente DEBE tener su propia carpeta con la siguiente estructura:
 
 ```
 ComponentName/
-  ComponentName.tsx    # Componente principal
-  ComponentName.test.tsx  # Tests (opcional)
-  ComponentName.module.css  # Estilos (opcional)
-  index.ts            # Re-export del componente
+  ComponentName.component.tsx    # Componente principal
+  component.css                   # Estilos (en minúsculas)
+  ComponentName.test.tsx         # Tests (opcional)
+  index.ts                       # Re-export del componente
 ```
 
 **Ejemplo:**
 
+```
+Button/
+  Button.component.tsx
+  button.css
+  Button.test.tsx
+  index.ts
+```
+
+**Ejemplo de código:**
+
+```tsx
+// src/components/atoms/Button/Button.component.tsx
+import "./button.css";
+
+export interface ButtonProps {
+  variant?: "primary" | "secondary";
+  children: React.ReactNode;
+  onClick?: () => void;
+}
+
+export const Button = ({ variant = "primary", children, onClick }: ButtonProps) => {
+  return (
+    <button className={`btn btn-${variant}`} onClick={onClick}>
+      {children}
+    </button>
+  );
+};
+```
+
 ```tsx
 // src/components/atoms/Button/index.ts
-export { Button } from "./Button";
-export type { ButtonProps } from "./Button";
+export { Button } from "./Button.component";
+export type { ButtonProps } from "./Button.component";
 ```
 
 ## Reglas de Importación

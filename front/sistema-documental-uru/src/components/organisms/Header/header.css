@@ -1,0 +1,98 @@
+.header {
+  background-color: #2D4F91;
+  width: 100%;
+  padding: 0.75rem 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
+}
+
+.header__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 100%;
+}
+
+.header__branding {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header__brand-abbr {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+}
+
+.header__separator {
+  color: #9ca3af;
+  font-weight: 300;
+}
+
+.header__brand-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.header__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header__icon-button {
+  background: none;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s ease-in-out;
+  font-size: 0.875rem;
+}
+
+.header__icon-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.header__icon-button:active {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.header__icon-button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.header__icon-text {
+  font-size: 0.875rem;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0.75rem 1rem;
+  }
+
+  .header__brand-text {
+    display: none;
+  }
+
+  .header__separator {
+    display: none;
+  }
+
+  .header__icon-text {
+    display: none;
+  }
+}

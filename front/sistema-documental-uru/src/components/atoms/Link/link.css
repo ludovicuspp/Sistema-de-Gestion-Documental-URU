@@ -1,0 +1,46 @@
+/* Base Link Styles */
+.link {
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* Variant: Default */
+.link--default {
+  color: #374151;
+}
+
+.link--default:hover {
+  color: #1f2937;
+}
+
+/* Variant: Primary */
+.link--primary {
+  color: #3b82f6;
+}
+
+.link--primary:hover {
+  color: #2563eb;
+}
+
+/* Variant: Secondary */
+.link--secondary {
+  color: #6b7280;
+}
+
+.link--secondary:hover {
+  color: #4b5563;
+}
+
+/* Underline */
+.link--underline {
+  text-decoration: underline;
+}
+
+.link--underline:hover {
+  text-decoration: underline;
+}
