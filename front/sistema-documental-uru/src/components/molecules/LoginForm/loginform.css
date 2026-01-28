@@ -48,6 +48,7 @@
 .login-form__submit-button {
   margin-top: 0.5rem;
   background-color: #1E3A8A;
+  border-color: #1E3A8A;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -56,8 +57,9 @@
 }
 
 .login-form__submit-button:hover:not(:disabled) {
-  background-color: #2C4D93;
-  border-color: none !important;
+  background-color: #33518f;
+  border-color: #33518f;
+  outline: none !important;
 }
 
 .login-form__links {
