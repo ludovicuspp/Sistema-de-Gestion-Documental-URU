@@ -75,12 +75,12 @@ export interface SidebarProps {
   onRefresh?: () => void;
 }
 
-const MODULES = [
+const MODULES: { label: string; icon: React.ReactNode; href?: string; to?: string }[] = [
   { label: "Gestión de usuarios", icon: <IconUsers />, href: "#usuarios" },
   { label: "Gestión de estudiantes", icon: <IconUsers />, href: "#estudiantes" },
   { label: "Expedientes", icon: <IconFolder />, href: "#expedientes" },
   { label: "Gestion de documentos", icon: <IconFile />, href: "#documentos" },
-  { label: "Tareas", icon: <IconCheckSquare />, href: "#tareas" },
+  { label: "Tareas", icon: <IconCheckSquare />, to: "/admin/tasks" },
   { label: "Reportes", icon: <IconBarChart />, href: "#reportes" },
   { label: "Configuración", icon: <IconSettings />, href: "#configuracion" },
   { label: "Solicitudes", icon: <IconInbox />, href: "#solicitudes" },
@@ -97,7 +97,7 @@ export const Sidebar = ({ onCreateUser, onRefresh }: SidebarProps) => {
       <h2 className="sidebar__title">Módulos</h2>
       <nav className="sidebar__nav">
         {MODULES.map((m) => (
-          <NavItem key={m.label} label={m.label} icon={m.icon} href={m.href} />
+          <NavItem key={m.label} label={m.label} icon={m.icon} href={m.href} to={m.to} />
         ))}
       </nav>
       <div className="sidebar__actions">

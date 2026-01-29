@@ -15,8 +15,18 @@
 
 .dashboard-template__main {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   padding: 1.5rem;
+}
+
+.dashboard-template__main > * {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 768px) {

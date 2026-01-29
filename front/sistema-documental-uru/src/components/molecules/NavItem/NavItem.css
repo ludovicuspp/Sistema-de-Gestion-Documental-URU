@@ -21,9 +21,14 @@
 }
 
 .nav-item--active {
-  background-color: #eff6ff;
-  color: #284483;
+  background-color: #284483;
+  color: #ffffff;
   font-weight: 500;
+}
+
+.nav-item--active:hover {
+  background-color: #1e3562;
+  color: #ffffff;
 }
 
 .nav-item__icon {

@@ -1,0 +1,26 @@
+.task-list-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.task-list-card__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.task-list-card__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.task-list-card__note {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}

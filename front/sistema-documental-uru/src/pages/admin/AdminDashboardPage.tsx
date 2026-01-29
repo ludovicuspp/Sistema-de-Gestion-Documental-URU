@@ -128,8 +128,8 @@ export const AdminDashboardPage = () => {
             </section>
             <RecentTasks
               tasks={tasks}
-              onViewAll={() => {}}
-              onCreateTask={() => {}}
+              onViewAll={() => navigate("/admin/tasks")}
+              onCreateTask={() => navigate("/admin/tasks")}
             />
             <div className="admin-dashboard__two-cards">
               <MonthlyActivityCard value={monthlyActivityValue} />

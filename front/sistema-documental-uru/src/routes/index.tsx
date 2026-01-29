@@ -1,7 +1,8 @@
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 import { Layout } from "@/components/templates/Layout";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LoginPage } from "@/pages/auth";
-import { AdminDashboardPage } from "@/pages/admin";
+import { AdminDashboardPage, TaskManagementPage } from "@/pages/admin";
 
 /**
  * Routes grouped by role/functionality:
@@ -18,11 +19,23 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: "/admin/tasks",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <TaskManagementPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
     path: "/admin",
     element: (
-      <Layout>
-        <AdminDashboardPage />
-      </Layout>
+      <ErrorBoundary>
+        <Layout>
+          <AdminDashboardPage />
+        </Layout>
+      </ErrorBoundary>
     ),
   },
   {
