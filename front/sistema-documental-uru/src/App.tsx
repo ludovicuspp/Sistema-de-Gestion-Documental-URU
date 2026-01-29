@@ -1,13 +1,8 @@
-import { Layout } from "@/components/templates/Layout";
-import { LoginPage } from "./pages/LoginPage";
+import { AppRouter } from "@/routes";
 import "./App.css";
 
 function App() {
-  return (
-    <Layout>
-      <LoginPage />
-    </Layout>
-  );
+  return <AppRouter />;
 }
 
 export default App;

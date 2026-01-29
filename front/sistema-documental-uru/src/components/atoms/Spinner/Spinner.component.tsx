@@ -1,28 +1,28 @@
-import "./spinner.css";
+import "./Spinner.css";
 
 export type SpinnerSize = "small" | "medium" | "large";
 
 export interface SpinnerProps {
   /**
-   * Tamaño del spinner
+   * Spinner size
    * @default 'medium'
    */
   size?: SpinnerSize;
   /**
-   * Color del spinner
+   * Spinner color
    * @default 'currentColor'
    */
   color?: string;
   /**
-   * Clase CSS adicional
+   * Additional CSS class
    */
   className?: string;
 }
 
 /**
- * Componente Spinner - Atom
+ * Spinner component - Atom
  *
- * Indicador de carga reutilizable y desacoplado.
+ * Reusable, decoupled loading indicator.
  *
  * @example
  * ```tsx

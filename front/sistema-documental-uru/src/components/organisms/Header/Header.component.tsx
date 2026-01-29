@@ -1,16 +1,16 @@
-import "./header.css";
+import "./Header.css";
 
 export interface HeaderProps {
   /**
-   * Callback cuando se hace clic en el icono de usuario
+   * Callback when the user icon is clicked
    */
   onUserClick?: () => void;
   /**
-   * Callback cuando se hace clic en el icono de configuración
+   * Callback when the settings icon is clicked
    */
   onSettingsClick?: () => void;
   /**
-   * Callback cuando se hace clic en el icono de ayuda
+   * Callback when the help icon is clicked
    */
   onHelpClick?: () => void;
 }

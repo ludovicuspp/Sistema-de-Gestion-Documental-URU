@@ -1,0 +1,26 @@
+.dashboard-template {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: #f3f4f6;
+}
+
+.dashboard-template__body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashboard-template__main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-template__main {
+    padding: 1rem;
+  }
+}

@@ -1,8 +1,8 @@
-import "./footer.css";
+import "./Footer.css";
 
 export interface FooterProps {
   /**
-   * Callback cuando se hace clic en Privacy & Terms
+   * Callback when Privacy & Terms is clicked
    */
   onPrivacyClick?: () => void;
 }

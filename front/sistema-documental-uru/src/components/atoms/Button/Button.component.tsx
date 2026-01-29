@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from "react";
 import { forwardRef } from "react";
 import { Spinner } from "@/components/atoms/Spinner";
-import "./button.css";
+import "./Button.css";
 
 export type ButtonVariant = "primary" | "secondary" | "danger" | "success" | "outline" | "ghost";
 export type ButtonSize = "small" | "medium" | "large";

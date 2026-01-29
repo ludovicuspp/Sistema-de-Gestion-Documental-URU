@@ -1,0 +1,49 @@
+.admin-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.admin-dashboard__kpis {
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-dashboard__grid {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 360px);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.admin-dashboard__left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.admin-dashboard__two-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.admin-dashboard__right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .admin-dashboard__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dashboard__two-cards {
+    grid-template-columns: 1fr;
+  }
+}

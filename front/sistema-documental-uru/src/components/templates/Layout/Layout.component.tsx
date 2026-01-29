@@ -1,8 +1,8 @@
-import "./layout.css";
+import "./Layout.css";
 
 export interface LayoutProps {
   /**
-   * Contenido principal del layout
+   * Main content of the layout
    */
   children: React.ReactNode;
   /**
@@ -29,5 +29,9 @@ export interface LayoutProps {
 export const Layout = ({ children, className = "" }: LayoutProps) => {
   const layoutClasses = ["layout", className].filter(Boolean).join(" ");
 
-  return <div className={layoutClasses}>{children}</div>;
+  return (
+    <div className={layoutClasses}>
+      <div className="layout__content">{children}</div>
+    </div>
+  );
 };
