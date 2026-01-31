@@ -29,7 +29,6 @@ export const UserDetails = ({ user, onEdit, onDelete }: UserDetailsProps) => {
       <h2 className="user-details__title">Detalle del usuario</h2>
       <p className="user-details__subtitle">Selecciona un usuario para ver o gestionar</p>
       <div className="user-details__section">
-        <h3 className="user-details__section-title">Información</h3>
         <dl className="user-details__fields">
           <div className="user-details__field">
             <dt className="user-details__label">Cédula</dt>
@@ -50,10 +49,10 @@ export const UserDetails = ({ user, onEdit, onDelete }: UserDetailsProps) => {
         </dl>
       </div>
       <div className="user-details__actions">
-        <Button variant="secondary" size="small" onClick={() => user && onEdit?.(user.id)} disabled={!user}>
+        <Button variant="outline" size="small" onClick={() => user && onEdit?.(user.id)} disabled={!user}>
           Editar
         </Button>
-        <Button variant="danger" size="small" onClick={() => user && onDelete?.(user.id)} disabled={!user}>
+        <Button variant="primary" size="small" onClick={() => user && onDelete?.(user.id)} disabled={!user}>
           Eliminar
         </Button>
       </div>

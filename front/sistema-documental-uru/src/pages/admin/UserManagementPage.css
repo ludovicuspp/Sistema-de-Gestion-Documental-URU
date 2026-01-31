@@ -1,8 +1,12 @@
+/* Override template min-height so page can grow and main area scrolls (detail card no longer cut off) */
+.dashboard-template__main .user-management-page {
+  min-height: min-content;
+}
+
 .user-management-page {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  min-height: 0;
 }
 
 .user-management-page__top {
@@ -21,8 +25,9 @@
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   flex: 1;
-  min-height: 320px;
+  min-height: 380px;
   align-items: stretch;
+  flex-shrink: 0;
 }
 
 .user-management-page__detail {
