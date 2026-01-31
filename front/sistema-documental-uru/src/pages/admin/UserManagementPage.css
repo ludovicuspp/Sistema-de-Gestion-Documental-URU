@@ -1,0 +1,60 @@
+.user-management-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: 0;
+}
+
+.user-management-page__top {
+  flex-shrink: 0;
+}
+
+.user-management-page__count {
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.user-management-page__bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 320px;
+  align-items: stretch;
+}
+
+.user-management-page__detail {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-management-page__detail .card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.user-management-page__history {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-management-page__history .card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .user-management-page__bottom {
+    grid-template-columns: 1fr;
+  }
+}
