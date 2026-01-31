@@ -221,32 +221,32 @@ export const DashboardPage = () => {
 
 ## Convenciones de Nomenclatura
 
-- **Carpetas:** PascalCase que coincida con el nombre del componente (`Button/`, `SearchBox/`)
-- **Componente:** `ComponentName.component.tsx` (ej: `Button.component.tsx`)
-- **Estilos:** `ComponentName.css` en PascalCase (ej: `Button.css`)
+- **Carpetas, componentes y CSS en inglés:** Todas las carpetas, nombres de componente y archivos CSS deben estar en **inglés** (ej: `UserDetail/`, `UserDetail.component.tsx`, `UserDetail.css`). No usar español en rutas ni nombres de archivo.
+- **Carpetas:** PascalCase que coincida con el nombre del componente en inglés (`Button/`, `UserDetail/`, `SearchBox/`)
+- **Componente:** `ComponentName.component.tsx` en inglés (ej: `UserDetail.component.tsx`)
+- **Estilos:** `ComponentName.css` en inglés, PascalCase (ej: `UserDetail.css`)
 - **Tests:** `ComponentName.test.tsx` (opcional)
 - **Exports:** Named exports preferidos (`export const Button`)
-- **Props interfaces:** `ComponentNameProps` (ej: `ButtonProps`)
+- **Props interfaces:** `ComponentNameProps` en inglés (ej: `UserDetailProps`)
 
 ## Estructura de Archivo de Componente
 
-Cada componente DEBE tener su propia carpeta con la siguiente estructura:
+Cada componente DEBE tener su propia carpeta con la siguiente estructura. **Nombres en inglés:**
 
 ```
 ComponentName/
-  ComponentName.component.tsx    # Componente principal
-  ComponentName.css               # Estilos (PascalCase)
+  ComponentName.component.tsx    # Componente principal (nombre en inglés)
+  ComponentName.css              # Estilos, nombre en inglés (PascalCase)
   ComponentName.test.tsx         # Tests (opcional)
   index.ts                       # Re-export del componente
 ```
 
-**Ejemplo:**
+**Ejemplo (estándar: carpetas, componentes y CSS en inglés):**
 
 ```
-Button/
-  Button.component.tsx
-  Button.css
-  Button.test.tsx
+UserDetail/
+  UserDetail.component.tsx
+  UserDetail.css
   index.ts
 ```
 
