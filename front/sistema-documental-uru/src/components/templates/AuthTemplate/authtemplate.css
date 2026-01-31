@@ -15,7 +15,7 @@
   overflow: hidden;
 }
 
-/* Background con imagen del campus URU */
+/* Background with URU campus image */
 .auth-template__main-content::before {
   content: "";
   position: absolute;
@@ -31,7 +31,7 @@
   z-index: 0;
 }
 
-/* Overlay oscuro para oscurecer más la imagen */
+/* Dark overlay to dim the background image */
 .auth-template__main-content::after {
   content: "";
   position: absolute;

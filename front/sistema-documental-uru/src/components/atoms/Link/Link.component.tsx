@@ -1,32 +1,32 @@
-import { AnchorHTMLAttributes, forwardRef } from "react";
-import "./link.css";
+import { type AnchorHTMLAttributes, forwardRef } from "react";
+import "./Link.css";
 
 export interface LinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   /**
-   * Variante visual del enlace
+   * Link visual variant
    * @default 'default'
    */
   variant?: "default" | "primary" | "secondary";
   /**
-   * Si es true, el enlace se muestra como texto simple sin subrayado
+   * If true, link is shown as plain text without underline
    * @default false
    */
   underline?: boolean;
   /**
-   * Contenido del enlace
+   * Link content
    */
   children: React.ReactNode;
 }
 
 /**
- * Componente Link - Atom
+ * Link component - Atom
  *
- * Enlace reutilizable y desacoplado.
+ * Reusable, decoupled link.
  *
  * @example
  * ```tsx
- * <Link href="/forgot-password">Olvidé mi contraseña</Link>
- * <Link href="/register" variant="primary">Registrarse</Link>
+ * <Link href="/forgot-password">Forgot password</Link>
+ * <Link href="/register" variant="primary">Register</Link>
  * ```
  */
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>(

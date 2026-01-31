@@ -1,0 +1,30 @@
+.monthly-activity-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.monthly-activity-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.monthly-activity-card__subtitle {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.monthly-activity-card__chart {
+  min-height: 120px;
+  width: 100%;
+  margin: 0.25rem 0;
+}
+
+.monthly-activity-card__value {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1f2937;
+}

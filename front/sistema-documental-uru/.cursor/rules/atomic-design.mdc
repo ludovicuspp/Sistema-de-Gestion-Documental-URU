@@ -223,7 +223,7 @@ export const DashboardPage = () => {
 
 - **Carpetas:** PascalCase que coincida con el nombre del componente (`Button/`, `SearchBox/`)
 - **Componente:** `ComponentName.component.tsx` (ej: `Button.component.tsx`)
-- **Estilos:** `component.css` en minúsculas (ej: `button.css`)
+- **Estilos:** `ComponentName.css` en PascalCase (ej: `Button.css`)
 - **Tests:** `ComponentName.test.tsx` (opcional)
 - **Exports:** Named exports preferidos (`export const Button`)
 - **Props interfaces:** `ComponentNameProps` (ej: `ButtonProps`)
@@ -235,7 +235,7 @@ Cada componente DEBE tener su propia carpeta con la siguiente estructura:
 ```
 ComponentName/
   ComponentName.component.tsx    # Componente principal
-  component.css                   # Estilos (en minúsculas)
+  ComponentName.css               # Estilos (PascalCase)
   ComponentName.test.tsx         # Tests (opcional)
   index.ts                       # Re-export del componente
 ```
@@ -245,7 +245,7 @@ ComponentName/
 ```
 Button/
   Button.component.tsx
-  button.css
+  Button.css
   Button.test.tsx
   index.ts
 ```

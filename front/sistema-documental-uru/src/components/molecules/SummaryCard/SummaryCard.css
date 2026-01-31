@@ -1,0 +1,24 @@
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.summary-card__value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.summary-card__label {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.summary-card__subtitle {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+}

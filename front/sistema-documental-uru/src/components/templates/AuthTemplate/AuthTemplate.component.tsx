@@ -1,27 +1,27 @@
 import { Header } from "@/components/organisms/Header";
 import { Footer } from "@/components/organisms/Footer";
 import backgroundImage from "@/assets/img/uru-background.jpg";
-import "./authtemplate.css";
+import "./AuthTemplate.css";
 
 export interface AuthTemplateProps {
   /**
-   * Contenido principal del template (normalmente un formulario de autenticación)
+   * Main content of the template (usually an auth form)
    */
   children: React.ReactNode;
   /**
-   * Callback cuando se hace clic en el icono de usuario del header
+   * Callback when the header user icon is clicked
    */
   onUserClick?: () => void;
   /**
-   * Callback cuando se hace clic en el icono de configuración del header
+   * Callback when the header settings icon is clicked
    */
   onSettingsClick?: () => void;
   /**
-   * Callback cuando se hace clic en el icono de ayuda del header
+   * Callback when the header help icon is clicked
    */
   onHelpClick?: () => void;
   /**
-   * Callback cuando se hace clic en Privacy & Terms del footer
+   * Callback when Privacy & Terms in the footer is clicked
    */
   onPrivacyClick?: () => void;
 }

@@ -1,0 +1,36 @@
+.recent-activity {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.recent-activity__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.recent-activity__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.recent-activity__subtitle {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+.recent-activity__link {
+  font-size: 0.875rem;
+  color: #284483;
+}
+
+.recent-activity__list {
+  display: flex;
+  flex-direction: column;
+}
