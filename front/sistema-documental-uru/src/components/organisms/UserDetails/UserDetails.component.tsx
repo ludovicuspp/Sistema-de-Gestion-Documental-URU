@@ -49,10 +49,10 @@ export const UserDetails = ({ user, onEdit, onDelete }: UserDetailsProps) => {
         </dl>
       </div>
       <div className="user-details__actions">
-        <Button variant="outline" size="small" onClick={() => user && onEdit?.(user.id)} disabled={!user}>
+        <Button variant="outline" size="small" onClick={() => user && onEdit?.(user.id)}>
           Editar
         </Button>
-        <Button variant="primary" size="small" onClick={() => user && onDelete?.(user.id)} disabled={!user}>
+        <Button variant="primary" size="small" onClick={() => user && onDelete?.(user.id)}>
           Eliminar
         </Button>
       </div>
