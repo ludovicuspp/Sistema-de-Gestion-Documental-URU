@@ -81,7 +81,7 @@ const MODULES: { label: string; icon: React.ReactNode; href?: string; to?: strin
   { label: "Expedientes", icon: <IconFolder />, href: "#expedientes" },
   { label: "Gestion de documentos", icon: <IconFile />, href: "#documentos" },
   { label: "Tareas", icon: <IconCheckSquare />, to: "/admin/tasks" },
-  { label: "Reportes", icon: <IconBarChart />, href: "#reportes" },
+  { label: "Reportes", icon: <IconBarChart />, to: "/admin/reports" },
   { label: "Configuración", icon: <IconSettings />, href: "#configuracion" },
   { label: "Solicitudes", icon: <IconInbox />, href: "#solicitudes" },
 ];
