@@ -1,0 +1,39 @@
+.expedient-select-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.expedient-select-card__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.expedient-select-card__grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+}
+
+.expedient-select-card__row {
+  display: contents;
+}
+
+.expedient-select-card__label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.expedient-select-card__value {
+  font-size: 0.875rem;
+  color: #1f2937;
+}
+
+.expedient-select-card__actions {
+  display: flex;
+  gap: 0.5rem;
+}
