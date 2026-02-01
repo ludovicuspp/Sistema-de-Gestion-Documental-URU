@@ -1,0 +1,337 @@
+.reports-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+}
+
+/* Filters Section */
+.reports-page__filters-card {
+  padding: 1.5rem;
+}
+
+.reports-page__filters-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.reports-page__filters-left {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+  min-width: 300px;
+}
+
+.reports-page__filters-right {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.reports-page__select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background-color: white;
+  color: #111827;
+  min-width: 150px;
+}
+
+.reports-page__select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Section Titles */
+.reports-page__section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.reports-page__section-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* KPI Cards */
+.reports-page__kpis {
+  margin-top: 0.5rem;
+}
+
+.reports-page__kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+/* Main Grid */
+.reports-page__main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+/* Chart Section */
+.reports-page__chart-card {
+  padding: 1.5rem;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.reports-page__chart-header {
+  margin-bottom: 1.5rem;
+}
+
+.reports-page__chart-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9fafb;
+  border: 2px dashed #d1d5db;
+  border-radius: 0.5rem;
+  min-height: 250px;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.reports-page__chart-footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.reports-page__chart-comparison {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.reports-page__chart-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Right Column */
+.reports-page__right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Status Distribution */
+.reports-page__status-card {
+  padding: 1.5rem;
+}
+
+.reports-page__status-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.reports-page__status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 0.375rem;
+}
+
+.reports-page__status-label {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.reports-page__status-count {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Top Careers */
+.reports-page__careers-card {
+  padding: 1.5rem;
+}
+
+.reports-page__careers-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.reports-page__career-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 0.375rem;
+}
+
+.reports-page__career-rank {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+  min-width: 1.5rem;
+}
+
+.reports-page__career-name {
+  font-size: 0.875rem;
+  color: #374151;
+  flex: 1;
+}
+
+.reports-page__career-count {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Detail Table Section */
+.reports-page__detail-section {
+  margin-top: 0.5rem;
+}
+
+.reports-page__detail-card {
+  padding: 1.5rem;
+}
+
+.reports-page__detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.reports-page__detail-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.reports-page__table-wrapper {
+  overflow-x: auto;
+}
+
+.reports-page__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.reports-page__table thead {
+  background-color: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.reports-page__table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.reports-page__table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #6b7280;
+}
+
+.reports-page__table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.reports-page__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .reports-page__main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .reports-page__filters-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .reports-page__filters-left {
+    flex-direction: column;
+  }
+
+  .reports-page__filters-right {
+    flex-direction: column;
+  }
+
+  .reports-page__filters-right .button {
+    width: 100%;
+  }
+
+  .reports-page__kpis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reports-page__chart-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .reports-page__chart-actions {
+    flex-direction: column;
+  }
+
+  .reports-page__chart-actions .button {
+    width: 100%;
+  }
+
+  .reports-page__detail-header {
+    flex-direction: column;
+  }
+
+  .reports-page__detail-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .reports-page__detail-actions .button {
+    width: 100%;
+  }
+
+  .reports-page__table {
+    font-size: 0.75rem;
+  }
+
+  .reports-page__table th,
+  .reports-page__table td {
+    padding: 0.5rem;
+  }
+}
