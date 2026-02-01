@@ -1,3 +1,4 @@
-export { AdminDashboardPage } from "./AdminDashboardPage";
-export { TaskManagementPage } from "./TaskManagementPage";
-export { UserManagementPage } from "./UserManagementPage";
+export { AdminDashboardPage } from "./AdminDashboard";
+export { TaskManagementPage } from "./TaskManagement";
+export { UserManagementPage } from "./UserManagement";
+export { StudentManagementPage } from "./StudentManagement";

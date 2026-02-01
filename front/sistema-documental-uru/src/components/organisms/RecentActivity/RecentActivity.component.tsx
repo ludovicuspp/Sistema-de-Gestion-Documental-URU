@@ -10,24 +10,32 @@ export interface ActivityEntry {
 
 export interface RecentActivityProps {
   entries: ActivityEntry[];
+  title?: string;
   subtitle?: string;
+  linkText?: string;
   onViewAll?: () => void;
 }
 
 /**
  * RecentActivity - Organism
  *
- * Recent activity block (action log).
+ * Recent activity block (action log). Optional title for reuse as "Historial / Observaciones".
  */
-export const RecentActivity = ({ entries, subtitle, onViewAll }: RecentActivityProps) => (
+export const RecentActivity = ({
+  entries,
+  title = "Actividad reciente",
+  subtitle,
+  linkText = "Ver todo",
+  onViewAll,
+}: RecentActivityProps) => (
   <Card variant="elevated" className="recent-activity">
     <div className="recent-activity__header">
       <div>
-        <h3 className="recent-activity__title">Actividad reciente</h3>
+        <h3 className="recent-activity__title">{title}</h3>
         {subtitle && <p className="recent-activity__subtitle">{subtitle}</p>}
       </div>
       <Link href="#" onClick={(e) => { e.preventDefault(); onViewAll?.(); }} className="recent-activity__link">
-        Ver todo
+        {linkText}
       </Link>
     </div>
     <div className="recent-activity__list">
