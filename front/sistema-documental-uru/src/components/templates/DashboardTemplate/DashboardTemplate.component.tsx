@@ -5,6 +5,8 @@ import "./DashboardTemplate.css";
 
 export interface DashboardTemplateProps {
   children: React.ReactNode;
+  /** Optional content below sidebar nav (e.g. Bandeja de verificación in Gestión de documentos). */
+  sidebarContent?: React.ReactNode;
   currentView?: string;
   userRole?: string;
   userEmail?: string;
@@ -22,6 +24,7 @@ export interface DashboardTemplateProps {
  */
 export const DashboardTemplate = ({
   children,
+  sidebarContent,
   currentView,
   userRole,
   userEmail,
@@ -39,7 +42,14 @@ export const DashboardTemplate = ({
         onLogout={onLogout}
       />
       <div className="dashboard-template__body">
-        <Sidebar onCreateUser={onCreateUser} onRefresh={onRefresh} />
+        <div className="dashboard-template__aside">
+          <Sidebar onCreateUser={onCreateUser} onRefresh={onRefresh} />
+          {sidebarContent != null && (
+            <div className="dashboard-template__sidebar-content">
+              {sidebarContent}
+            </div>
+          )}
+        </div>
         <main className="dashboard-template__main">{children}</main>
       </div>
       <Footer onPrivacyClick={onPrivacyClick} />

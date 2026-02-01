@@ -13,6 +13,29 @@
   overflow: hidden;
 }
 
+.dashboard-template__aside {
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  min-width: 280px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.dashboard-template__aside .sidebar {
+  flex-shrink: 0;
+}
+
+.dashboard-template__sidebar-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-top: 1px solid #e5e7eb;
+  background-color: #fafafa;
+  padding: 1rem;
+}
+
 .dashboard-template__main {
   flex: 1;
   min-width: 0;

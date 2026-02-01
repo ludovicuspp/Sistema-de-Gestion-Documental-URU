@@ -1,0 +1,66 @@
+/* Grid: row1 = left (Seleccione + Documentos) | right (Tipos). Row2 = full width (Subir documento + Reglas rápidas). */
+.dashboard-template__main .document-management-page {
+  min-height: min-content;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.document-management-page {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.document-management-page__left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.document-management-page__left .expedient-select-card {
+  flex-shrink: 0;
+}
+
+.document-management-page__left .expedient-documents-card {
+  flex: 1;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.document-management-page__left .expedient-documents-card__table-wrap {
+  flex: 1;
+  min-height: 120px;
+}
+
+.document-management-page__right {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.document-management-page__right .document-types-card {
+  flex-shrink: 0;
+}
+
+.document-management-page__full {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.document-management-page__full .upload-document-card {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .dashboard-template__main .document-management-page {
+    grid-template-columns: 1fr;
+  }
+
+  .document-management-page__full {
+    grid-column: 1;
+  }
+}
