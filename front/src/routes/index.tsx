@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom"
 import { Layout } from "@/components/templates/Layout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LoginPage } from "@/pages/auth";
-import { AdminDashboardPage, TaskManagementPage, UserManagementPage } from "@/pages/admin";
+import { AdminDashboardPage, RecordsManagementPage, TaskManagementPage, UserManagementPage } from "@/pages/admin";
 
 /**
  * Routes grouped by role/functionality:
@@ -24,6 +24,16 @@ const router = createBrowserRouter([
       <ErrorBoundary>
         <Layout>
           <UserManagementPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/admin/records",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <RecordsManagementPage />
         </Layout>
       </ErrorBoundary>
     ),

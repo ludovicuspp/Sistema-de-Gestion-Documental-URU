@@ -17,3 +17,13 @@
   background-color: #22c55e;
   color: #ffffff;
 }
+
+.status-badge--rejected {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.status-badge--no-documents {
+  background-color: #6b7280;
+  color: #ffffff;
+}

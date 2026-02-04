@@ -1,0 +1,12 @@
+.dashboard-template__main .records-management-page {
+  min-height: min-content;
+}
+
+.records-management-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}

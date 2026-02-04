@@ -78,7 +78,7 @@ export interface SidebarProps {
 const MODULES: { label: string; icon: React.ReactNode; href?: string; to?: string }[] = [
   { label: "Gestión de usuarios", icon: <IconUsers />, to: "/admin/users" },
   { label: "Gestión de estudiantes", icon: <IconUsers />, href: "#estudiantes" },
-  { label: "Expedientes", icon: <IconFolder />, href: "#expedientes" },
+  { label: "Expedientes", icon: <IconFolder />, to: "/admin/records" },
   { label: "Gestion de documentos", icon: <IconFile />, href: "#documentos" },
   { label: "Tareas", icon: <IconCheckSquare />, to: "/admin/tasks" },
   { label: "Reportes", icon: <IconBarChart />, href: "#reportes" },

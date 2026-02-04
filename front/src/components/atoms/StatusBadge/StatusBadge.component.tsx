@@ -1,6 +1,6 @@
 import "./StatusBadge.css";
 
-export type StatusBadgeVariant = "pending" | "completed";
+export type StatusBadgeVariant = "pending" | "completed" | "rejected" | "no-documents";
 
 export interface StatusBadgeProps {
   variant: StatusBadgeVariant;
