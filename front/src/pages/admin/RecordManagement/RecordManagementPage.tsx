@@ -119,17 +119,17 @@ export const RecordManagementPage = () => {
       onRefresh={handleRefresh}
     >
       <div className="record-management-page">
-        <div className="record-management-page__top">
-          <RecordSearchCard
-            searchValue={searchQuery}
-            onSearchChange={handleSearchChange}
-            activeFilter={activeFilter}
-            onFilterChange={handleFilterChange}
-            onNewRecord={handleNewRecord}
-          />
-        </div>
         <div className="record-management-page__content">
           <div className="record-management-page__left">
+            <div className="record-management-page__search">
+              <RecordSearchCard
+                searchValue={searchQuery}
+                onSearchChange={handleSearchChange}
+                activeFilter={activeFilter}
+                onFilterChange={handleFilterChange}
+                onNewRecord={handleNewRecord}
+              />
+            </div>
             <div className="record-management-page__detail">
               <RecordDetailCard
                 record={selectedRecord}
@@ -149,12 +149,14 @@ export const RecordManagementPage = () => {
             </div>
           </div>
           <div className="record-management-page__right">
-            <RecentActivity
-              title="Observaciones"
-              linkText="Ver historial"
-              entries={selectedRecord ? MOCK_OBSERVATIONS : []}
-              onViewAll={handleViewHistory}
-            />
+            <div className="record-management-page__observations">
+              <RecentActivity
+                title="Observaciones"
+                linkText="Ver historial"
+                entries={selectedRecord ? MOCK_OBSERVATIONS : []}
+                onViewAll={handleViewHistory}
+              />
+            </div>
           </div>
         </div>
       </div>
