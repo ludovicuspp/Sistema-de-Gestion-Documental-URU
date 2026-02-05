@@ -9,6 +9,7 @@ import {
   StudentManagementPage,
   ReportsPage,
   DocumentManagementPage,
+  RecordManagementPage,
 } from "@/pages/admin";
 
 /**
@@ -81,6 +82,16 @@ const router = createBrowserRouter([
       <ErrorBoundary>
         <Layout>
           <DocumentManagementPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/admin/records",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <RecordManagementPage />
         </Layout>
       </ErrorBoundary>
     ),

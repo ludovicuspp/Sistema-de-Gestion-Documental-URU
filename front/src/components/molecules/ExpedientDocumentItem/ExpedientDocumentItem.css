@@ -1,0 +1,43 @@
+.expedient-document-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.expedient-document-item:last-child {
+  border-bottom: none;
+}
+
+.expedient-document-item__icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.expedient-document-item__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.expedient-document-item__type {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.expedient-document-item__file {
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.expedient-document-item__size {
+  color: #9ca3af;
+}
+
+.expedient-document-item__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}

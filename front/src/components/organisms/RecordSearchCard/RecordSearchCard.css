@@ -1,0 +1,84 @@
+.record-search-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.record-search-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.record-search-card__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.record-search-card__subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+.record-search-card__search-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.record-search-card__search-row .input-wrapper {
+  flex: 1;
+  min-width: 200px;
+}
+
+.record-search-card__clear-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: #6b7280;
+}
+
+.record-search-card__clear-btn:hover {
+  color: #1f2937;
+}
+
+.record-search-card__filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.record-search-card__filter {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background-color: #ffffff;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.record-search-card__filter:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.record-search-card__filter--active {
+  background-color: #dbeafe;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+.record-search-card__filter--active:hover {
+  background-color: #bfdbfe;
+}

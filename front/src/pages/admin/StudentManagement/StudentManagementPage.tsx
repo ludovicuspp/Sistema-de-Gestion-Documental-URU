@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { StudentList } from "@/components/organisms/StudentList";
 import { StudentDetails } from "@/components/organisms/StudentDetails";
@@ -66,6 +67,7 @@ const MOCK_HISTORY: ActivityEntry[] = [
  * Based on UserManagementPage layout.
  */
 export const StudentManagementPage = () => {
+  const navigate = useNavigate();
   const [students] = useState<StudentListItem[]>(MOCK_STUDENTS);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>("1");
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,6 +96,14 @@ export const StudentManagementPage = () => {
   const handleDelete = useCallback((id: string) => {
     console.log("Eliminar estudiante", id);
   }, []);
+
+  const handleViewExpedientes = useCallback((id: string) => {
+    navigate("/admin/records");
+  }, [navigate]);
+
+  const handleNewExpediente = useCallback((id: string) => {
+    navigate("/admin/records");
+  }, [navigate]);
 
   const filteredStudents = searchQuery
     ? students.filter(
@@ -128,8 +138,8 @@ export const StudentManagementPage = () => {
               student={selectedStudent}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              onViewExpedientes={() => {}}
-              onNewExpediente={() => {}}
+              onViewExpedientes={handleViewExpedientes}
+              onNewExpediente={handleNewExpediente}
             />
           </div>
           <div className="student-management-page__history">
