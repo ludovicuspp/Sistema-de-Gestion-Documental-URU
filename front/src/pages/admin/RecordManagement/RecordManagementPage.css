@@ -8,17 +8,13 @@
   gap: 1.5rem;
 }
 
-.record-management-page__top {
-  flex-shrink: 0;
-}
-
 .record-management-page__content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: 1.5rem;
   flex: 1;
   min-height: 380px;
-  align-items: stretch;
+  align-items: start;
   flex-shrink: 0;
 }
 
@@ -27,6 +23,26 @@
   flex-direction: column;
   gap: 1.5rem;
   min-height: 0;
+}
+
+.record-management-page__search {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.record-management-page__observations {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.record-management-page__observations .card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .record-management-page__detail {

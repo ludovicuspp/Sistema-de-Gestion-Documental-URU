@@ -10,6 +10,7 @@ import {
   ReportsPage,
   DocumentManagementPage,
   RecordManagementPage,
+  RequestManagementPage,
 } from "@/pages/admin";
 
 /**
@@ -92,6 +93,16 @@ const router = createBrowserRouter([
       <ErrorBoundary>
         <Layout>
           <RecordManagementPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/admin/requests",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <RequestManagementPage />
         </Layout>
       </ErrorBoundary>
     ),
