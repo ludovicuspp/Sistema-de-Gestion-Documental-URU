@@ -12,16 +12,18 @@ export interface QuickAccessItem {
 
 export interface QuickAccessProps {
   items: QuickAccessItem[];
+  /** Card title. Default: "Accesos rápidos". */
+  title?: string;
 }
 
 /**
  * QuickAccess - Organism
  *
- * Quick access block.
+ * Quick access block. Title can be overridden for i18n.
  */
-export const QuickAccess = ({ items }: QuickAccessProps) => (
+export const QuickAccess = ({ items, title = "Accesos rápidos" }: QuickAccessProps) => (
   <Card variant="elevated" className="quick-access">
-    <h3 className="quick-access__title">Accesos rápidos</h3>
+    <h3 className="quick-access__title">{title}</h3>
     <div className="quick-access__list">
       {items.map((item, i) =>
         item.primary ? (

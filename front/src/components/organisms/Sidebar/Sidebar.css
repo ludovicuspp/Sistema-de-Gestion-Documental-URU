@@ -40,6 +40,21 @@
   flex-shrink: 0;
 }
 
+.sidebar__title--section {
+  margin-top: 0.75rem;
+}
+
+.sidebar__nav--tasks {
+  flex: 0;
+}
+
+.sidebar__empty {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  padding: 0.25rem 0;
+}
+
 @media (max-width: 1024px) {
   .sidebar {
     width: 240px;

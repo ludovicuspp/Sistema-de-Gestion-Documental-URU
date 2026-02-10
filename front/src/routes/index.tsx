@@ -12,11 +12,13 @@ import {
   RecordManagementPage,
   RequestManagementPage,
 } from "@/pages/admin";
+import { VerifierDashboardPage } from "@/pages/verifier";
 
 /**
  * Routes grouped by role/functionality:
  * - /auth/*     → Auth (login, register, forgot password)
  * - /admin/*    → Admin panel and modules
+ * - /verifier   → Verifier role dashboard
  */
 const router = createBrowserRouter([
   {
@@ -63,6 +65,16 @@ const router = createBrowserRouter([
       <ErrorBoundary>
         <Layout>
           <AdminDashboardPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/verifier",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <VerifierDashboardPage />
         </Layout>
       </ErrorBoundary>
     ),

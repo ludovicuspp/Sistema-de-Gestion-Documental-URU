@@ -6,6 +6,8 @@ export interface AdminHeaderProps {
   currentView?: string;
   userRole?: string;
   userEmail?: string;
+  /** Logout button label. Default: "Cerrar sesión". */
+  logoutButtonText?: string;
   onLogout?: () => void;
 }
 
@@ -18,6 +20,7 @@ export const AdminHeader = ({
   currentView = "Panel principal",
   userRole = "Administrador",
   userEmail = "username@mail.co",
+  logoutButtonText = "Cerrar sesión",
   onLogout,
 }: AdminHeaderProps) => {
   return (
@@ -37,7 +40,7 @@ export const AdminHeader = ({
             <span className="admin-header__email">{userEmail}</span>
           </div>
           <Button variant="primary" size="small" onClick={onLogout} className="admin-header__logout">
-            Cerrar sesión
+            {logoutButtonText}
           </Button>
         </div>
       </div>

@@ -1,0 +1,40 @@
+.verifier-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.verifier-dashboard__grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 360px);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.verifier-dashboard__left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.verifier-dashboard__right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (max-width: 1024px) {
+  .verifier-dashboard__grid {
+    grid-template-columns: 1fr;
+  }
+}
