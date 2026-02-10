@@ -21,6 +21,8 @@ export interface StudentDetailsProps {
   onDelete?: (id: string) => void;
   onViewExpedientes?: (id: string) => void;
   onNewExpediente?: (id: string) => void;
+  /** Show edit and delete student actions. Default true. */
+  showEditDeleteActions?: boolean;
 }
 
 const getInitials = (name: string) =>
@@ -44,6 +46,7 @@ export const StudentDetails = ({
   onDelete,
   onViewExpedientes,
   onNewExpediente,
+  showEditDeleteActions = true,
 }: StudentDetailsProps) => {
   const display = (value: string | undefined) => value ?? "—";
 
@@ -75,6 +78,7 @@ export const StudentDetails = ({
             <p className="student-details__meta">Email: {display(student.email)}</p>
           </div>
         </div>
+        {showEditDeleteActions && (
         <div className="student-details__actions">
           <Button variant="outline" size="small" onClick={() => onEdit?.(student.id)}>
             Editar estudiante
@@ -83,6 +87,7 @@ export const StudentDetails = ({
             Eliminar estudiante
           </Button>
         </div>
+        )}
       </Card>
 
       <Card variant="elevated" className="student-details student-details--academic">
