@@ -1,0 +1,1 @@
+export { VerifierDashboardPage } from "./VerifierDashboardPage";

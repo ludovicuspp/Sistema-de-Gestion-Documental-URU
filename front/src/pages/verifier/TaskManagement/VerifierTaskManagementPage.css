@@ -1,0 +1,42 @@
+.dashboard-template__main .verifier-task-management-page {
+  min-height: min-content;
+}
+
+.verifier-task-management-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.verifier-task-management-page__search {
+  flex-shrink: 0;
+}
+
+.verifier-task-management-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.verifier-task-management-page__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+}
+
+.verifier-task-management-page__documents {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.verifier-task-management-page__documents .card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}

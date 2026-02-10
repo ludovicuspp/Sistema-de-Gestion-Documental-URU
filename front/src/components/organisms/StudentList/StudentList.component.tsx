@@ -17,6 +17,8 @@ export interface StudentListProps {
   onFilterSelect?: () => void;
   onNewStudent?: () => void;
   onImportList?: () => void;
+  /** Show "Nuevo estudiante" and "Importar lista" actions. Default true. */
+  showCreateActions?: boolean;
 }
 
 /**
@@ -32,6 +34,7 @@ export const StudentList = ({
   onFilterSelect,
   onNewStudent,
   onImportList,
+  showCreateActions = true,
 }: StudentListProps) => {
   const [searchValue, setSearchValue] = useState("");
 
@@ -75,6 +78,7 @@ export const StudentList = ({
           </Button>
         </div>
       </div>
+      {showCreateActions && (
       <div className="student-list__actions">
         <Button variant="primary" size="small" onClick={onNewStudent} startIcon={<span>+</span>}>
           Nuevo estudiante
@@ -83,6 +87,7 @@ export const StudentList = ({
           Importar lista
         </Button>
       </div>
+      )}
       <div className="student-list__list">
         {students.length === 0 ? (
           <p className="student-list__empty">No hay estudiantes para mostrar.</p>

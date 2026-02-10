@@ -70,12 +70,40 @@ const IconRefresh = () => (
   </svg>
 );
 
+export interface SidebarNavItem {
+  label: string;
+  icon: React.ReactNode;
+  href?: string;
+  to?: string;
+}
+
+export interface SidebarTaskItem {
+  label: string;
+  to?: string;
+}
+
 export interface SidebarProps {
+  /** Override default modules; when not set, admin modules are used. */
+  modules?: SidebarNavItem[];
+  /** Show "Crear usuario" button (admin only). Default true. */
+  showCreateUser?: boolean;
+  /** Optional task items for "Tareas" section; section is shown when defined (can be empty). */
+  taskItems?: SidebarTaskItem[];
+  /** Section title for modules. Default: "Módulos". */
+  modulesTitle?: string;
+  /** Section title for tasks. Default: "Tareas". */
+  tasksTitle?: string;
+  /** Text when task list is empty. Default: "Sin tareas asignadas". */
+  emptyTasksText?: string;
+  /** Refresh button label. Default: "Refrescar". */
+  refreshButtonText?: string;
+  /** Create user button label. Default: "Crear usuario". */
+  createUserButtonText?: string;
   onCreateUser?: () => void;
   onRefresh?: () => void;
 }
 
-const MODULES: { label: string; icon: React.ReactNode; href?: string; to?: string }[] = [
+const ADMIN_MODULES: SidebarNavItem[] = [
   { label: "Gestión de usuarios", icon: <IconUsers />, to: "/admin/users" },
   { label: "Gestión de estudiantes", icon: <IconUsers />, to: "/admin/students" },
   { label: "Expedientes", icon: <IconFolder />, to: "/admin/records" },
@@ -86,26 +114,72 @@ const MODULES: { label: string; icon: React.ReactNode; href?: string; to?: strin
   { label: "Solicitudes", icon: <IconInbox />, to: "/admin/requests" },
 ];
 
+/** Sidebar modules for Verifier role (Spanish labels). */
+export const VERIFICADOR_SIDEBAR_MODULES: SidebarNavItem[] = [
+  { label: "Solicitudes", icon: <IconInbox />, to: "/admin/requests" },
+  { label: "Gestión de estudiantes", icon: <IconUsers />, to: "/verifier/students" },
+  { label: "Expedientes", icon: <IconFolder />, to: "/admin/records" },
+  { label: "Documentos", icon: <IconFile />, to: "/admin/documents" },
+  { label: "Tareas", icon: <IconCheckSquare />, to: "/verifier/tasks" },
+];
+
+/** Sidebar modules for Verifier role (English): Requests, Student management, Records, Documents. */
+export const VERIFIER_SIDEBAR_MODULES: SidebarNavItem[] = [
+  { label: "Requests", icon: <IconInbox />, to: "/admin/requests" },
+  { label: "Student management", icon: <IconUsers />, to: "/admin/students" },
+  { label: "Records", icon: <IconFolder />, to: "/admin/records" },
+  { label: "Documents", icon: <IconFile />, to: "/admin/documents" },
+];
+
 /**
  * Sidebar - Organism
  *
- * Admin modules sidebar.
+ * Admin or role-specific modules sidebar. Supports custom modules, optional Tasks section, and i18n labels.
  */
-export const Sidebar = ({ onCreateUser, onRefresh }: SidebarProps) => {
+export const Sidebar = ({
+  modules,
+  showCreateUser = true,
+  taskItems,
+  modulesTitle = "Módulos",
+  tasksTitle = "Tareas",
+  emptyTasksText = "Sin tareas asignadas",
+  refreshButtonText = "Refrescar",
+  createUserButtonText = "Crear usuario",
+  onCreateUser,
+  onRefresh,
+}: SidebarProps) => {
+  const navModules = modules ?? ADMIN_MODULES;
+
   return (
     <aside className="sidebar">
-      <h2 className="sidebar__title">Módulos</h2>
+      <h2 className="sidebar__title">{modulesTitle}</h2>
       <nav className="sidebar__nav">
-        {MODULES.map((m) => (
+        {navModules.map((m) => (
           <NavItem key={m.label} label={m.label} icon={m.icon} href={m.href} to={m.to} />
         ))}
       </nav>
+      {taskItems !== undefined && (
+        <>
+          <h2 className="sidebar__title sidebar__title--section">{tasksTitle}</h2>
+          <nav className="sidebar__nav sidebar__nav--tasks">
+            {taskItems.length === 0 ? (
+              <p className="sidebar__empty">{emptyTasksText}</p>
+            ) : (
+              taskItems.map((t) => (
+                <NavItem key={t.label} label={t.label} to={t.to} />
+              ))
+            )}
+          </nav>
+        </>
+      )}
       <div className="sidebar__actions">
-        <Button variant="primary" fullWidth onClick={onCreateUser} startIcon={<IconPlus />} className="sidebar__btn-create">
-          Crear usuario
-        </Button>
+        {showCreateUser && (
+          <Button variant="primary" fullWidth onClick={onCreateUser} startIcon={<IconPlus />} className="sidebar__btn-create">
+            {createUserButtonText}
+          </Button>
+        )}
         <Button variant="secondary" fullWidth onClick={onRefresh} startIcon={<IconRefresh />} className="sidebar__btn-refresh">
-          Refrescar
+          {refreshButtonText}
         </Button>
       </div>
     </aside>

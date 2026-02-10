@@ -1,5 +1,6 @@
 import { AdminHeader } from "@/components/organisms/AdminHeader";
 import { Sidebar } from "@/components/organisms/Sidebar";
+import type { SidebarNavItem, SidebarTaskItem } from "@/components/organisms/Sidebar";
 import { Footer } from "@/components/organisms/Footer";
 import "./DashboardTemplate.css";
 
@@ -7,6 +8,19 @@ export interface DashboardTemplateProps {
   children: React.ReactNode;
   /** Optional content below sidebar nav (e.g. Bandeja de verificación in Gestión de documentos). */
   sidebarContent?: React.ReactNode;
+  /** Override sidebar modules (e.g. for Verifier role). */
+  sidebarModules?: SidebarNavItem[];
+  /** Hide "Crear usuario" in sidebar (e.g. for Verifier). Default false. */
+  sidebarShowCreateUser?: boolean;
+  /** Optional task items for sidebar "Tareas" section. */
+  sidebarTaskItems?: SidebarTaskItem[];
+  /** Sidebar section labels (e.g. for English Verifier view). */
+  sidebarModulesTitle?: string;
+  sidebarTasksTitle?: string;
+  sidebarEmptyTasksText?: string;
+  sidebarRefreshButtonText?: string;
+  /** Header logout button label (e.g. "Log out" for English). */
+  headerLogoutButtonText?: string;
   currentView?: string;
   userRole?: string;
   userEmail?: string;
@@ -20,11 +34,19 @@ export interface DashboardTemplateProps {
  * DashboardTemplate - Template
  *
  * Layout for admin panel pages: header, sidebar, main content and footer.
- * Similar a AuthTemplate en estructura (template + children), aplicado al dashboard.
+ * Same structure as AuthTemplate (template + children), used for the dashboard.
  */
 export const DashboardTemplate = ({
   children,
   sidebarContent,
+  sidebarModules,
+  sidebarShowCreateUser,
+  sidebarTaskItems,
+  sidebarModulesTitle,
+  sidebarTasksTitle,
+  sidebarEmptyTasksText,
+  sidebarRefreshButtonText,
+  headerLogoutButtonText,
   currentView,
   userRole,
   userEmail,
@@ -39,11 +61,22 @@ export const DashboardTemplate = ({
         currentView={currentView}
         userRole={userRole}
         userEmail={userEmail}
+        logoutButtonText={headerLogoutButtonText}
         onLogout={onLogout}
       />
       <div className="dashboard-template__body">
         <div className="dashboard-template__aside">
-          <Sidebar onCreateUser={onCreateUser} onRefresh={onRefresh} />
+          <Sidebar
+            modules={sidebarModules}
+            showCreateUser={sidebarShowCreateUser}
+            taskItems={sidebarTaskItems}
+            modulesTitle={sidebarModulesTitle}
+            tasksTitle={sidebarTasksTitle}
+            emptyTasksText={sidebarEmptyTasksText}
+            refreshButtonText={sidebarRefreshButtonText}
+            onCreateUser={onCreateUser}
+            onRefresh={onRefresh}
+          />
           {sidebarContent != null && (
             <div className="dashboard-template__sidebar-content">
               {sidebarContent}
