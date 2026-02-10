@@ -1,4 +1,5 @@
 export { AdminDashboardPage } from "./AdminDashboard";
+export { AdminConfigurationPage } from "./AdminConfiguration";
 export { TaskManagementPage } from "./TaskManagement";
 export { UserManagementPage } from "./UserManagement";
 export { StudentManagementPage } from "./StudentManagement";

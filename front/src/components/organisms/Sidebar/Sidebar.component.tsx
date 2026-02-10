@@ -110,7 +110,7 @@ const ADMIN_MODULES: SidebarNavItem[] = [
   { label: "Gestión de documentos", icon: <IconFile />, to: "/admin/documents" },
   { label: "Tareas", icon: <IconCheckSquare />, to: "/admin/tasks" },
   { label: "Reportes", icon: <IconBarChart />, to: "/admin/reports" },
-  { label: "Configuración", icon: <IconSettings />, href: "#configuracion" },
+  { label: "Configuración", icon: <IconSettings />, to: "/admin/config" },
   { label: "Solicitudes", icon: <IconInbox />, to: "/admin/requests" },
 ];
 

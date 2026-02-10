@@ -4,6 +4,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LoginPage } from "@/pages/auth";
 import {
   AdminDashboardPage,
+  AdminConfigurationPage,
   TaskManagementPage,
   UserManagementPage,
   StudentManagementPage,
@@ -135,6 +136,16 @@ const router = createBrowserRouter([
       <ErrorBoundary>
         <Layout>
           <RequestManagementPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/admin/config",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <AdminConfigurationPage />
         </Layout>
       </ErrorBoundary>
     ),
