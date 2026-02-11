@@ -7,6 +7,7 @@ export type TaskItemVariant = "dashboard" | "management";
 export interface TaskItemProps {
   title: string;
   date: string;
+  dueDate?: string;
   variant?: TaskItemVariant;
   /** Dashboard: optional. Management: required. */
   assignee?: string;
@@ -27,6 +28,7 @@ export interface TaskItemProps {
 export const TaskItem = ({
   title,
   date,
+  dueDate,
   variant = "dashboard",
   assignee,
   priority,
@@ -60,7 +62,9 @@ export const TaskItem = ({
         <div className="task-item__info">
           <div className="task-item__title">{title}</div>
           <div className="task-item__meta">
-            Asignada a: {assignee ?? ""}. Fecha asignación: {date}
+            {dueDate
+              ? `${date} hasta ${dueDate}`
+              : `Asignada a: ${assignee ?? ""}. Fecha asignación: ${date}`}
           </div>
         </div>
         <div className="task-item__actions">

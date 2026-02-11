@@ -7,6 +7,7 @@ export interface TaskListItem {
   title: string;
   assignee: string;
   assignmentDate: string;
+  dueDate?: string;
   status: "Pendiente" | "Finalizada";
 }
 
@@ -42,6 +43,7 @@ export const TaskListCard = ({
           variant="management"
           title={t.title}
           date={t.assignmentDate}
+          dueDate={t.dueDate}
           assignee={t.assignee}
           status={t.status}
           selected={selectedId === t.id}
