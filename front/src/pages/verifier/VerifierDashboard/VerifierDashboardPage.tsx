@@ -62,9 +62,9 @@ export const VerifierDashboardPage = () => {
   }, []);
 
   const handleQuickAccess = (index: number) => {
-    if (index === 0) navigate("/admin/records");
-    else if (index === 1) navigate("/admin/documents");
-    else if (index === 2) navigate("/admin/requests");
+    if (index === 0) navigate("/verifier/records");
+    else if (index === 1) navigate("/verifier/documents");
+    else if (index === 2) navigate("/verifier/requests");
   };
 
   const quickAccessWithNav = QUICK_ACCESS_ITEMS.map((item, i) => ({
@@ -102,7 +102,7 @@ export const VerifierDashboardPage = () => {
             <RecentActivity
               entries={activityEntries}
               subtitle="Últimas acciones registradas"
-              onViewAll={() => navigate("/admin/requests")}
+              onViewAll={() => navigate("/verifier/requests")}
             />
           </aside>
         </div>
