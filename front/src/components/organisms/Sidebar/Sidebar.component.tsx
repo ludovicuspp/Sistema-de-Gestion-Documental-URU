@@ -118,7 +118,7 @@ const ADMIN_MODULES: SidebarNavItem[] = [
 export const VERIFICADOR_SIDEBAR_MODULES: SidebarNavItem[] = [
   { label: "Solicitudes", icon: <IconInbox />, to: "/admin/requests" },
   { label: "Gestión de estudiantes", icon: <IconUsers />, to: "/verifier/students" },
-  { label: "Expedientes", icon: <IconFolder />, to: "/admin/records" },
+  { label: "Expedientes", icon: <IconFolder />, to: "/verifier/records" },
   { label: "Documentos", icon: <IconFile />, to: "/admin/documents" },
   { label: "Tareas", icon: <IconCheckSquare />, to: "/verifier/tasks" },
 ];

@@ -1,0 +1,1 @@
+export { VerifierRecordManagementPage } from "./VerifierRecordManagementPage";
