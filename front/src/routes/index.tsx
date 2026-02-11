@@ -13,7 +13,7 @@ import {
   RecordManagementPage,
   RequestManagementPage,
 } from "@/pages/admin";
-import { VerifierDashboardPage, VerifierStudentManagementPage, VerifierTaskManagementPage, VerifierRecordManagementPage, VerifierDocumentManagementPage } from "@/pages/verifier";
+import { VerifierDashboardPage, VerifierStudentManagementPage, VerifierTaskManagementPage, VerifierRecordManagementPage, VerifierDocumentManagementPage, VerifierRequestManagementPage } from "@/pages/verifier";
 
 /**
  * Routes grouped by role/functionality:
@@ -116,6 +116,16 @@ const router = createBrowserRouter([
       <ErrorBoundary>
         <Layout>
           <VerifierDocumentManagementPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/verifier/requests",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <VerifierRequestManagementPage />
         </Layout>
       </ErrorBoundary>
     ),
