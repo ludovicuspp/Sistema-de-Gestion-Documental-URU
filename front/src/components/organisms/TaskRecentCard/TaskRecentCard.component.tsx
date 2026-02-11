@@ -38,6 +38,7 @@ export const TaskRecentCard = ({
           variant="management"
           title={t.title}
           date={t.assignmentDate}
+          dueDate={t.dueDate}
           assignee={t.assignee}
           status={t.status}
           selected={selectedId === t.id}

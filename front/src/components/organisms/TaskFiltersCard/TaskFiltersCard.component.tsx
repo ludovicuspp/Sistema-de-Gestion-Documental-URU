@@ -34,9 +34,11 @@ export const TaskFiltersCard = ({
   <Card variant="elevated" className="task-filters-card">
     <div className="task-filters-card__header">
       <h2 className="task-filters-card__title">Tareas</h2>
-      <Button variant="primary" size="small" onClick={onCreateTask} className="task-filters-card__create">
-        Crear tarea
-      </Button>
+      {onCreateTask && (
+        <Button variant="primary" size="small" onClick={onCreateTask} className="task-filters-card__create">
+          Crear tarea
+        </Button>
+      )}
     </div>
     <div className="task-filters-card__search">
       <Input
