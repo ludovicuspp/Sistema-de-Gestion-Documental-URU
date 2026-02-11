@@ -1,0 +1,51 @@
+/* Layout: left column (ExpedientSelect + ExpedientDocuments), full width row (UploadDocument). */
+.dashboard-template__main .verifier-document-management-page {
+  min-height: min-content;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.verifier-document-management-page {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.verifier-document-management-page__left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.verifier-document-management-page__left .expedient-select-card {
+  flex-shrink: 0;
+}
+
+.verifier-document-management-page__left .expedient-documents-card {
+  flex: 1;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.verifier-document-management-page__left .expedient-documents-card__table-wrap {
+  flex: 1;
+  min-height: 120px;
+}
+
+.verifier-document-management-page__full {
+  min-width: 0;
+}
+
+.verifier-document-management-page__full .upload-document-card {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .verifier-document-management-page__left {
+    gap: 1rem;
+  }
+}
