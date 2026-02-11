@@ -12,7 +12,7 @@ const MOCK_STUDENTS: StudentListItem[] = [
   {
     id: "1",
     name: "Ludovicus Van Vargas",
-    ciNivelEstado: "CI: 0113 · Pregrado · Activo",
+    ciNivelEstado: "CI: 0113 - Pregrado - Activo",
     levelLabel: "Pregrado",
     status: "Activo",
     lastModified: "2025-11-12",
@@ -20,7 +20,7 @@ const MOCK_STUDENTS: StudentListItem[] = [
   {
     id: "2",
     name: "María Pérez",
-    ciNivelEstado: "CI: 98765432 · Postgrado · Activo",
+    ciNivelEstado: "CI: 98765432 - Postgrado - Activo",
     levelLabel: "Postgrado",
     status: "Activo",
     lastModified: "2025-10-10",
@@ -57,7 +57,8 @@ const MOCK_DETAILS: Record<string, StudentDetail> = {
  * VerifierStudentManagementPage - Page (Verifier)
  *
  * Student management view for Verifier role: consult students, view detail,
- * academic info and associated records. No history/observations section.
+ * academic info and associated records. Same structure as admin but without
+ * history/observations section. Based on the provided image layout.
  */
 export const VerifierStudentManagementPage = () => {
   const navigate = useNavigate();
@@ -72,12 +73,18 @@ export const VerifierStudentManagementPage = () => {
     setSelectedStudentId(id);
   }, []);
 
+  const handleRefresh = useCallback(() => {
+    setSearchQuery("");
+    setSelectedStudentId(null);
+    console.log("Refrescar");
+  }, []);
+
   const handleViewExpedientes = useCallback((id: string) => {
-    navigate("/admin/records");
+    navigate("/verifier/records");
   }, [navigate]);
 
   const handleNewExpediente = useCallback((id: string) => {
-    navigate("/admin/records");
+    navigate("/verifier/records");
   }, [navigate]);
 
   const filteredStudents = searchQuery
@@ -94,7 +101,7 @@ export const VerifierStudentManagementPage = () => {
       userRole="Verificador"
       userEmail="username@mail.co"
       onLogout={() => navigate("/")}
-      onRefresh={() => globalThis.location.reload()}
+      onRefresh={handleRefresh}
       onPrivacyClick={() => {}}
       sidebarModules={VERIFICADOR_SIDEBAR_MODULES}
       sidebarShowCreateUser={false}
@@ -115,12 +122,14 @@ export const VerifierStudentManagementPage = () => {
           {filteredStudents.length} estudiantes
         </div>
         <div className="verifier-student-management-page__bottom">
-          <StudentDetails
-            student={selectedStudent}
-            onViewExpedientes={handleViewExpedientes}
-            onNewExpediente={handleNewExpediente}
-            showEditDeleteActions={false}
-          />
+          <div className="verifier-student-management-page__detail">
+            <StudentDetails
+              student={selectedStudent}
+              onViewExpedientes={handleViewExpedientes}
+              onNewExpediente={handleNewExpediente}
+              showEditDeleteActions={false}
+            />
+          </div>
         </div>
       </div>
     </DashboardTemplate>
