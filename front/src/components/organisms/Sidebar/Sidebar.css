@@ -38,6 +38,14 @@
 
 .sidebar__btn-refresh {
   flex-shrink: 0;
+  background-color: #ebf0f5 !important;
+  color: #4a5568 !important;
+  border: none !important;
+}
+
+.sidebar__btn-refresh:hover:not(:disabled) {
+  background-color: #dfe6ec !important;
+  color: #2d3748 !important;
 }
 
 .sidebar__title--section {
