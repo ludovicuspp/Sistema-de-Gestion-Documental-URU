@@ -139,23 +139,23 @@ export const DocumentManagementPage = () => {
       onCreateUser={() => {}}
       onRefresh={() => globalThis.location.reload()}
       onPrivacyClick={() => {}}
-      sidebarContent={
-        <VerificationInbox
-          title="Bandeja de verificación"
-          pendingCount={2}
-          approvedToday="0"
-          avgValidationTime="—"
-          items={filteredVerificationItems}
-          onBack={() => {}}
-          onSearch={setVerificationSearch}
-          onFilterType={() => {}}
-          onFilterUploader={() => {}}
-          onExport={() => {}}
-          onOpen={handleOpenVerification}
-        />
-      }
     >
       <div className="document-management-page">
+        <aside className="document-management-page__bandeja">
+          <VerificationInbox
+            title="Bandeja de verificación"
+            pendingCount={2}
+            approvedToday="0"
+            avgValidationTime="—"
+            items={filteredVerificationItems}
+            onBack={() => {}}
+            onSearch={setVerificationSearch}
+            onFilterType={() => {}}
+            onFilterUploader={() => {}}
+            onExport={() => {}}
+            onOpen={handleOpenVerification}
+          />
+        </aside>
         <div className="document-management-page__left">
           <ExpedientSelectCard
             title="Seleccione un expediente"

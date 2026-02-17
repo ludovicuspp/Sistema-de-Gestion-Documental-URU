@@ -28,6 +28,8 @@ export interface VerificationInboxProps {
   onOpen?: (id: string) => void;
 }
 
+type FilterType = "all" | "uploader";
+
 /**
  * VerificationInbox - Organism
  *
@@ -47,44 +49,70 @@ export const VerificationInbox = ({
   onOpen,
 }: VerificationInboxProps) => {
   const [searchValue, setSearchValue] = useState("");
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+
+  const handleFilterType = () => {
+    setActiveFilter("all");
+    onFilterType?.();
+  };
+
+  const handleFilterUploader = () => {
+    setActiveFilter("uploader");
+    onFilterUploader?.();
+  };
 
   return (
     <Card variant="elevated" className="verification-inbox">
       <div className="verification-inbox__header">
+        <h3 className="verification-inbox__title">{title}</h3>
         {onBack && (
           <Button variant="ghost" size="small" onClick={onBack} className="verification-inbox__back">
             ← Volver
           </Button>
         )}
-        <h3 className="verification-inbox__title">{title}</h3>
       </div>
       <div className="verification-inbox__stats">
-        <span className="verification-inbox__stat verification-inbox__stat--highlight">
-          {pendingCount} Pendientes
-        </span>
-        <span className="verification-inbox__stat">Aprobados hoy: {String(approvedToday)}</span>
-        <span className="verification-inbox__stat">T. medio validación: {String(avgValidationTime)}</span>
+        <div className="verification-inbox__stat-card verification-inbox__stat-card--highlight">
+          <span className="verification-inbox__stat-value">{pendingCount}</span>
+          <span className="verification-inbox__stat-label">Pendientes</span>
+        </div>
+        <div className="verification-inbox__stat-card">
+          <span className="verification-inbox__stat-value">{String(approvedToday)}</span>
+          <span className="verification-inbox__stat-label">Aprobados hoy</span>
+        </div>
+        <div className="verification-inbox__stat-card">
+          <span className="verification-inbox__stat-value">{String(avgValidationTime)}</span>
+          <span className="verification-inbox__stat-label">T. medio validación</span>
+        </div>
       </div>
-      <div className="verification-inbox__search-row">
-        <Input
-          placeholder="Buscar por cédula o nombre"
-          value={searchValue}
-          onChange={(e) => {
-            setSearchValue(e.target.value);
-            onSearch?.(e.target.value);
-          }}
-          fullWidth
-        />
-      </div>
-      <div className="verification-inbox__filters">
-        <Button variant="outline" size="small" onClick={onFilterType}>
-          Todos los tipos
-        </Button>
-        <Button variant="primary" size="small" onClick={onFilterUploader}>
-          Cargador
-        </Button>
-      </div>
-      <div className="verification-inbox__actions">
+      <div className="verification-inbox__toolbar">
+        <div className="verification-inbox__search-wrap">
+          <Input
+            placeholder="Buscar por cédula o nombre"
+            value={searchValue}
+            onChange={(e) => {
+              setSearchValue(e.target.value);
+              onSearch?.(e.target.value);
+            }}
+            fullWidth
+          />
+        </div>
+        <div className="verification-inbox__filters">
+          <Button
+            variant={activeFilter === "all" ? "primary" : "outline"}
+            size="small"
+            onClick={handleFilterType}
+          >
+            Todos los tipos
+          </Button>
+          <Button
+            variant={activeFilter === "uploader" ? "primary" : "outline"}
+            size="small"
+            onClick={handleFilterUploader}
+          >
+            Cargador
+          </Button>
+        </div>
         <Button variant="outline" size="small" onClick={onExport}>
           Exportar
         </Button>

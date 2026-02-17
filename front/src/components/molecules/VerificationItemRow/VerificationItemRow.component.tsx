@@ -16,6 +16,12 @@ export interface VerificationItemRowProps {
  *
  * Row for verification inbox: name, details, date, missing count, optional urgent tag, Open button.
  */
+const getMissingBadgeVariant = (count: number): "complete" | "warning" | "danger" => {
+  if (count === 0) return "complete";
+  if (count === 1) return "warning";
+  return "danger";
+};
+
 export const VerificationItemRow = ({
   id,
   name,
@@ -25,6 +31,8 @@ export const VerificationItemRow = ({
   urgent,
   onOpen,
 }: VerificationItemRowProps) => {
+  const badgeVariant = getMissingBadgeVariant(missingCount);
+
   return (
     <div className="verification-item-row">
       <div className="verification-item-row__info">
@@ -33,9 +41,12 @@ export const VerificationItemRow = ({
           {urgent && <span className="verification-item-row__urgent">URGENT</span>}
         </div>
         <span className="verification-item-row__details">{details}</span>
-        <span className="verification-item-row__date">{date}</span>
       </div>
-      <span className="verification-item-row__missing" title="Documentos faltantes">
+      <span className="verification-item-row__date">{date}</span>
+      <span
+        className={`verification-item-row__missing verification-item-row__missing--${badgeVariant}`}
+        title="Documentos faltantes"
+      >
         {missingCount} faltan
       </span>
       <Button variant="primary" size="small" onClick={() => onOpen?.(id)} className="verification-item-row__btn">

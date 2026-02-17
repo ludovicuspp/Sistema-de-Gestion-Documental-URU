@@ -1,10 +1,31 @@
-/* Grid: row1 = left (Seleccione + Documentos) | right (Tipos). Row2 = full width (Subir documento + Reglas rápidas). */
+/* Grid: bandeja (left) | row1 = left (Seleccione + Documentos) | right (Tipos). Row2 = full width (Subir documento). */
 .dashboard-template__main .document-management-page {
   min-height: min-content;
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 320px 1fr 320px;
+  grid-template-rows: auto 1fr;
   gap: 1.5rem;
   align-items: start;
+}
+
+.document-management-page__bandeja {
+  grid-row: 1 / -1;
+  overflow-y: auto;
+}
+
+.document-management-page__bandeja .verification-inbox {
+  height: 100%;
+}
+
+.document-management-page__bandeja .card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.document-management-page__bandeja .verification-inbox__list {
+  flex: 1;
+  max-height: none;
 }
 
 .document-management-page {
@@ -47,7 +68,7 @@
 }
 
 .document-management-page__full {
-  grid-column: 1 / -1;
+  grid-column: 2 / -1;
   min-width: 0;
 }
 
@@ -55,9 +76,46 @@
   width: 100%;
 }
 
+@media (max-width: 1200px) {
+  .dashboard-template__main .document-management-page {
+    grid-template-columns: 1fr 320px;
+    grid-template-areas:
+      "bandeja bandeja"
+      "left right"
+      "full full";
+  }
+
+  .document-management-page__bandeja {
+    grid-area: bandeja;
+    grid-row: auto;
+    max-height: 350px;
+  }
+
+  .document-management-page__bandeja .verification-inbox__list {
+    max-height: 180px;
+  }
+
+  .document-management-page__left {
+    grid-area: left;
+  }
+
+  .document-management-page__right {
+    grid-area: right;
+  }
+
+  .document-management-page__full {
+    grid-area: full;
+  }
+}
+
 @media (max-width: 900px) {
   .dashboard-template__main .document-management-page {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "bandeja"
+      "left"
+      "right"
+      "full";
   }
 
   .document-management-page__full {

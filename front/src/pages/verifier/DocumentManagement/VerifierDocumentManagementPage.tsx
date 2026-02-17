@@ -155,24 +155,25 @@ export const VerifierDocumentManagementPage = () => {
       sidebarModules={VERIFICADOR_SIDEBAR_MODULES}
       sidebarShowCreateUser={false}
       sidebarTaskItems={[]}
-      sidebarContent={
-        <VerificationInbox
-          title="Bandeja de verificación"
-          pendingCount={2}
-          approvedToday="—"
-          avgValidationTime="—"
-          items={filteredVerificationItems}
-          onBack={() => {}}
-          onSearch={setVerificationSearch}
-          onFilterType={() => {}}
-          onFilterUploader={() => {}}
-          onExport={() => {}}
-          onOpen={handleOpenVerification}
-        />
-      }
     >
       <div className="verifier-document-management-page">
-        <div className="verifier-document-management-page__left">
+        <aside className="verifier-document-management-page__bandeja">
+          <VerificationInbox
+            title="Bandeja de verificación"
+            pendingCount={2}
+            approvedToday="—"
+            avgValidationTime="—"
+            items={filteredVerificationItems}
+            onBack={() => {}}
+            onSearch={setVerificationSearch}
+            onFilterType={() => {}}
+            onFilterUploader={() => {}}
+            onExport={() => {}}
+            onOpen={handleOpenVerification}
+          />
+        </aside>
+        <div className="verifier-document-management-page__content">
+          <div className="verifier-document-management-page__left">
           <ExpedientSelectCard
             title="Seleccione un expediente"
             expedient={expedientData}
@@ -186,9 +187,9 @@ export const VerifierDocumentManagementPage = () => {
             onObservation={handleObservation}
             onDeleteDocument={handleDeleteDocument}
           />
-        </div>
-        <div className="verifier-document-management-page__full">
-          <UploadDocumentCard
+          </div>
+          <div className="verifier-document-management-page__full">
+            <UploadDocumentCard
             title="Subir documento"
             context="Asociar archivos a un expediente"
             selectedExpedientLabel={selectedExpedientLabel}
@@ -205,6 +206,7 @@ export const VerifierDocumentManagementPage = () => {
               setUploadTypeError(false);
             }}
           />
+          </div>
         </div>
       </div>
     </DashboardTemplate>
