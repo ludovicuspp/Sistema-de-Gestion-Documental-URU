@@ -13,18 +13,18 @@ import "./VerifierTaskManagementPage.css";
 const MOCK_LIST: TaskListItem[] = [
   {
     id: "1",
-    title: "Subir Fondo notas certificadas de estudiantes nuevo ingreso",
-    assignee: "Verificador",
-    assignmentDate: "2025-11-11",
+    title: "Revisión de partidas - Grupo A",
+    assignee: "Verificador A",
+    assignmentDate: "2025-11-13",
     dueDate: "2025-12-02",
     status: "Pendiente",
   },
   {
     id: "2",
-    title: "Revisar expedientes de nuevos ingresos",
+    title: "Subir Fondo notas certificadas de estudiantes nuevo ingreso",
     assignee: "Verificador",
     assignmentDate: "2025-11-11",
-    dueDate: "2025-12-03",
+    dueDate: "2025-12-02",
     status: "Pendiente",
   },
 ];
@@ -32,12 +32,13 @@ const MOCK_LIST: TaskListItem[] = [
 const MOCK_DETAILS: Record<string, TaskDetail> = {
   "1": {
     id: "1",
-    title: "Subir Fondo notas certificadas de estudiantes nuevo ingreso",
-    assignee: "Verificador",
-    assignmentDate: "2025-11-11",
+    title: "Revisión de partidas - Grupo A",
+    assignee: "Verificador A",
+    assignmentDate: "2025-11-13",
     dueDate: "2025-12-02",
     status: "Pendiente",
-    description: "Subir y verificar las notas certificadas de los estudiantes de nuevo ingreso.",
+    description:
+      "Revisar integridad y legibilidad de partidas de nacimiento del lote A. Reportar observaciones y marcar como validada.",
     workDetail: [
       "Verificar documentos escaneados.",
       "Agregar observaciones por documento si aplica.",
@@ -49,12 +50,12 @@ const MOCK_DETAILS: Record<string, TaskDetail> = {
   },
   "2": {
     id: "2",
-    title: "Revisar expedientes de nuevos ingresos",
+    title: "Subir Fondo notas certificadas de estudiantes nuevo ingreso",
     assignee: "Verificador",
     assignmentDate: "2025-11-11",
-    dueDate: "2025-12-03",
+    dueDate: "2025-12-02",
     status: "Pendiente",
-    description: "Revisar la integridad y completitud de los expedientes de nuevos ingresos.",
+    description: "Subir y verificar las notas certificadas de los estudiantes de nuevo ingreso.",
     workDetail: [
       "Verificar documentos escaneados.",
       "Agregar observaciones por documento si aplica.",
@@ -75,7 +76,7 @@ export const VerifierTaskManagementPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<TaskFilterTab>("assigned-to-me");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>("1");
   const [list] = useState<TaskListItem[]>(MOCK_LIST);
 
   const filteredList = useMemo(() => {

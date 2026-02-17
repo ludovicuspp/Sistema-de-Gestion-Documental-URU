@@ -12,9 +12,9 @@
 }
 
 .task-detail-card__title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #111827;
   margin: 0;
 }
 
@@ -39,6 +39,16 @@
   border-radius: 0.375rem;
 }
 
+.task-detail-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.task-detail-card__body--verifier {
+  gap: 1.25rem;
+}
+
 .task-detail-card__meta-row {
   display: flex;
   align-items: flex-start;
@@ -48,11 +58,12 @@
 }
 
 .task-detail-card__task-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
   flex: 1;
   min-width: 0;
+  margin: 0;
 }
 
 .task-detail-card__actions {
@@ -61,10 +72,30 @@
   flex-shrink: 0;
 }
 
+.task-detail-card__btn-complete {
+  font-weight: 600;
+  background-color: #ffffff !important;
+  border: 1px solid #d1d5db;
+}
+
+.task-detail-card__btn-complete:hover {
+  background-color: #f9fafb !important;
+}
+
 .task-detail-card__meta {
   font-size: 0.875rem;
   color: #6b7280;
   margin: 0;
+}
+
+.task-detail-card__meta--verifier {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.task-detail-card__meta--verifier span {
+  display: block;
 }
 
 .task-detail-card__section {
@@ -72,9 +103,9 @@
 }
 
 .task-detail-card__section-title {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #374151;
+  color: #111827;
   margin: 0 0 0.5rem 0;
 }
 

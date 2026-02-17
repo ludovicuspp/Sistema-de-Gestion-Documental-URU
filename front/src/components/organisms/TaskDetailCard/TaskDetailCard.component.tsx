@@ -58,12 +58,12 @@ export const TaskDetailCard = ({
       {task == null ? (
         <div className="task-detail-card__empty">Ninguna tarea seleccionada.</div>
       ) : (
-        <>
+        <div className={`task-detail-card__body ${isVerifier ? "task-detail-card__body--verifier" : ""}`}>
           <div className="task-detail-card__meta-row">
-            <span className="task-detail-card__task-title">{task.title}</span>
+            <h4 className="task-detail-card__task-title">{task.title}</h4>
             <div className="task-detail-card__actions">
               {isVerifier ? (
-                <Button variant="primary" size="small" onClick={onMarkCompleted}>
+                <Button variant="outline" size="small" onClick={onMarkCompleted} className="task-detail-card__btn-complete">
                   Marcar como completada
                 </Button>
               ) : (
@@ -78,32 +78,33 @@ export const TaskDetailCard = ({
               )}
             </div>
           </div>
-          <p className="task-detail-card__meta">
-            Asignada a: {task.assignee} - Fecha asignación: {task.assignmentDate}
-            {task.dueDate ? ` - Fecha limite: ${task.dueDate}` : ""} - Estado:{" "}
-            <StatusBadge variant={task.status === "Finalizada" ? "completed" : "pending"}>
-              {task.status}
-            </StatusBadge>
-          </p>
+          <div className={`task-detail-card__meta ${isVerifier ? "task-detail-card__meta--verifier" : ""}`}>
+            <span>Asignada a: {task.assignee}</span>
+            <span>Fecha asignación: {task.assignmentDate}</span>
+            {task.dueDate && <span>Fecha limite: {task.dueDate}</span>}
+            <span>Estado: <StatusBadge variant={task.status === "Finalizada" ? "completed" : "pending"}>{task.status}</StatusBadge></span>
+          </div>
 
-        <section className="task-detail-card__section">
-          <h4 className="task-detail-card__section-title">Descripción</h4>
-          <p className="task-detail-card__section-content">{task.description}</p>
-        </section>
+          <section className="task-detail-card__section">
+            <h4 className="task-detail-card__section-title">Descripción</h4>
+            <p className="task-detail-card__section-content">{task.description}</p>
+          </section>
 
-        <section className="task-detail-card__section">
-          <h4 className="task-detail-card__section-title">Detalle de trabajo</h4>
-          <ul className="task-detail-card__list">
-            {task.workDetail.map((item, i) => (
-              <li key={i}>{item}</li>
-            ))}
-          </ul>
-        </section>
+          <section className="task-detail-card__section">
+            <h4 className="task-detail-card__section-title">Detalle de trabajo</h4>
+            <ul className="task-detail-card__list">
+              {task.workDetail.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </section>
 
-          <p className="task-detail-card__history">
-            Historial: {task.historyCount} eventos - Responsable: {task.historyResponsible}
-          </p>
-        </>
+          {!isVerifier && (
+            <p className="task-detail-card__history">
+              Historial: {task.historyCount} eventos - Responsable: {task.historyResponsible}
+            </p>
+          )}
+        </div>
       )}
     </Card>
   );
