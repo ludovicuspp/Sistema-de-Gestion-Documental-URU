@@ -24,6 +24,13 @@
   margin: 0;
 }
 
+.request-actions-card__textarea-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .request-actions-card__textarea {
   width: 100%;
   padding: 0.75rem;
@@ -33,7 +40,7 @@
   font-size: 0.9375rem;
   color: var(--color-text-primary);
   background: var(--color-background);
-  resize: vertical;
+  resize: none;
   min-height: 200px;
 }
 
@@ -45,6 +52,21 @@
 
 .request-actions-card__textarea::placeholder {
   color: var(--color-text-secondary);
+}
+
+.request-actions-card__counter {
+  align-self: flex-end;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.request-actions-card__counter--warning {
+  color: #b45309;
+}
+
+.request-actions-card__counter--error {
+  color: #dc2626;
+  font-weight: 600;
 }
 
 .request-actions-card__actions {
