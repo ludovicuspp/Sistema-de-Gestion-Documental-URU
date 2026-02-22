@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
@@ -61,6 +62,7 @@ const MOCK_OBSERVATIONS: ActivityEntry[] = [
  * Based on StudentManagementPage layout.
  */
 export const RecordManagementPage = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<RecordStatusFilter>("pending");
   const [selectedRecord, setSelectedRecord] = useState<RecordDetailData | null>(MOCK_RECORD);
@@ -115,8 +117,13 @@ export const RecordManagementPage = () => {
   return (
     <DashboardTemplate
       currentView="Gestión de expedientes"
+      userRole="Administrador"
+      userEmail="username@mail.co"
+      headerHomePath="/admin"
+      onLogout={() => navigate("/")}
       onCreateUser={handleNewRecord}
       onRefresh={handleRefresh}
+      onPrivacyClick={() => {}}
     >
       <div className="record-management-page">
         <div className="record-management-page__content">

@@ -60,9 +60,10 @@ export const AssistantRecordManagementPage = () => {
 
   return (
     <DashboardTemplate
-      currentView="Expedientes"
+      currentView="Gestión de expedientes"
       userRole="Asistente"
       userEmail="username@mail.co"
+      headerHomePath="/assistant"
       onLogout={() => navigate("/")}
       onRefresh={handleRefresh}
       onPrivacyClick={() => {}}
@@ -85,10 +86,12 @@ export const AssistantRecordManagementPage = () => {
             <div className="assistant-record-management-page__detail">
               <RecordDetailCard
                 record={selectedRecord}
-                onUpdateDocuments={handleUpdateDocuments}
                 onUploadRecord={handleUploadRecord}
+                onUpdateDocuments={handleUpdateDocuments}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                showUpdateDocuments={false}
+                showEditDelete={false}
               />
             </div>
             <div className="assistant-record-management-page__documents">
@@ -97,6 +100,7 @@ export const AssistantRecordManagementPage = () => {
                 documents={selectedRecord ? MOCK_DOCUMENTS : []}
                 onViewDocument={handleViewDocument}
                 onObservation={handleDocumentObservation}
+                showObservation={false}
               />
             </div>
           </div>

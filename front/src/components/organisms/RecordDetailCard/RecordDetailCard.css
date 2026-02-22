@@ -42,7 +42,7 @@
 .record-detail-card__avatar {
   width: 56px;
   height: 56px;
-  border-radius: 8px;
+  border-radius: 50%;
   background: #dbeafe;
   color: #1d4ed8;
   font-size: 1rem;

@@ -39,9 +39,11 @@ export const RecordDocumentItem = ({
         <Button variant="outline" size="small" onClick={() => onView?.(id)}>
           Ver
         </Button>
-        <Button variant="outline" size="small" onClick={() => onObservation?.(id)}>
-          Observación
-        </Button>
+        {onObservation && (
+          <Button variant="outline" size="small" onClick={() => onObservation(id)}>
+            Observación
+          </Button>
+        )}
       </div>
     </div>
   );

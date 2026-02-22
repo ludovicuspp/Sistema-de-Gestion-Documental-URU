@@ -11,6 +11,8 @@ export interface RecordDocumentsListProps {
   documents: RecordDocumentListItem[];
   onViewDocument?: (id: string) => void;
   onObservation?: (id: string) => void;
+  /** Si es true, muestra el botón "Observación" en cada documento. Default: true */
+  showObservation?: boolean;
 }
 
 /**
@@ -23,6 +25,7 @@ export const RecordDocumentsList = ({
   documents,
   onViewDocument,
   onObservation,
+  showObservation = true,
 }: RecordDocumentsListProps) => {
   return (
     <Card variant="elevated" className="record-documents-list">
@@ -39,7 +42,7 @@ export const RecordDocumentsList = ({
               fileName={doc.fileName}
               fileSize={doc.fileSize}
               onView={onViewDocument}
-              onObservation={onObservation}
+              onObservation={showObservation ? onObservation : undefined}
             />
           ))
         )}
