@@ -21,9 +21,9 @@ export interface RecordDetailCardProps {
   onUploadRecord?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
-  /** Si es true, muestra el botón "Actualizar Documentos". Default: true */
+  /** When true, shows the "Actualizar Documentos" button. Default: true */
   showUpdateDocuments?: boolean;
-  /** Si es true, muestra los botones Editar/Eliminar. Default: true */
+  /** When true, shows the Edit/Delete buttons. Default: true */
   showEditDelete?: boolean;
 }
 

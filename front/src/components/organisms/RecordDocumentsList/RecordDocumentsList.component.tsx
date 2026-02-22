@@ -11,7 +11,7 @@ export interface RecordDocumentsListProps {
   documents: RecordDocumentListItem[];
   onViewDocument?: (id: string) => void;
   onObservation?: (id: string) => void;
-  /** Si es true, muestra el botón "Observación" en cada documento. Default: true */
+  /** When true, shows the "Observación" button on each document. Default: true */
   showObservation?: boolean;
 }
 
