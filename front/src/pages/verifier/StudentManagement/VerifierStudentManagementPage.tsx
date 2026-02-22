@@ -5,7 +5,7 @@ import { StudentList } from "@/components/organisms/StudentList";
 import { StudentDetails } from "@/components/organisms/StudentDetails";
 import type { StudentListItem } from "@/components/organisms/StudentList";
 import type { StudentDetail } from "@/components/organisms/StudentDetails";
-import { VERIFICADOR_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
+import { VERIFIER_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
 import "./VerifierStudentManagementPage.css";
 
 const MOCK_STUDENTS: StudentListItem[] = [
@@ -103,7 +103,7 @@ export const VerifierStudentManagementPage = () => {
       onLogout={() => navigate("/")}
       onRefresh={handleRefresh}
       onPrivacyClick={() => {}}
-      sidebarModules={VERIFICADOR_SIDEBAR_MODULES}
+      sidebarModules={VERIFIER_SIDEBAR_MODULES}
       sidebarShowCreateUser={false}
       sidebarTaskItems={[]}
     >

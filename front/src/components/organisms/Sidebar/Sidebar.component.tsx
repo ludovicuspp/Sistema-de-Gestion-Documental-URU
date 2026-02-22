@@ -70,6 +70,13 @@ const IconRefresh = () => (
   </svg>
 );
 
+const IconShortcut = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+  </svg>
+);
+
 export interface SidebarNavItem {
   label: string;
   icon: React.ReactNode;
@@ -114,8 +121,8 @@ const ADMIN_MODULES: SidebarNavItem[] = [
   { label: "Solicitudes", icon: <IconInbox />, to: "/admin/requests" },
 ];
 
-/** Sidebar modules for Verifier role (Spanish labels). */
-export const VERIFICADOR_SIDEBAR_MODULES: SidebarNavItem[] = [
+/** Sidebar modules for Verifier role. */
+export const VERIFIER_SIDEBAR_MODULES: SidebarNavItem[] = [
   { label: "Solicitudes", icon: <IconInbox />, to: "/verifier/requests" },
   { label: "Gestión de estudiantes", icon: <IconUsers />, to: "/verifier/students" },
   { label: "Expedientes", icon: <IconFolder />, to: "/verifier/records" },
@@ -123,12 +130,13 @@ export const VERIFICADOR_SIDEBAR_MODULES: SidebarNavItem[] = [
   { label: "Tareas", icon: <IconCheckSquare />, to: "/verifier/tasks" },
 ];
 
-/** Sidebar modules for Verifier role (English): Requests, Student management, Records, Documents. */
-export const VERIFIER_SIDEBAR_MODULES: SidebarNavItem[] = [
-  { label: "Requests", icon: <IconInbox />, to: "/admin/requests" },
-  { label: "Student management", icon: <IconUsers />, to: "/admin/students" },
-  { label: "Records", icon: <IconFolder />, to: "/admin/records" },
-  { label: "Documents", icon: <IconFile />, to: "/admin/documents" },
+/** Sidebar modules for Assistant role. */
+export const ASSISTANT_SIDEBAR_MODULES: SidebarNavItem[] = [
+  { label: "Expedientes", icon: <IconFolder />, to: "/assistant/records" },
+  { label: "Documentos", icon: <IconFile />, to: "/assistant/documents" },
+  { label: "Solicitudes", icon: <IconInbox />, to: "/assistant/requests" },
+  { label: "Tareas", icon: <IconCheckSquare />, to: "/assistant/tasks" },
+  { label: "Atajos", icon: <IconShortcut />, to: "/assistant/shortcuts" },
 ];
 
 /**
