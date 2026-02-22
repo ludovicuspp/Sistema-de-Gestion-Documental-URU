@@ -21,6 +21,10 @@ export interface RecordDetailCardProps {
   onUploadRecord?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  /** When true, shows the "Actualizar Documentos" button. Default: true */
+  showUpdateDocuments?: boolean;
+  /** When true, shows the Edit/Delete buttons. Default: true */
+  showEditDelete?: boolean;
 }
 
 const getInitials = (name: string) =>
@@ -56,6 +60,8 @@ export const RecordDetailCard = ({
   onUploadRecord,
   onEdit,
   onDelete,
+  showUpdateDocuments = true,
+  showEditDelete = true,
 }: RecordDetailCardProps) => {
   if (!record) {
     return (
@@ -92,9 +98,11 @@ export const RecordDetailCard = ({
           </div>
         </div>
         <div className="record-detail-card__student-actions">
-          <Button variant="outline" size="small" onClick={onUpdateDocuments}>
-            Actualizar Documentos
-          </Button>
+          {showUpdateDocuments && (
+            <Button variant="outline" size="small" onClick={onUpdateDocuments}>
+              Actualizar Documentos
+            </Button>
+          )}
           <Button variant="primary" size="small" onClick={onUploadRecord}>
             Cargar Expediente
           </Button>
@@ -105,7 +113,7 @@ export const RecordDetailCard = ({
         <div className="record-detail-card__record-header">
           <div>
             <h3 className="record-detail-card__record-title">
-              Expediente - {display(record.recordType)}
+              Expediente • {display(record.recordType)}
             </h3>
             <p className="record-detail-card__record-meta">
               Creado: {display(record.recordCreatedDate)}
@@ -116,14 +124,16 @@ export const RecordDetailCard = ({
             Estado: {statusLabel}
           </StatusBadge>
         </div>
-        <div className="record-detail-card__record-actions">
-          <Button variant="primary" size="small" onClick={onEdit}>
-            Editar
-          </Button>
-          <Button variant="danger" size="small" onClick={onDelete}>
-            Eliminar
-          </Button>
-        </div>
+        {showEditDelete && (
+          <div className="record-detail-card__record-actions">
+            <Button variant="primary" size="small" onClick={onEdit}>
+              Editar
+            </Button>
+            <Button variant="danger" size="small" onClick={onDelete}>
+              Eliminar
+            </Button>
+          </div>
+        )}
       </Card>
     </>
   );
