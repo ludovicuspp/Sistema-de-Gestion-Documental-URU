@@ -1,0 +1,33 @@
+.assistant-shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  flex: 1;
+}
+
+.assistant-shortcuts__card {
+  max-width: 500px;
+}
+
+.assistant-shortcuts__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.assistant-shortcuts__desc {
+  margin: 0 0 1.5rem;
+  color: var(--color-text-secondary, #666);
+  font-size: 0.9rem;
+}
+
+.assistant-shortcuts__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.assistant-shortcuts__btn {
+  flex-shrink: 0;
+}

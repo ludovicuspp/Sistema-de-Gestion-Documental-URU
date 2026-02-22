@@ -1,0 +1,1 @@
+export { AssistantRequestManagementPage } from "./AssistantRequestManagementPage";

@@ -7,38 +7,23 @@ import { TaskDetailCard } from "@/components/organisms/TaskDetailCard";
 import type { TaskFilterTab } from "@/components/organisms/TaskFiltersCard";
 import type { TaskListItem } from "@/components/organisms/TaskListCard";
 import type { TaskDetail } from "@/components/organisms/TaskDetailCard";
-import { VERIFIER_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
-import "./VerifierTaskManagementPage.css";
+import { ASSISTANT_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
+import "./AssistantTaskManagementPage.css";
 
 const MOCK_LIST: TaskListItem[] = [
-  {
-    id: "1",
-    title: "Revisión de partidas - Grupo A",
-    assignee: "Verificador A",
-    assignmentDate: "2025-11-13",
-    dueDate: "2025-12-02",
-    status: "Pendiente",
-  },
-  {
-    id: "2",
-    title: "Subir Fondo notas certificadas de estudiantes nuevo ingreso",
-    assignee: "Verificador",
-    assignmentDate: "2025-11-11",
-    dueDate: "2025-12-02",
-    status: "Pendiente",
-  },
+  { id: "1", title: "Revisión de partidas - Grupo A", assignee: "Asistente A", assignmentDate: "2025-11-13", dueDate: "2025-12-02", status: "Pendiente" },
+  { id: "2", title: "Subir actas lote 12", assignee: "Asistente B", assignmentDate: "2025-11-11", dueDate: "2025-12-02", status: "Pendiente" },
 ];
 
 const MOCK_DETAILS: Record<string, TaskDetail> = {
   "1": {
     id: "1",
     title: "Revisión de partidas - Grupo A",
-    assignee: "Verificador A",
+    assignee: "Asistente A",
     assignmentDate: "2025-11-13",
     dueDate: "2025-12-02",
     status: "Pendiente",
-    description:
-      "Revisar integridad y legibilidad de partidas de nacimiento del lote A. Reportar observaciones y marcar como validada.",
+    description: "Revisar integridad y legibilidad de partidas de nacimiento del lote A. Reportar observaciones y marcar como validada.",
     workDetail: [
       "Verificar documentos escaneados.",
       "Agregar observaciones por documento si aplica.",
@@ -50,29 +35,23 @@ const MOCK_DETAILS: Record<string, TaskDetail> = {
   },
   "2": {
     id: "2",
-    title: "Subir Fondo notas certificadas de estudiantes nuevo ingreso",
-    assignee: "Verificador",
+    title: "Subir actas lote 12",
+    assignee: "Asistente B",
     assignmentDate: "2025-11-11",
     dueDate: "2025-12-02",
     status: "Pendiente",
-    description: "Subir y verificar las notas certificadas de los estudiantes de nuevo ingreso.",
+    description: "Subir y verificar las actas del lote 12 de estudiantes.",
     workDetail: [
       "Verificar documentos escaneados.",
-      "Agregar observaciones por documento si aplica.",
-      "Marcar expediente como validado en el sistema.",
+      "Subir actas al sistema.",
+      "Marcar como completado.",
     ],
     historyCount: 1,
     historyResponsible: "Admin",
   },
 };
 
-/**
- * VerifierTaskManagementPage - Page (Verifier)
- *
- * Task management view for Verifier role: assigned tasks list and task details.
- * Similar structure to admin but focused on tasks assigned to the verifier.
- */
-export const VerifierTaskManagementPage = () => {
+export const AssistantTaskManagementPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<TaskFilterTab>("assigned-to-me");
@@ -86,41 +65,33 @@ export const VerifierTaskManagementPage = () => {
     else if (activeTab === "completed") out = out.filter((t) => t.status === "Finalizada");
     const q = search.trim().toLowerCase();
     if (!q) return out;
-    return out.filter(
-      (t) =>
-        t.title.toLowerCase().includes(q) ||
-        t.assignee.toLowerCase().includes(q)
-    );
+    return out.filter((t) => t.title.toLowerCase().includes(q) || t.assignee.toLowerCase().includes(q));
   }, [list, search, activeTab]);
 
-  const selectedDetail =
-    selectedId == null ? null : (MOCK_DETAILS[selectedId] ?? null);
+  const selectedDetail = selectedId == null ? null : (MOCK_DETAILS[selectedId] ?? null);
 
-  const handleLogout = () => navigate("/");
-  const handleMarkCompleted = () => {
-    console.log("Mark task as completed", selectedId);
-  };
+  const handleMarkCompleted = () => console.log("Mark task as completed", selectedId);
 
   return (
     <DashboardTemplate
-      currentView="Gestión de tareas"
-      userRole="Verificador"
+      currentView="Tareas"
+      userRole="Asistente"
       userEmail="username@mail.co"
-      onLogout={handleLogout}
+      onLogout={() => navigate("/")}
       onRefresh={() => globalThis.location.reload()}
       onPrivacyClick={() => {}}
-      sidebarModules={VERIFIER_SIDEBAR_MODULES}
+      sidebarModules={ASSISTANT_SIDEBAR_MODULES}
       sidebarShowCreateUser={false}
       sidebarTaskItems={[]}
     >
-      <div className="verifier-task-management">
+      <div className="assistant-task-management">
         <TaskFiltersCard
           searchValue={search}
           onSearchChange={setSearch}
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
-        <div className="verifier-task-management__content">
+        <div className="assistant-task-management__content">
           <TaskListCard
             title="Tareas asignadas"
             items={filteredList}
@@ -130,7 +101,7 @@ export const VerifierTaskManagementPage = () => {
           <TaskDetailCard
             task={selectedDetail}
             variant="verifier"
-            subtitle="Selecciona una tarea para ver el detalle o crear una nueva"
+            subtitle="Selecciona una tarea para ver el detalle"
             onMarkCompleted={handleMarkCompleted}
           />
         </div>

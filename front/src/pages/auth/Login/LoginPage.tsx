@@ -48,9 +48,17 @@ export const LoginPage = () => {
       onPrivacyClick={handlePrivacyClick}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
         <LoginForm onSubmit={handleLogin} loading={loading} error={error} />
-        <Link to="/admin" style={{ fontSize: "0.875rem", color: "#284483" }}>
-          Ir al panel admin (demo)
-        </Link>
+        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
+          <Link to="/admin" style={{ fontSize: "0.875rem", color: "#284483" }}>
+            Ir al panel admin (demo)
+          </Link>
+          <Link to="/verifier" style={{ fontSize: "0.875rem", color: "#284483" }}>
+            Ir al panel verificador (demo)
+          </Link>
+          <Link to="/assistant" style={{ fontSize: "0.875rem", color: "#284483" }}>
+            Ir al panel asistente (demo)
+          </Link>
+        </div>
       </div>
     </AuthTemplate>
   );

@@ -14,6 +14,14 @@ import {
   RequestManagementPage,
 } from "@/pages/admin";
 import { VerifierDashboardPage, VerifierStudentManagementPage, VerifierTaskManagementPage, VerifierRecordManagementPage, VerifierDocumentManagementPage, VerifierRequestManagementPage } from "@/pages/verifier";
+import {
+  AssistantDashboardPage,
+  AssistantRecordManagementPage,
+  AssistantDocumentManagementPage,
+  AssistantRequestManagementPage,
+  AssistantTaskManagementPage,
+  AssistantShortcutsPage,
+} from "@/pages/assistant";
 
 /**
  * Routes grouped by role/functionality:
@@ -126,6 +134,66 @@ const router = createBrowserRouter([
       <ErrorBoundary>
         <Layout>
           <VerifierRequestManagementPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/assistant",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <AssistantDashboardPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/assistant/records",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <AssistantRecordManagementPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/assistant/documents",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <AssistantDocumentManagementPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/assistant/requests",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <AssistantRequestManagementPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/assistant/tasks",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <AssistantTaskManagementPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/assistant/shortcuts",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <AssistantShortcutsPage />
         </Layout>
       </ErrorBoundary>
     ),

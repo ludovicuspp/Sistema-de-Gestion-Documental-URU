@@ -4,34 +4,13 @@ import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { RequestList, type RequestListItem } from "@/components/organisms/RequestList";
 import { RequestDetailCard, type RequestDetailData } from "@/components/organisms/RequestDetailCard";
 import { RequestActionsCard } from "@/components/organisms/RequestActionsCard";
-import { VERIFIER_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
-import "./VerifierRequestManagementPage.css";
+import { ASSISTANT_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
+import "./AssistantRequestManagementPage.css";
 
 const MOCK_REQUESTS: RequestListItem[] = [
-  {
-    id: "1",
-    studentName: "José Luis Pérez Gómez",
-    studentCI: "V-12345678",
-    level: "Pregrado",
-    date: "2025-11-10 14:32",
-    status: "pending",
-  },
-  {
-    id: "2",
-    studentName: "María González",
-    studentCI: "V-87654321",
-    level: "Postgrado",
-    date: "2025-11-12 09:12",
-    status: "validated",
-  },
-  {
-    id: "3",
-    studentName: "Carlos Andrés Rojas M.",
-    studentCI: "V-11223344",
-    level: "Pregrado",
-    date: "2025-11-13 08:20",
-    status: "rejected",
-  },
+  { id: "1", studentName: "José Luis Pérez Gómez", studentCI: "V-12345678", level: "Pregrado", date: "2025-11-10 14:32", status: "pending" },
+  { id: "2", studentName: "María González", studentCI: "V-87654321", level: "Postgrado", date: "2025-11-12 09:12", status: "validated" },
+  { id: "3", studentName: "Carlos Andrés Rojas M.", studentCI: "V-11223344", level: "Pregrado", date: "2025-11-13 08:20", status: "rejected" },
 ];
 
 const MOCK_REQUEST_DETAILS: Record<string, RequestDetailData> = {
@@ -70,13 +49,7 @@ const MOCK_REQUEST_DETAILS: Record<string, RequestDetailData> = {
   },
 };
 
-/**
- * VerifierRequestManagementPage - Page (Verifier)
- *
- * Request management view for verifier role: search requests, view request details, and administrative actions.
- * Same structure and base as admin RequestManagementPage.
- */
-export const VerifierRequestManagementPage = () => {
+export const AssistantRequestManagementPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>("1");
@@ -85,48 +58,31 @@ export const VerifierRequestManagementPage = () => {
     if (!searchQuery.trim()) return MOCK_REQUESTS;
     const query = searchQuery.toLowerCase();
     return MOCK_REQUESTS.filter(
-      (r) =>
-        r.studentName.toLowerCase().includes(query) ||
-        r.studentCI.toLowerCase().includes(query)
+      (r) => r.studentName.toLowerCase().includes(query) || r.studentCI.toLowerCase().includes(query)
     );
   }, [searchQuery]);
 
   const selectedRequest = selectedRequestId ? MOCK_REQUEST_DETAILS[selectedRequestId] ?? null : null;
 
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-  }, []);
-
-  const handleOpenRequest = useCallback((id: string) => {
-    setSelectedRequestId(id);
-  }, []);
-
+  const handleSearch = useCallback((query: string) => setSearchQuery(query), []);
+  const handleOpenRequest = useCallback((id: string) => setSelectedRequestId(id), []);
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
     setSelectedRequestId(null);
     console.log("Refrescar");
   }, []);
-
-  const handleExport = useCallback(() => {
-    console.log("Exportar solicitud", selectedRequestId);
-  }, [selectedRequestId]);
-
-  const handleSaveNote = useCallback((note: string) => {
-    console.log("Guardar nota", note);
-  }, []);
-
-  const handleClearNote = useCallback(() => {
-    console.log("Limpiar nota");
-  }, []);
+  const handleExport = useCallback(() => console.log("Exportar solicitud", selectedRequestId), [selectedRequestId]);
+  const handleSaveNote = useCallback((note: string) => console.log("Guardar nota", note), []);
+  const handleClearNote = useCallback(() => console.log("Limpiar nota"), []);
 
   return (
     <DashboardTemplate
-      currentView="Gestión de solicitudes"
-      userRole="Verificador"
+      currentView="Solicitudes"
+      userRole="Asistente"
       userEmail="username@mail.co"
       onLogout={() => navigate("/")}
       onRefresh={handleRefresh}
-      sidebarModules={VERIFIER_SIDEBAR_MODULES}
+      sidebarModules={ASSISTANT_SIDEBAR_MODULES}
       sidebarShowCreateUser={false}
       sidebarTaskItems={[]}
     >
@@ -134,24 +90,14 @@ export const VerifierRequestManagementPage = () => {
         <div className="request-management-page__content">
           <div className="request-management-page__left">
             <div className="request-management-page__list">
-              <RequestList
-                requests={filteredRequests}
-                onOpen={handleOpenRequest}
-                onSearch={handleSearch}
-              />
+              <RequestList requests={filteredRequests} onOpen={handleOpenRequest} onSearch={handleSearch} />
             </div>
             <div className="request-management-page__detail">
-              <RequestDetailCard
-                request={selectedRequest}
-                onExport={handleExport}
-              />
+              <RequestDetailCard request={selectedRequest} onExport={handleExport} />
             </div>
           </div>
           <div className="request-management-page__right">
-            <RequestActionsCard
-              onSaveNote={handleSaveNote}
-              onClear={handleClearNote}
-            />
+            <RequestActionsCard onSaveNote={handleSaveNote} onClear={handleClearNote} />
           </div>
         </div>
       </div>

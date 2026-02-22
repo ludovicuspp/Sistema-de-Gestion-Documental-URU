@@ -7,9 +7,9 @@ import { RecentActivity } from "@/components/organisms/RecentActivity";
 import { TaskPanelCard } from "@/components/organisms/TaskPanelCard";
 import type { QuickAccessItem } from "@/components/organisms/QuickAccess";
 import type { ActivityEntry } from "@/components/organisms/RecentActivity";
-import { VERIFIER_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
+import { ASSISTANT_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
 import { remindersService, activityService } from "@/services/api";
-import "./VerifierDashboardPage.css";
+import "./AssistantDashboardPage.css";
 
 const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   { label: "+ Crear expediente", onClick: () => {}, primary: true },
@@ -17,24 +17,26 @@ const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   { label: "Ver solicitudes", onClick: () => {} },
 ];
 
-/** Activity entries for verifier dashboard (same format as activityService). */
 const ACTIVITY_MOCK: ActivityEntry[] = [
   { text: "Expediente #0113 creado", datetime: "2025-11-25" },
   { text: "Documento cedula.pdf subido", datetime: "2025-11-25" },
   { text: "Solicitud de José Luis revisada", datetime: "2025-11-24" },
 ];
 
-const TASK_PANEL_TODO = ["Revisar expediente 00060-001", "Subir actas lote 12"];
+const TASK_PANEL_TODO = [
+  "Revisar expediente 00060-001",
+  "Subir actas lote 12",
+];
 const TASK_PANEL_IN_PROGRESS = ["Validar documentos Verificador A"];
 const TASK_PANEL_COMPLETED = ["Generar reporte mensual"];
 
 /**
- * VerifierDashboardPage - Page (Verifier)
+ * AssistantDashboardPage - Page (Asistente)
  *
- * Main panel for the Verifier role: Reminders, Quick access, Recent activity,
- * and Task panel. Same structure and base as AdminDashboard. UI and data in Spanish.
+ * Panel principal para el rol Asistente: Recordatorios, Accesos rápidos,
+ * Actividad reciente y Panel de tareas. Misma estructura y base que Admin/Verificador.
  */
-export const VerifierDashboardPage = () => {
+export const AssistantDashboardPage = () => {
   const navigate = useNavigate();
   const [reminders, setReminders] = useState<string[]>([]);
   const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>(ACTIVITY_MOCK);
@@ -62,9 +64,9 @@ export const VerifierDashboardPage = () => {
   }, []);
 
   const handleQuickAccess = (index: number) => {
-    if (index === 0) navigate("/verifier/records");
-    else if (index === 1) navigate("/verifier/documents");
-    else if (index === 2) navigate("/verifier/requests");
+    if (index === 0) navigate("/assistant/records");
+    else if (index === 1) navigate("/assistant/documents");
+    else if (index === 2) navigate("/assistant/requests");
   };
 
   const quickAccessWithNav = QUICK_ACCESS_ITEMS.map((item, i) => ({
@@ -75,18 +77,18 @@ export const VerifierDashboardPage = () => {
   return (
     <DashboardTemplate
       currentView="Panel principal"
-      userRole="Verificador"
+      userRole="Asistente"
       userEmail="username@mail.co"
       onLogout={() => navigate("/")}
       onRefresh={() => globalThis.location.reload()}
       onPrivacyClick={() => {}}
-      sidebarModules={VERIFIER_SIDEBAR_MODULES}
+      sidebarModules={ASSISTANT_SIDEBAR_MODULES}
       sidebarShowCreateUser={false}
       sidebarTaskItems={[]}
     >
-      <div className="verifier-dashboard">
-        <div className="verifier-dashboard__grid">
-          <div className="verifier-dashboard__left">
+      <div className="assistant-dashboard">
+        <div className="assistant-dashboard__grid">
+          <div className="assistant-dashboard__left">
             <Reminders
               items={loading ? [] : reminders}
               onAddReminder={() => {}}
@@ -97,12 +99,12 @@ export const VerifierDashboardPage = () => {
               completed={TASK_PANEL_COMPLETED}
             />
           </div>
-          <aside className="verifier-dashboard__right">
+          <aside className="assistant-dashboard__right">
             <QuickAccess items={quickAccessWithNav} />
             <RecentActivity
               entries={activityEntries}
               subtitle="Últimas acciones registradas"
-              onViewAll={() => navigate("/verifier/requests")}
+              onViewAll={() => navigate("/assistant/requests")}
             />
           </aside>
         </div>

@@ -8,7 +8,7 @@ import { UploadDocumentCard } from "@/components/organisms/UploadDocumentCard";
 import type { VerificationInboxItem } from "@/components/organisms/VerificationInbox";
 import type { ExpedientSelectCardData } from "@/components/organisms/ExpedientSelectCard";
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
-import { VERIFICADOR_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
+import { VERIFIER_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
 import "./VerifierDocumentManagementPage.css";
 
 const MOCK_VERIFICATION_ITEMS: VerificationInboxItem[] = [
@@ -152,7 +152,7 @@ export const VerifierDocumentManagementPage = () => {
       onLogout={handleLogout}
       onRefresh={() => globalThis.location.reload()}
       onPrivacyClick={() => {}}
-      sidebarModules={VERIFICADOR_SIDEBAR_MODULES}
+      sidebarModules={VERIFIER_SIDEBAR_MODULES}
       sidebarShowCreateUser={false}
       sidebarTaskItems={[]}
     >
