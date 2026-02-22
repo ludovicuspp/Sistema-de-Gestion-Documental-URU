@@ -19,6 +19,8 @@ export interface DashboardTemplateProps {
   sidebarTasksTitle?: string;
   sidebarEmptyTasksText?: string;
   sidebarRefreshButtonText?: string;
+  /** Header logo/home link path (e.g. "/assistant" for assistant role). Default: "/admin". */
+  headerHomePath?: string;
   /** Header logout button label (e.g. "Log out" for English). */
   headerLogoutButtonText?: string;
   currentView?: string;
@@ -46,6 +48,7 @@ export const DashboardTemplate = ({
   sidebarTasksTitle,
   sidebarEmptyTasksText,
   sidebarRefreshButtonText,
+  headerHomePath,
   headerLogoutButtonText,
   currentView,
   userRole,
@@ -61,6 +64,7 @@ export const DashboardTemplate = ({
         currentView={currentView}
         userRole={userRole}
         userEmail={userEmail}
+        homePath={headerHomePath}
         logoutButtonText={headerLogoutButtonText}
         onLogout={onLogout}
       />

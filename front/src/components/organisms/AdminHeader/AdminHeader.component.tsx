@@ -6,6 +6,8 @@ export interface AdminHeaderProps {
   currentView?: string;
   userRole?: string;
   userEmail?: string;
+  /** Logo/home link path. Default: "/admin". */
+  homePath?: string;
   /** Logout button label. Default: "Cerrar sesión". */
   logoutButtonText?: string;
   onLogout?: () => void;
@@ -20,6 +22,7 @@ export const AdminHeader = ({
   currentView = "Panel principal",
   userRole = "Administrador",
   userEmail = "username@mail.co",
+  homePath = "/admin",
   logoutButtonText = "Cerrar sesión",
   onLogout,
 }: AdminHeaderProps) => {
@@ -27,7 +30,7 @@ export const AdminHeader = ({
     <header className="admin-header">
       <div className="admin-header__main">
         <div className="admin-header__branding">
-          <Link to="/admin" className="admin-header__logo">
+          <Link to={homePath} className="admin-header__logo">
             URU Universidad Rafael Urdaneta
           </Link>
           <span className="admin-header__system">SISTEMA DOCUMENTAL DE EXPEDIENTES</span>

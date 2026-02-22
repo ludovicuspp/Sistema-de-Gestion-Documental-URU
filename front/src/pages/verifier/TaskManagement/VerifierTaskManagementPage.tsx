@@ -106,6 +106,7 @@ export const VerifierTaskManagementPage = () => {
       currentView="Gestión de tareas"
       userRole="Verificador"
       userEmail="username@mail.co"
+      headerHomePath="/verifier"
       onLogout={handleLogout}
       onRefresh={() => globalThis.location.reload()}
       onPrivacyClick={() => {}}
