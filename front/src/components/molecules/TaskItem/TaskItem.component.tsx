@@ -2,20 +2,21 @@ import { Button } from "@/components/atoms/Button";
 import { StatusBadge, type StatusBadgeVariant } from "@/components/atoms/StatusBadge";
 import "./TaskItem.css";
 
-export type TaskItemVariant = "dashboard" | "management";
+export type TaskItemVariant = "dashboard" | "management" | "assistant";
 
 export interface TaskItemProps {
   title: string;
   date: string;
   dueDate?: string;
   variant?: TaskItemVariant;
-  /** Dashboard: optional. Management: required. */
+  /** Dashboard: optional. Management/Assistant: required. */
   assignee?: string;
   priority?: "Alta" | "Media" | "Baja";
   status?: "Pendiente" | "Finalizada";
   selected?: boolean;
   onSelect?: () => void;
   onDelete?: () => void;
+  onStart?: () => void;
   actions?: Array<{ label: string; onClick: () => void; variant?: "primary" | "secondary" | "ghost" }>;
 }
 
@@ -36,12 +37,56 @@ export const TaskItem = ({
   selected = false,
   onSelect,
   onDelete,
+  onStart,
   actions,
 }: TaskItemProps) => {
   const isManagement = variant === "management";
+  const isAssistant = variant === "assistant";
   let statusVariant: StatusBadgeVariant | undefined;
   if (status === "Finalizada") statusVariant = "completed";
   else if (status === "Pendiente") statusVariant = "pending";
+
+  if (isAssistant) {
+    const rowClasses = ["task-item", "task-item--assistant", "task-item--management", selected && "task-item--selected"]
+      .filter(Boolean)
+      .join(" ");
+    const dateText = dueDate ? `Asignada el ${date} hasta ${dueDate}` : `Asignada el ${date}`;
+    return (
+      <div
+        className={rowClasses}
+        tabIndex={onSelect ? 0 : undefined}
+        onClick={onSelect}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect?.();
+          }
+        }}
+      >
+        <div className="task-item__info">
+          <div className="task-item__title">{title}</div>
+          <div className="task-item__meta">{dateText}</div>
+        </div>
+        <div className="task-item__actions">
+          {onStart && (
+            <Button
+              variant="secondary"
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStart();
+              }}
+            >
+              Comenzar
+            </Button>
+          )}
+          {status != null && statusVariant != null && (
+            <StatusBadge variant={statusVariant}>{status}</StatusBadge>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (isManagement) {
     const rowClasses = ["task-item", "task-item--management", selected && "task-item--selected"]

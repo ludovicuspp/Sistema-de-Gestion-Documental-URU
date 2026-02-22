@@ -4,11 +4,24 @@
   gap: 1rem;
 }
 
+.task-list-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .task-list-card__title {
   font-size: 1.125rem;
   font-weight: 600;
   color: #1f2937;
   margin: 0;
+}
+
+.task-list-card__total {
+  font-size: 0.875rem;
+  color: #6b7280;
+  flex-shrink: 0;
 }
 
 .task-list-card__list {
