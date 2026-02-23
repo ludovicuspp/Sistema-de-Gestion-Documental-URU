@@ -4,3 +4,4 @@ export { AssistantDocumentManagementPage } from "./DocumentManagement";
 export { AssistantRequestManagementPage } from "./RequestManagement";
 export { AssistantTaskManagementPage } from "./TaskManagement";
 export { AssistantShortcutsPage } from "./Shortcuts";
+export { AssistantConfigurationPage } from "./Configuration";

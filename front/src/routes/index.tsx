@@ -21,6 +21,7 @@ import {
   AssistantRequestManagementPage,
   AssistantTaskManagementPage,
   AssistantShortcutsPage,
+  AssistantConfigurationPage,
 } from "@/pages/assistant";
 
 /**
@@ -194,6 +195,16 @@ const router = createBrowserRouter([
       <ErrorBoundary>
         <Layout>
           <AssistantShortcutsPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
+  },
+  {
+    path: "/assistant/config",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <AssistantConfigurationPage />
         </Layout>
       </ErrorBoundary>
     ),
