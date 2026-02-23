@@ -1,21 +1,14 @@
 import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
-import { VerificationInbox } from "@/components/organisms/VerificationInbox";
 import { ExpedientSelectCard } from "@/components/organisms/ExpedientSelectCard";
 import { ExpedientDocumentsCard } from "@/components/organisms/ExpedientDocumentsCard";
 import { UploadDocumentCard } from "@/components/organisms/UploadDocumentCard";
-import type { VerificationInboxItem } from "@/components/organisms/VerificationInbox";
+import { Card } from "@/components/molecules/Card";
 import type { ExpedientSelectCardData } from "@/components/organisms/ExpedientSelectCard";
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
 import { ASSISTANT_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
 import "./AssistantDocumentManagementPage.css";
-
-const MOCK_VERIFICATION_ITEMS: VerificationInboxItem[] = [
-  { id: "1", name: "Ludovicus Van Vargas", details: "V-0113 · Pregrado · Asistente A", date: "2025-11-12", missingCount: 1 },
-  { id: "2", name: "María Pérez", details: "V-9876 · Postgrado · Asistente B", date: "2025-11-10", missingCount: 0 },
-  { id: "3", name: "Carlos Gómez", details: "V-2233 · Pregrado · Asistente A", date: "2025-11", missingCount: 2, urgent: true },
-];
 
 const MOCK_DOCUMENTS: ExpedientDocumentItem[] = [
   { id: "d1", type: "Partida de Nacimiento", fileName: "partida.pdf", uploadedBy: "Asistente B", date: "2025-11-10", validationStatus: "pending" },
@@ -29,11 +22,15 @@ const QUICK_RULES = [
   "Documento duplicado solicita confirmación para reemplazo.",
 ];
 
+/**
+ * AssistantDocumentManagementPage - Page
+ *
+ * Document management view for Asistente: expedient selection, upload document, documents table, and quick rules.
+ * Layout matches design: upload section on top, document table in middle, reglas rápidas at bottom.
+ */
 export const AssistantDocumentManagementPage = () => {
   const navigate = useNavigate();
-  const [verificationItems] = useState<VerificationInboxItem[]>(MOCK_VERIFICATION_ITEMS);
-  const [selectedExpedientId, setSelectedExpedientId] = useState<string | null>("1");
-  const [expedientData, setExpedientData] = useState<ExpedientSelectCardData | null>({
+  const [expedientData] = useState<ExpedientSelectCardData | null>({
     ci: "0113",
     tipo: "Pregrado",
     cargado: "2025-11-12",
@@ -42,7 +39,6 @@ export const AssistantDocumentManagementPage = () => {
   const [documents, setDocuments] = useState<ExpedientDocumentItem[]>(MOCK_DOCUMENTS);
   const [uploadTypeError, setUploadTypeError] = useState(false);
   const [selectedTypeId, setSelectedTypeId] = useState("");
-  const [verificationSearch, setVerificationSearch] = useState("");
 
   const documentTypesForSelect = useMemo(
     () => [
@@ -54,19 +50,8 @@ export const AssistantDocumentManagementPage = () => {
     []
   );
 
-  const filteredVerificationItems = useMemo(() => {
-    if (!verificationSearch.trim()) return verificationItems;
-    const q = verificationSearch.toLowerCase();
-    return verificationItems.filter((v) => v.name.toLowerCase().includes(q) || v.details.toLowerCase().includes(q));
-  }, [verificationItems, verificationSearch]);
-
   const selectedExpedientLabel =
-    selectedExpedientId && expedientData?.ci ? `${expedientData.tipo} · Ludovicus Van Vargas` : undefined;
-
-  const handleOpenVerification = useCallback((id: string) => {
-    setSelectedExpedientId(id);
-    setExpedientData({ ci: "0113", tipo: "Pregrado", cargado: "2025-11-12", ubicacion: "Estante 3 / Caja 12" });
-  }, []);
+    expedientData?.ci && expedientData?.tipo ? `${expedientData.tipo} - Ludovicus Van Vargas` : undefined;
 
   const handleViewDocument = useCallback((id: string) => console.log("Ver documento", id), []);
   const handleObservation = useCallback((id: string) => console.log("Observación", id), []);
@@ -76,7 +61,7 @@ export const AssistantDocumentManagementPage = () => {
 
   return (
     <DashboardTemplate
-      currentView="Documentos"
+      currentView="Gestión de documentos"
       userRole="Asistente"
       userEmail="username@mail.co"
       onLogout={() => navigate("/")}
@@ -87,28 +72,32 @@ export const AssistantDocumentManagementPage = () => {
       sidebarTaskItems={[]}
     >
       <div className="assistant-document-management-page">
-        <aside className="assistant-document-management-page__bandeja">
-          <VerificationInbox
-            title="Bandeja de verificación"
-            pendingCount={2}
-            approvedToday="—"
-            avgValidationTime="—"
-            items={filteredVerificationItems}
-            onBack={() => {}}
-            onSearch={setVerificationSearch}
-            onFilterType={() => {}}
-            onFilterUploader={() => {}}
-            onExport={() => {}}
-            onOpen={handleOpenVerification}
-          />
-        </aside>
-        <div className="assistant-document-management-page__content">
-          <div className="assistant-document-management-page__left">
+        <div className="assistant-document-management-page__main">
+          <div className="assistant-document-management-page__expedient">
             <ExpedientSelectCard
               title="Seleccione un expediente"
               expedient={expedientData}
               onMarkUrgent={() => {}}
             />
+          </div>
+
+          <div className="assistant-document-management-page__upload">
+            <UploadDocumentCard
+              title="Subir documento"
+              context="Asociar archivos a un expediente"
+              selectedExpedientLabel={selectedExpedientLabel}
+              documentTypes={documentTypesForSelect}
+              selectedTypeId={selectedTypeId}
+              selectedTypeError={uploadTypeError}
+              onUpload={(_file, typeId) => setUploadTypeError(typeId === "")}
+              onTypeChange={(id) => {
+                setSelectedTypeId(id);
+                setUploadTypeError(false);
+              }}
+            />
+          </div>
+
+          <div className="assistant-document-management-page__documents">
             <ExpedientDocumentsCard
               title="Documentos del expediente"
               generalStatus="pending"
@@ -118,22 +107,18 @@ export const AssistantDocumentManagementPage = () => {
               onDeleteDocument={handleDeleteDocument}
             />
           </div>
-          <div className="assistant-document-management-page__full">
-            <UploadDocumentCard
-              title="Subir documento"
-              context="Asociar archivos a un expediente"
-              selectedExpedientLabel={selectedExpedientLabel}
-              documentTypes={documentTypesForSelect}
-              selectedTypeId={selectedTypeId}
-              selectedTypeError={uploadTypeError}
-              quickRules={QUICK_RULES}
-              quickRulesTitle="Reglas rápidas"
-              onUpload={(_file, typeId) => setUploadTypeError(typeId === "")}
-              onTypeChange={(id) => {
-                setSelectedTypeId(id);
-                setUploadTypeError(false);
-              }}
-            />
+
+          <div className="assistant-document-management-page__rules">
+            <Card variant="elevated" className="assistant-document-management-page__rules-card">
+              <h4 className="assistant-document-management-page__rules-title">Reglas rápidas</h4>
+              <ul className="assistant-document-management-page__rules-list">
+                {QUICK_RULES.map((rule) => (
+                  <li key={rule} className="assistant-document-management-page__rules-item">
+                    {rule}
+                  </li>
+                ))}
+              </ul>
+            </Card>
           </div>
         </div>
       </div>
