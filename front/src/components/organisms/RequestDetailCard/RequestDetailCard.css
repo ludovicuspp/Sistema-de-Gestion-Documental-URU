@@ -72,6 +72,18 @@
   gap: 1rem;
 }
 
+.request-detail-card__fields--two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem;
+}
+
+.request-detail-card__field-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .request-detail-card__field {
   display: flex;
   flex-direction: column;
@@ -107,7 +119,15 @@
 }
 
 .request-detail-card__document-item::before {
-  content: "—";
-  position: absolute;
-  left: 0;
+  content: none;
+}
+
+.request-detail-card__status-btn {
+  opacity: 0.85;
+}
+
+@media (max-width: 600px) {
+  .request-detail-card__fields--two-cols {
+    grid-template-columns: 1fr;
+  }
 }
