@@ -137,6 +137,7 @@ export const ASSISTANT_SIDEBAR_MODULES: SidebarNavItem[] = [
   { label: "Solicitudes", icon: <IconInbox />, to: "/assistant/requests" },
   { label: "Tareas", icon: <IconCheckSquare />, to: "/assistant/tasks" },
   { label: "Atajos", icon: <IconShortcut />, to: "/assistant/shortcuts" },
+  { label: "Configuración", icon: <IconSettings />, to: "/assistant/config" },
 ];
 
 /**
