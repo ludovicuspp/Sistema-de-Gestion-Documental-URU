@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { RequestList, type RequestListItem } from "@/components/organisms/RequestList";
 import { RequestDetailCard, type RequestDetailData } from "@/components/organisms/RequestDetailCard";
@@ -74,6 +75,7 @@ const MOCK_REQUEST_DETAILS: Record<string, RequestDetailData> = {
  * Request management view: search requests, view request details, and administrative actions.
  */
 export const RequestManagementPage = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>("1");
 
@@ -118,6 +120,10 @@ export const RequestManagementPage = () => {
   return (
     <DashboardTemplate
       currentView="Gestión de solicitudes"
+      userRole="Administrador"
+      userEmail="username@mail.co"
+      headerHomePath="/admin"
+      onLogout={() => navigate("/")}
       onCreateUser={() => {}}
       onRefresh={handleRefresh}
     >

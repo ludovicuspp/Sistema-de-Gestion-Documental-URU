@@ -55,9 +55,15 @@ export const RequestDetailCard = ({ request, onExport }: RequestDetailCardProps)
           {initials}
         </div>
         <div className="request-detail-card__header-right">
-          <StatusBadge variant={request.status === "validated" ? "completed" : "pending"} className="request-detail-card__status">
-            {request.status === "validated" ? "Validado" : request.status === "rejected" ? "Rechazado" : "No validado"}
-          </StatusBadge>
+          {request.status === "not-validated" ? (
+            <Button variant="secondary" size="small" className="request-detail-card__status-btn" disabled>
+              No validado
+            </Button>
+          ) : (
+            <StatusBadge variant={request.status === "validated" ? "completed" : "pending"} className="request-detail-card__status">
+              {request.status === "validated" ? "Validado" : "Rechazado"}
+            </StatusBadge>
+          )}
           <Button variant="outline" size="small" onClick={onExport}>
             Exportar
           </Button>
@@ -66,30 +72,34 @@ export const RequestDetailCard = ({ request, onExport }: RequestDetailCardProps)
 
       <div className="request-detail-card__section">
         <h3 className="request-detail-card__section-title">Datos proporcionados por el estudiante</h3>
-        <div className="request-detail-card__fields">
-          <div className="request-detail-card__field">
-            <label className="request-detail-card__label">Nombres</label>
-            <p className="request-detail-card__value">{display(request.studentName)}</p>
+        <div className="request-detail-card__fields request-detail-card__fields--two-cols">
+          <div className="request-detail-card__field-col">
+            <div className="request-detail-card__field">
+              <label className="request-detail-card__label">Nombres</label>
+              <p className="request-detail-card__value">{display(request.studentName)}</p>
+            </div>
+            <div className="request-detail-card__field">
+              <label className="request-detail-card__label">Cédula</label>
+              <p className="request-detail-card__value">{display(request.studentCI)}</p>
+            </div>
+            <div className="request-detail-card__field">
+              <label className="request-detail-card__label">Correo electrónico</label>
+              <p className="request-detail-card__value">{display(request.email)}</p>
+            </div>
           </div>
-          <div className="request-detail-card__field">
-            <label className="request-detail-card__label">Apellidos</label>
-            <p className="request-detail-card__value">{display(request.studentSurname)}</p>
-          </div>
-          <div className="request-detail-card__field">
-            <label className="request-detail-card__label">Cédula</label>
-            <p className="request-detail-card__value">{display(request.studentCI)}</p>
-          </div>
-          <div className="request-detail-card__field">
-            <label className="request-detail-card__label">Nivel</label>
-            <p className="request-detail-card__value">{display(request.level)}</p>
-          </div>
-          <div className="request-detail-card__field">
-            <label className="request-detail-card__label">Correo electrónico</label>
-            <p className="request-detail-card__value">{display(request.email)}</p>
-          </div>
-          <div className="request-detail-card__field">
-            <label className="request-detail-card__label">Comentario</label>
-            <p className="request-detail-card__value">{display(request.comment)}</p>
+          <div className="request-detail-card__field-col">
+            <div className="request-detail-card__field">
+              <label className="request-detail-card__label">Apellidos</label>
+              <p className="request-detail-card__value">{display(request.studentSurname)}</p>
+            </div>
+            <div className="request-detail-card__field">
+              <label className="request-detail-card__label">Nivel</label>
+              <p className="request-detail-card__value">{display(request.level)}</p>
+            </div>
+            <div className="request-detail-card__field">
+              <label className="request-detail-card__label">Comentario</label>
+              <p className="request-detail-card__value">{display(request.comment)}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -102,7 +112,7 @@ export const RequestDetailCard = ({ request, onExport }: RequestDetailCardProps)
           ) : (
             request.requestedDocuments.map((doc, index) => (
               <li key={index} className="request-detail-card__document-item">
-                {doc}
+                - {doc}
               </li>
             ))
           )}

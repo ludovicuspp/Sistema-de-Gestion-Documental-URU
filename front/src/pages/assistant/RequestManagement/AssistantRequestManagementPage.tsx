@@ -77,13 +77,14 @@ export const AssistantRequestManagementPage = () => {
 
   return (
     <DashboardTemplate
-      currentView="Solicitudes"
+      currentView="Gestión de solicitudes"
       userRole="Asistente"
       userEmail="username@mail.co"
       onLogout={() => navigate("/")}
       onRefresh={handleRefresh}
       sidebarModules={ASSISTANT_SIDEBAR_MODULES}
       sidebarShowCreateUser={false}
+      headerHomePath="/assistant"
       sidebarTaskItems={[]}
     >
       <div className="request-management-page">
