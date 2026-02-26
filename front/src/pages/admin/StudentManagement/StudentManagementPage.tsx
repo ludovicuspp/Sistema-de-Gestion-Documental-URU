@@ -4,6 +4,7 @@ import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { StudentList } from "@/components/organisms/StudentList";
 import { StudentDetails } from "@/components/organisms/StudentDetails";
 import { RecentActivity } from "@/components/organisms/RecentActivity";
+import { StudentFormModal } from "@/components/molecules/StudentFormModal";
 import type { StudentListItem } from "@/components/organisms/StudentList";
 import type { StudentDetail } from "@/components/organisms/StudentDetails";
 import type { ActivityEntry } from "@/components/organisms/RecentActivity";
@@ -68,9 +69,11 @@ const MOCK_HISTORY: ActivityEntry[] = [
  */
 export const StudentManagementPage = () => {
   const navigate = useNavigate();
-  const [students] = useState<StudentListItem[]>(MOCK_STUDENTS);
+  const [students, setStudents] = useState<StudentListItem[]>(MOCK_STUDENTS);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>("1");
   const [searchQuery, setSearchQuery] = useState("");
+  const [studentModalOpen, setStudentModalOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<StudentDetail | null>(null);
 
   const selectedStudent =
     selectedStudentId ? (MOCK_DETAILS[selectedStudentId] ?? null) : null;
@@ -80,7 +83,8 @@ export const StudentManagementPage = () => {
   }, []);
 
   const handleNewStudent = useCallback(() => {
-    console.log("Nuevo estudiante");
+    setEditingStudent(null);
+    setStudentModalOpen(true);
   }, []);
 
   const handleRefresh = useCallback(() => {
@@ -90,20 +94,59 @@ export const StudentManagementPage = () => {
   }, []);
 
   const handleEdit = useCallback((id: string) => {
-    console.log("Editar estudiante", id);
+    const student = MOCK_DETAILS[id] ?? null;
+    setEditingStudent(student);
+    setStudentModalOpen(true);
   }, []);
 
   const handleDelete = useCallback((id: string) => {
     console.log("Eliminar estudiante", id);
   }, []);
 
-  const handleViewExpedientes = useCallback((id: string) => {
+  const handleViewExpedientes = useCallback((_id: string) => {
     navigate("/admin/records");
   }, [navigate]);
 
-  const handleNewExpediente = useCallback((id: string) => {
+  const handleNewExpediente = useCallback((_id: string) => {
     navigate("/admin/records");
   }, [navigate]);
+
+  const handleStudentSubmit = useCallback(
+    (data: { name: string; cedula: string; nivel: string; carrera: string; estado: string }) => {
+      const nivelLabel = data.nivel === "todos" ? "Pregrado" : data.nivel === "pregrado" ? "Pregrado" : "Postgrado";
+      const estadoLabel = data.estado === "activo" ? "Activo" : "Inactivo";
+      if (editingStudent) {
+        setStudents((prev) =>
+          prev.map((s) =>
+            s.id === editingStudent.id
+              ? {
+                  ...s,
+                  name: data.name,
+                  ciNivelEstado: `CI: ${data.cedula} - ${nivelLabel} - ${estadoLabel}`,
+                  levelLabel: nivelLabel,
+                  status: estadoLabel,
+                }
+              : s
+          )
+        );
+        // Actualizar MOCK_DETAILS no es posible directamente, pero la UI usará students
+      } else {
+        const newId = String(students.length + 1);
+        setStudents((prev) => [
+          ...prev,
+          {
+            id: newId,
+            name: data.name,
+            ciNivelEstado: `CI: ${data.cedula} - ${nivelLabel} - ${estadoLabel}`,
+            levelLabel: nivelLabel,
+            status: estadoLabel,
+            lastModified: new Date().toISOString().slice(0, 10),
+          },
+        ]);
+      }
+    },
+    [editingStudent, students.length]
+  );
 
   const filteredStudents = searchQuery
     ? students.filter(
@@ -152,6 +195,12 @@ export const StudentManagementPage = () => {
           </div>
         </div>
       </div>
+      <StudentFormModal
+        open={studentModalOpen}
+        onClose={() => setStudentModalOpen(false)}
+        student={editingStudent}
+        onSubmit={handleStudentSubmit}
+      />
     </DashboardTemplate>
   );
 };

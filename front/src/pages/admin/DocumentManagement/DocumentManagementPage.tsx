@@ -8,6 +8,7 @@ import { ExpedientDocumentsCard } from "@/components/organisms/ExpedientDocument
 import { UploadDocumentCard } from "@/components/organisms/UploadDocumentCard";
 import type { VerificationInboxItem } from "@/components/organisms/VerificationInbox";
 import type { ExpedientSelectCardData } from "@/components/organisms/ExpedientSelectCard";
+import { DocumentTypeFormModal } from "@/components/molecules/DocumentTypeFormModal";
 import type { DocumentTypeItem } from "@/components/organisms/DocumentTypesCard";
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
 import "./DocumentManagementPage.css";
@@ -92,11 +93,13 @@ export const DocumentManagementPage = () => {
     cargado: "2025-11-12",
     ubicacion: "Estante 3 / Caja 12",
   });
-  const [documentTypes] = useState<DocumentTypeItem[]>(MOCK_DOCUMENT_TYPES);
+  const [documentTypes, setDocumentTypes] = useState<DocumentTypeItem[]>(MOCK_DOCUMENT_TYPES);
   const [documents, setDocuments] = useState<ExpedientDocumentItem[]>(MOCK_DOCUMENTS);
   const [uploadTypeError, setUploadTypeError] = useState(false);
   const [selectedTypeId, setSelectedTypeId] = useState("");
   const [verificationSearch, setVerificationSearch] = useState("");
+  const [documentTypeModalOpen, setDocumentTypeModalOpen] = useState(false);
+  const [editingDocumentType, setEditingDocumentType] = useState<DocumentTypeItem | null>(null);
 
   const filteredVerificationItems = useMemo(() => {
     if (!verificationSearch.trim()) return verificationItems;
@@ -129,6 +132,43 @@ export const DocumentManagementPage = () => {
   }, []);
 
   const handleLogout = () => navigate("/");
+
+  const handleNewType = useCallback(() => {
+    setEditingDocumentType(null);
+    setDocumentTypeModalOpen(true);
+  }, []);
+
+  const handleEditType = useCallback((id: string) => {
+    const type = documentTypes.find((t) => t.id === id) ?? null;
+    setEditingDocumentType(type);
+    setDocumentTypeModalOpen(true);
+  }, [documentTypes]);
+
+  const handleDocumentTypeSubmit = useCallback(
+    (data: { name: string; nivel: string; obligatoriedad: string; description: string }) => {
+      const desc = data.obligatoriedad
+        ? `${data.obligatoriedad === "obligatorio" ? "Obligatorio" : "Opcional"} - ${
+            data.nivel === "todos" ? "Todos" : data.nivel === "pregrado" ? "Pregrado" : "Postgrado"
+          }`
+        : data.description;
+      if (editingDocumentType) {
+        setDocumentTypes((prev) =>
+          prev.map((t) =>
+            t.id === editingDocumentType.id
+              ? { ...t, name: data.name, description: desc }
+              : t
+          )
+        );
+      } else {
+        const newId = String(Math.max(...documentTypes.map((t) => parseInt(t.id, 10)), 0) + 1);
+        setDocumentTypes((prev) => [
+          ...prev,
+          { id: newId, name: data.name, description: desc },
+        ]);
+      }
+    },
+    [editingDocumentType, documentTypes]
+  );
 
   return (
     <DashboardTemplate
@@ -177,8 +217,8 @@ export const DocumentManagementPage = () => {
           <DocumentTypesCard
             title="Tipos de documento"
             types={documentTypes}
-            onNewType={() => {}}
-            onEdit={(id) => console.log("Editar tipo", id)}
+            onNewType={handleNewType}
+            onEdit={handleEditType}
             onDelete={(id) => console.log("Eliminar tipo", id)}
           />
         </div>
@@ -202,6 +242,12 @@ export const DocumentManagementPage = () => {
           />
         </div>
       </div>
+      <DocumentTypeFormModal
+        open={documentTypeModalOpen}
+        onClose={() => setDocumentTypeModalOpen(false)}
+        documentType={editingDocumentType}
+        onSubmit={handleDocumentTypeSubmit}
+      />
     </DashboardTemplate>
   );
 };

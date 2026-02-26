@@ -74,3 +74,40 @@
   overflow-y: auto;
   flex: 1;
 }
+
+/* Variant: form (fondo azul, etiqueta, borde azul) */
+.modal__backdrop--form {
+  background-color: rgba(43, 68, 104, 0.85);
+}
+
+.modal__label {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.modal__box--form {
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 0 0 3px rgba(40, 68, 131, 0.3);
+}
+
+.modal__header--form {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  gap: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.modal__footer {
+  flex-shrink: 0;
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #f3f4f6;
+}

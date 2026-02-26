@@ -3,6 +3,7 @@ import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { UserList } from "@/components/organisms/UserList";
 import { UserDetails } from "@/components/organisms/UserDetails";
 import { ActionHistory } from "@/components/organisms/ActionHistory";
+import { UserFormModal } from "@/components/molecules/UserFormModal";
 import type { UserListItem } from "@/components/organisms/UserList";
 import type { UserDetail } from "@/components/organisms/UserDetails";
 import "./UserManagementPage.css";
@@ -64,9 +65,11 @@ const MOCK_DETAILS: Record<string, UserDetail> = {
  * Página de gestión de usuarios: consultar, ver detalle y historial de acciones.
  */
 export const UserManagementPage = () => {
-  const [users] = useState<UserListItem[]>(MOCK_USERS);
+  const [users, setUsers] = useState<UserListItem[]>(MOCK_USERS);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [userModalOpen, setUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<{ user: UserDetail; name: string } | null>(null);
 
   const selectedUser = selectedUserId ? MOCK_DETAILS[selectedUserId] ?? null : null;
 
@@ -75,8 +78,8 @@ export const UserManagementPage = () => {
   }, []);
 
   const handleCreateUser = useCallback(() => {
-    // TODO: abrir modal o navegar a formulario de creación
-    console.log("Crear usuario");
+    setEditingUser(null);
+    setUserModalOpen(true);
   }, []);
 
   const handleRefresh = useCallback(() => {
@@ -87,12 +90,56 @@ export const UserManagementPage = () => {
   }, []);
 
   const handleEdit = useCallback((id: string) => {
-    console.log("Editar usuario", id);
-  }, []);
+    const user = MOCK_DETAILS[id] ?? null;
+    const name = users.find((u) => u.id === id)?.name ?? "";
+    if (user) {
+      setEditingUser({ user, name });
+      setUserModalOpen(true);
+    }
+  }, [users]);
 
   const handleDelete = useCallback((id: string) => {
     console.log("Eliminar usuario", id);
   }, []);
+
+  const handleUserSubmit = useCallback(
+    (data: { name: string; cedula: string; rol: string; correo: string; estado: string }) => {
+      const rolLabel = data.rol === "administrador" ? "Administrador" : data.rol === "verificador" ? "Verificador" : "Asistente";
+      const estadoLabel = data.estado === "activo" ? "Activo" : "Inactivo";
+      const roleVariant: "administrador" | "verificador" | "asistente" =
+        data.rol === "administrador" || data.rol === "verificador" ? data.rol : "asistente";
+      if (editingUser) {
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === editingUser.user.id
+              ? {
+                  ...u,
+                  name: data.name,
+                  idEmail: `${data.cedula} - ${data.correo}`,
+                  role: rolLabel,
+                  roleVariant,
+                  status: estadoLabel,
+                }
+              : u
+          )
+        );
+      } else {
+        const newId = String(users.length + 1);
+        setUsers((prev) => [
+          ...prev,
+          {
+            id: newId,
+            name: data.name,
+            idEmail: `${data.cedula} - ${data.correo}`,
+            role: rolLabel,
+            roleVariant,
+            status: estadoLabel,
+          },
+        ]);
+      }
+    },
+    [editingUser, users.length]
+  );
 
   const filteredUsers = searchQuery
     ? users.filter(
@@ -133,6 +180,13 @@ export const UserManagementPage = () => {
           </div>
         </div>
       </div>
+      <UserFormModal
+        open={userModalOpen}
+        onClose={() => setUserModalOpen(false)}
+        user={editingUser?.user ?? null}
+        userName={editingUser?.name}
+        onSubmit={handleUserSubmit}
+      />
     </DashboardTemplate>
   );
 };
