@@ -60,6 +60,63 @@
   margin-bottom: 0;
 }
 
+.assistant-document-management-page__observation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.assistant-document-management-page__observation-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.assistant-document-management-page__observation-textarea-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.assistant-document-management-page__observation-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  resize: none;
+  min-height: 100px;
+}
+
+.assistant-document-management-page__observation-textarea:focus {
+  outline: none;
+  border-color: #284483;
+}
+
+.assistant-document-management-page__observation-counter {
+  align-self: flex-end;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.assistant-document-management-page__observation-counter--warning {
+  color: #b45309;
+}
+
+.assistant-document-management-page__observation-counter--error {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.assistant-document-management-page__observation-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+
 @media (max-width: 900px) {
   .assistant-document-management-page__main {
     gap: 1rem;

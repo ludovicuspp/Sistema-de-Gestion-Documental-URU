@@ -33,6 +33,16 @@
   overflow-y: auto;
 }
 
+.assistant-dashboard__reminder-field-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.assistant-dashboard__reminder-field-wrapper .form-modal__field-textarea {
+  resize: none;
+}
+
 @media (max-width: 1024px) {
   .assistant-dashboard__grid {
     grid-template-columns: 1fr;

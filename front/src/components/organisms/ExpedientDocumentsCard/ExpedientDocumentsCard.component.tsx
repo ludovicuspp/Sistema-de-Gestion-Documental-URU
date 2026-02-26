@@ -15,6 +15,8 @@ export interface ExpedientDocumentsCardProps {
   generalStatus?: "pending" | "validated" | "partial";
   generalStatusLabel?: string;
   documents: ExpedientDocumentItem[];
+  /** Document currently shown in viewer (when user clicked "Ver"). */
+  viewingDocument?: { id: string; fileName: string } | null;
   onViewDocument?: (id: string) => void;
   onObservation?: (id: string) => void;
   onDeleteDocument?: (id: string) => void;
@@ -37,6 +39,7 @@ export const ExpedientDocumentsCard = ({
   generalStatus = "pending",
   generalStatusLabel,
   documents,
+  viewingDocument = null,
   onViewDocument,
   onObservation,
   onDeleteDocument,
@@ -55,7 +58,9 @@ export const ExpedientDocumentsCard = ({
 
       <div className="expedient-documents-card__viewer">
         <p className="expedient-documents-card__viewer-placeholder">
-          Visor PDF / Imagen (placeholder). Selecciona &quot;Ver&quot; en un documento para mostrar aquí.
+          {viewingDocument
+            ? `Viendo: ${viewingDocument.fileName}`
+            : 'Visor PDF / Imagen (placeholder). Selecciona "Ver" en un documento para mostrar aquí.'}
         </p>
       </div>
 

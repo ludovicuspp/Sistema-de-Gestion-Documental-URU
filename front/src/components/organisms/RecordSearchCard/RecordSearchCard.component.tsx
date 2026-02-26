@@ -81,7 +81,7 @@ export const RecordSearchCard = ({
           <button
             key={key}
             type="button"
-            className={`record-search-card__filter ${
+            className={`record-search-card__filter record-search-card__filter--${key} ${
               activeFilter === key ? "record-search-card__filter--active" : ""
             }`}
             onClick={() => onFilterChange?.(key)}

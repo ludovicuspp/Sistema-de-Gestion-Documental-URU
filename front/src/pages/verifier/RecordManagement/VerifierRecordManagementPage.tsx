@@ -1,8 +1,11 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
+import { Modal } from "@/components/molecules/Modal";
 import { RecordFormModal } from "@/components/molecules/RecordFormModal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
+import { CargarExpedientForm } from "@/components/molecules/CargarExpedientForm";
+import type { CargarExpedientFormData } from "@/components/molecules/CargarExpedientForm";
 import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
 import { RecordDocumentsList } from "@/components/organisms/RecordDocumentsList";
@@ -73,6 +76,7 @@ export const VerifierRecordManagementPage = () => {
   const [editingExpedient, setEditingExpedient] = useState<RecordDetailData | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [confirmCreateOpen, setConfirmCreateOpen] = useState(false);
+  const [showCargarExpedientModal, setShowCargarExpedientModal] = useState(false);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -137,7 +141,16 @@ export const VerifierRecordManagementPage = () => {
   }, []);
 
   const handleUploadRecord = useCallback(() => {
-    console.log("Cargar expediente");
+    setShowCargarExpedientModal(true);
+  }, []);
+
+  const handleCargarExpedientSubmit = useCallback((data: CargarExpedientFormData) => {
+    console.log("Cargar expediente", data);
+    setShowCargarExpedientModal(false);
+  }, []);
+
+  const handleCargarExpedientCancel = useCallback(() => {
+    setShowCargarExpedientModal(false);
   }, []);
 
   const handleEdit = useCallback(() => {
@@ -242,6 +255,17 @@ export const VerifierRecordManagementPage = () => {
         message="¿Desea crear un expediente?"
         onConfirm={handleConfirmCreate}
       />
+      <Modal
+        open={showCargarExpedientModal}
+        onClose={handleCargarExpedientCancel}
+        title="Cargar expediente"
+        size="md"
+      >
+        <CargarExpedientForm
+          onSubmit={handleCargarExpedientSubmit}
+          onCancel={handleCargarExpedientCancel}
+        />
+      </Modal>
     </DashboardTemplate>
   );
 };

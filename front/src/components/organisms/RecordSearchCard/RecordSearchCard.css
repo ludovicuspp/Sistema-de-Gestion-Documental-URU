@@ -73,12 +73,26 @@
   border-color: #9ca3af;
 }
 
-.record-search-card__filter--active {
-  background-color: #dbeafe;
-  border-color: #3b82f6;
-  color: #1d4ed8;
+.record-search-card__filter--pending.record-search-card__filter--active {
+  background-color: #fef3c7;
+  border-color: #d97706;
+  color: #92400e;
 }
 
-.record-search-card__filter--active:hover {
-  background-color: #bfdbfe;
+.record-search-card__filter--approved.record-search-card__filter--active {
+  background-color: #d1fae5;
+  border-color: #059669;
+  color: #065f46;
+}
+
+.record-search-card__filter--rejected.record-search-card__filter--active {
+  background-color: #fee2e2;
+  border-color: #dc2626;
+  color: #991b1b;
+}
+
+.record-search-card__filter--without-documents.record-search-card__filter--active {
+  background-color: #dbeafe;
+  border-color: #2563eb;
+  color: #1e40af;
 }
