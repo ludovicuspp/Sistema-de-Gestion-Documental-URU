@@ -4,6 +4,7 @@ import { UserList } from "@/components/organisms/UserList";
 import { UserDetails } from "@/components/organisms/UserDetails";
 import { ActionHistory } from "@/components/organisms/ActionHistory";
 import { UserFormModal } from "@/components/molecules/UserFormModal";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import type { UserListItem } from "@/components/organisms/UserList";
 import type { UserDetail } from "@/components/organisms/UserDetails";
 import "./UserManagementPage.css";
@@ -70,6 +71,8 @@ export const UserManagementPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<{ user: UserDetail; name: string } | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const selectedUser = selectedUserId ? MOCK_DETAILS[selectedUserId] ?? null : null;
 
@@ -99,8 +102,18 @@ export const UserManagementPage = () => {
   }, [users]);
 
   const handleDelete = useCallback((id: string) => {
-    console.log("Eliminar usuario", id);
+    setDeletingUserId(id);
+    setConfirmDeleteOpen(true);
   }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (deletingUserId) {
+      setUsers((prev) => prev.filter((u) => u.id !== deletingUserId));
+      if (selectedUserId === deletingUserId) setSelectedUserId(null);
+      setConfirmDeleteOpen(false);
+      setDeletingUserId(null);
+    }
+  }, [deletingUserId, selectedUserId]);
 
   const handleUserSubmit = useCallback(
     (data: { name: string; cedula: string; rol: string; correo: string; estado: string }) => {
@@ -186,6 +199,13 @@ export const UserManagementPage = () => {
         user={editingUser?.user ?? null}
         userName={editingUser?.name}
         onSubmit={handleUserSubmit}
+      />
+      <ConfirmModal
+        open={confirmDeleteOpen}
+        onCancel={() => { setConfirmDeleteOpen(false); setDeletingUserId(null); }}
+        label="Eliminar"
+        message="¿Seguro que desea eliminar?"
+        onConfirm={handleConfirmDelete}
       />
     </DashboardTemplate>
   );

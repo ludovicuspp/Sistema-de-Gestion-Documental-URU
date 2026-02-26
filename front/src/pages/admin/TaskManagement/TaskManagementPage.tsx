@@ -6,6 +6,7 @@ import { TaskListCard } from "@/components/organisms/TaskListCard";
 import { TaskDetailCard } from "@/components/organisms/TaskDetailCard";
 import { TaskRecentCard } from "@/components/organisms/TaskRecentCard";
 import { TaskFormModal } from "@/components/molecules/TaskFormModal";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import type { TaskFilterTab } from "@/components/organisms/TaskFiltersCard";
 import type { TaskListItem } from "@/components/organisms/TaskListCard";
 import type { TaskDetail } from "@/components/organisms/TaskDetailCard";
@@ -98,6 +99,8 @@ export const TaskManagementPage = () => {
   const [recent, setRecent] = useState<TaskListItem[]>(MOCK_RECENT);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskDetail | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
 
   const filteredList = useMemo(() => {
     let out = list;
@@ -161,6 +164,21 @@ export const TaskManagementPage = () => {
     [editingTask, list]
   );
 
+  const handleDelete = useCallback((id: string) => {
+    setDeletingTaskId(id);
+    setConfirmDeleteOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (deletingTaskId) {
+      setList((prev) => prev.filter((t) => t.id !== deletingTaskId));
+      setRecent((prev) => prev.filter((t) => t.id !== deletingTaskId));
+      if (selectedId === deletingTaskId) setSelectedId(null);
+      setConfirmDeleteOpen(false);
+      setDeletingTaskId(null);
+    }
+  }, [deletingTaskId, selectedId]);
+
   const handleLogout = () => navigate("/");
 
   return (
@@ -185,9 +203,7 @@ export const TaskManagementPage = () => {
           items={filteredList}
           selectedId={selectedId}
           onSelect={setSelectedId}
-          onDelete={(id) => {
-            if (selectedId === id) setSelectedId(null);
-          }}
+          onDelete={handleDelete}
         />
         <TaskDetailCard
           task={selectedDetail}
@@ -199,7 +215,7 @@ export const TaskManagementPage = () => {
           selectedId={selectedId}
           onViewAll={() => {}}
           onSelect={setSelectedId}
-          onDelete={() => {}}
+          onDelete={handleDelete}
         />
       </div>
       <TaskFormModal
@@ -207,6 +223,13 @@ export const TaskManagementPage = () => {
         onClose={() => setTaskModalOpen(false)}
         task={editingTask}
         onSubmit={handleTaskSubmit}
+      />
+      <ConfirmModal
+        open={confirmDeleteOpen}
+        onCancel={() => { setConfirmDeleteOpen(false); setDeletingTaskId(null); }}
+        label="Eliminar"
+        message="¿Seguro que desea eliminar la tarea?"
+        onConfirm={handleConfirmDelete}
       />
     </DashboardTemplate>
   );

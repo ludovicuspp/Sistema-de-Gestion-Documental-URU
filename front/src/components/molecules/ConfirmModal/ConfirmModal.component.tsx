@@ -5,8 +5,8 @@ import "./ConfirmModal.css";
 export interface ConfirmModalProps {
   /** Si es false, no se renderiza el modal. */
   open: boolean;
-  /** Título del modal. */
-  title?: string;
+  /** Etiqueta gris en esquina superior izquierda (ej: "Eliminar", "aprobar", "Rechazar"). */
+  label: string;
   /** Mensaje o pregunta a mostrar. */
   message: string;
   /** Texto del botón de confirmar. Por defecto: "Sí". */
@@ -22,29 +22,43 @@ export interface ConfirmModalProps {
 /**
  * ConfirmModal - Molecule
  *
- * Modal de confirmación con mensaje y botones Sí / No.
- * Usa el Modal reutilizable internamente.
+ * Modal de confirmación usando la misma fórmula que los modals:
+ * variant form, label gris en esquina superior izquierda, botones Sí (morado claro) / No (azul oscuro).
  */
 export const ConfirmModal = ({
   open,
-  title = "Confirmar",
+  label,
   message,
   confirmLabel = "Sí",
   cancelLabel = "No",
   onConfirm,
   onCancel,
 }: ConfirmModalProps) => (
-  <Modal open={open} onClose={onCancel} title={title} size="sm">
+  <Modal
+    open={open}
+    onClose={onCancel}
+    variant="form"
+    label={label}
+    size="sm"
+    hideHeader
+    footerContent={
+      <div className="confirm-modal__actions">
+        <Button
+          variant="secondary"
+          size="medium"
+          onClick={onConfirm}
+          className="confirm-modal__btn-yes"
+        >
+          {confirmLabel}
+        </Button>
+        <Button variant="primary" size="medium" onClick={onCancel}>
+          {cancelLabel}
+        </Button>
+      </div>
+    }
+  >
     <p className="confirm-modal__message" id="confirm-modal-message">
       {message}
     </p>
-    <div className="confirm-modal__actions">
-      <Button variant="outline" size="medium" onClick={onCancel}>
-        {cancelLabel}
-      </Button>
-      <Button variant="primary" size="medium" onClick={onConfirm}>
-        {confirmLabel}
-      </Button>
-    </div>
   </Modal>
 );

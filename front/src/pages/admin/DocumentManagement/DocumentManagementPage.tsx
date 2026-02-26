@@ -9,6 +9,7 @@ import { UploadDocumentCard } from "@/components/organisms/UploadDocumentCard";
 import type { VerificationInboxItem } from "@/components/organisms/VerificationInbox";
 import type { ExpedientSelectCardData } from "@/components/organisms/ExpedientSelectCard";
 import { DocumentTypeFormModal } from "@/components/molecules/DocumentTypeFormModal";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import type { DocumentTypeItem } from "@/components/organisms/DocumentTypesCard";
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
 import "./DocumentManagementPage.css";
@@ -100,6 +101,10 @@ export const DocumentManagementPage = () => {
   const [verificationSearch, setVerificationSearch] = useState("");
   const [documentTypeModalOpen, setDocumentTypeModalOpen] = useState(false);
   const [editingDocumentType, setEditingDocumentType] = useState<DocumentTypeItem | null>(null);
+  const [confirmDeleteTypeOpen, setConfirmDeleteTypeOpen] = useState(false);
+  const [deletingTypeId, setDeletingTypeId] = useState<string | null>(null);
+  const [confirmDeleteDocOpen, setConfirmDeleteDocOpen] = useState(false);
+  const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
 
   const filteredVerificationItems = useMemo(() => {
     if (!verificationSearch.trim()) return verificationItems;
@@ -170,6 +175,32 @@ export const DocumentManagementPage = () => {
     [editingDocumentType, documentTypes]
   );
 
+  const handleDeleteType = useCallback((id: string) => {
+    setDeletingTypeId(id);
+    setConfirmDeleteTypeOpen(true);
+  }, []);
+
+  const handleConfirmDeleteType = useCallback(() => {
+    if (deletingTypeId) {
+      setDocumentTypes((prev) => prev.filter((t) => t.id !== deletingTypeId));
+      setConfirmDeleteTypeOpen(false);
+      setDeletingTypeId(null);
+    }
+  }, [deletingTypeId]);
+
+  const handleDeleteDocument = useCallback((id: string) => {
+    setDeletingDocId(id);
+    setConfirmDeleteDocOpen(true);
+  }, []);
+
+  const handleConfirmDeleteDocument = useCallback(() => {
+    if (deletingDocId) {
+      setDocuments((prev) => prev.filter((d) => d.id !== deletingDocId));
+      setConfirmDeleteDocOpen(false);
+      setDeletingDocId(null);
+    }
+  }, [deletingDocId]);
+
   return (
     <DashboardTemplate
       currentView="Gestión de documentos"
@@ -208,9 +239,7 @@ export const DocumentManagementPage = () => {
             documents={documents}
             onViewDocument={(id) => console.log("Ver documento", id)}
             onObservation={(id) => console.log("Observación", id)}
-            onDeleteDocument={(id) =>
-              setDocuments((prev) => prev.filter((d) => d.id !== id))
-            }
+            onDeleteDocument={handleDeleteDocument}
           />
         </div>
         <div className="document-management-page__right">
@@ -219,7 +248,7 @@ export const DocumentManagementPage = () => {
             types={documentTypes}
             onNewType={handleNewType}
             onEdit={handleEditType}
-            onDelete={(id) => console.log("Eliminar tipo", id)}
+            onDelete={handleDeleteType}
           />
         </div>
         <div className="document-management-page__full">
@@ -247,6 +276,20 @@ export const DocumentManagementPage = () => {
         onClose={() => setDocumentTypeModalOpen(false)}
         documentType={editingDocumentType}
         onSubmit={handleDocumentTypeSubmit}
+      />
+      <ConfirmModal
+        open={confirmDeleteTypeOpen}
+        onCancel={() => { setConfirmDeleteTypeOpen(false); setDeletingTypeId(null); }}
+        label="Eliminar"
+        message="¿Seguro que desea eliminar?"
+        onConfirm={handleConfirmDeleteType}
+      />
+      <ConfirmModal
+        open={confirmDeleteDocOpen}
+        onCancel={() => { setConfirmDeleteDocOpen(false); setDeletingDocId(null); }}
+        label="Eliminar"
+        message="¿Seguro que desea eliminar el documento?"
+        onConfirm={handleConfirmDeleteDocument}
       />
     </DashboardTemplate>
   );

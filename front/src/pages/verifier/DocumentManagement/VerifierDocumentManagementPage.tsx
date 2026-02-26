@@ -8,6 +8,7 @@ import { UploadDocumentCard } from "@/components/organisms/UploadDocumentCard";
 import type { VerificationInboxItem } from "@/components/organisms/VerificationInbox";
 import type { ExpedientSelectCardData } from "@/components/organisms/ExpedientSelectCard";
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { VERIFIER_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
 import "./VerifierDocumentManagementPage.css";
 
@@ -88,6 +89,8 @@ export const VerifierDocumentManagementPage = () => {
   });
   const [documents, setDocuments] = useState<ExpedientDocumentItem[]>(MOCK_DOCUMENTS);
   const [uploadTypeError, setUploadTypeError] = useState(false);
+  const [confirmDeleteDocOpen, setConfirmDeleteDocOpen] = useState(false);
+  const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [selectedTypeId, setSelectedTypeId] = useState("");
   const [verificationSearch, setVerificationSearch] = useState("");
 
@@ -137,12 +140,18 @@ export const VerifierDocumentManagementPage = () => {
     console.log("Observación", id);
   }, []);
 
-  const handleDeleteDocument = useCallback(
-    (id: string) => {
-      setDocuments((prev) => prev.filter((d) => d.id !== id));
-    },
-    []
-  );
+  const handleDeleteDocument = useCallback((id: string) => {
+    setDeletingDocId(id);
+    setConfirmDeleteDocOpen(true);
+  }, []);
+
+  const handleConfirmDeleteDocument = useCallback(() => {
+    if (deletingDocId) {
+      setDocuments((prev) => prev.filter((d) => d.id !== deletingDocId));
+      setConfirmDeleteDocOpen(false);
+      setDeletingDocId(null);
+    }
+  }, [deletingDocId]);
 
   return (
     <DashboardTemplate
@@ -209,6 +218,13 @@ export const VerifierDocumentManagementPage = () => {
           </div>
         </div>
       </div>
+      <ConfirmModal
+        open={confirmDeleteDocOpen}
+        onCancel={() => { setConfirmDeleteDocOpen(false); setDeletingDocId(null); }}
+        label="Eliminar"
+        message="¿Seguro que desea eliminar el documento?"
+        onConfirm={handleConfirmDeleteDocument}
+      />
     </DashboardTemplate>
   );
 };

@@ -66,7 +66,7 @@ export const TaskListCard = ({
             status={t.status}
             selected={selectedId === t.id}
             onSelect={() => onSelect?.(t.id)}
-            onDelete={isAssistant ? undefined : () => onDelete?.(t.id)}
+            onDelete={!isAssistant && onDelete ? () => onDelete(t.id) : undefined}
             onStart={isAssistant ? () => onStartTask?.(t.id) : undefined}
           />
         ))}

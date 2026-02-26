@@ -4,6 +4,7 @@ import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
 import { RecordFormModal } from "@/components/molecules/RecordFormModal";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { RecordDocumentsList } from "@/components/organisms/RecordDocumentsList";
 import { RecentActivity } from "@/components/organisms/RecentActivity";
 import type { RecordStatusFilter } from "@/components/organisms/RecordSearchCard";
@@ -42,10 +43,17 @@ export const AssistantRecordManagementPage = () => {
   const [activeFilter, setActiveFilter] = useState<RecordStatusFilter>("pending");
   const [selectedRecord, setSelectedRecord] = useState<RecordDetailData | null>(MOCK_RECORD);
   const [expedientModalOpen, setExpedientModalOpen] = useState(false);
+  const [confirmCreateOpen, setConfirmCreateOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const handleSearchChange = useCallback((value: string) => setSearchQuery(value), []);
   const handleFilterChange = useCallback((filter: RecordStatusFilter) => setActiveFilter(filter), []);
-  const handleNewRecord = useCallback(() => setExpedientModalOpen(true), []);
+  const handleNewRecord = useCallback(() => setConfirmCreateOpen(true), []);
+
+  const handleConfirmCreate = useCallback(() => {
+    setConfirmCreateOpen(false);
+    setExpedientModalOpen(true);
+  }, []);
 
   const handleExpedientSubmit = useCallback(
     (data: { studentCI: string; studentName: string; recordType: string; studentEmail?: string; studentBirthDate?: string; recordLocation?: string }) => {
@@ -72,7 +80,12 @@ export const AssistantRecordManagementPage = () => {
   const handleUpdateDocuments = useCallback(() => console.log("Actualizar documentos"), []);
   const handleUploadRecord = useCallback(() => console.log("Cargar expediente"), []);
   const handleEdit = useCallback(() => console.log("Editar expediente"), []);
-  const handleDelete = useCallback(() => console.log("Eliminar expediente"), []);
+  const handleDelete = useCallback(() => setConfirmDeleteOpen(true), []);
+
+  const handleConfirmDelete = useCallback(() => {
+    setSelectedRecord(null);
+    setConfirmDeleteOpen(false);
+  }, []);
   const handleViewDocument = useCallback((id: string) => console.log("Ver documento", id), []);
   const handleDocumentObservation = useCallback((id: string) => console.log("Observación documento", id), []);
   const handleViewHistory = useCallback(() => console.log("Ver historial"), []);
@@ -140,6 +153,20 @@ export const AssistantRecordManagementPage = () => {
         onClose={() => setExpedientModalOpen(false)}
         record={null}
         onSubmit={handleExpedientSubmit}
+      />
+      <ConfirmModal
+        open={confirmCreateOpen}
+        onCancel={() => setConfirmCreateOpen(false)}
+        label="Crear expediente"
+        message="¿Desea crear un expediente?"
+        onConfirm={handleConfirmCreate}
+      />
+      <ConfirmModal
+        open={confirmDeleteOpen}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        label="Eliminar"
+        message="¿Seguro que desea eliminar el expediente?"
+        onConfirm={handleConfirmDelete}
       />
     </DashboardTemplate>
   );

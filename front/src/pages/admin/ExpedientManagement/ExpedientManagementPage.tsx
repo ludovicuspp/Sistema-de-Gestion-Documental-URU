@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { ExpedientSearchCard } from "@/components/organisms/ExpedientSearchCard";
 import { ExpedientDetailCard } from "@/components/organisms/ExpedientDetailCard";
@@ -64,6 +65,7 @@ export const ExpedientManagementPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<ExpedientStatusFilter>("pending");
   const [selectedExpedient, setSelectedExpedient] = useState<ExpedientDetailData | null>(MOCK_EXPEDIENT);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -97,7 +99,12 @@ export const ExpedientManagementPage = () => {
   }, []);
 
   const handleDelete = useCallback(() => {
-    console.log("Eliminar expediente");
+    setConfirmDeleteOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    setSelectedExpedient(null);
+    setConfirmDeleteOpen(false);
   }, []);
 
   const handleViewDocument = useCallback((id: string) => {
@@ -158,6 +165,13 @@ export const ExpedientManagementPage = () => {
           </div>
         </div>
       </div>
+      <ConfirmModal
+        open={confirmDeleteOpen}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        label="Eliminar"
+        message="¿Seguro que desea eliminar el expediente?"
+        onConfirm={handleConfirmDelete}
+      />
     </DashboardTemplate>
   );
 };

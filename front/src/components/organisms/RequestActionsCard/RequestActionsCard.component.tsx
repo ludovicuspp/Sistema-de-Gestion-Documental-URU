@@ -13,6 +13,12 @@ export interface RequestActionsCardProps {
   confirmBeforeSave?: boolean;
   /** Mensaje de la confirmación. Por defecto: "¿Desea guardar la nota?" */
   confirmSaveMessage?: string;
+  /** Llamado al aprobar la solicitud. Si se pasa, muestra botón Aprobar. */
+  onApprove?: () => void;
+  /** Llamado al rechazar la solicitud. Si se pasa, muestra botón Rechazar. */
+  onReject?: () => void;
+  /** Si true, la solicitud puede ser aprobada/rechazada (estado no validado). */
+  canApproveReject?: boolean;
 }
 
 /**
@@ -25,6 +31,9 @@ export const RequestActionsCard = ({
   onClear,
   confirmBeforeSave = false,
   confirmSaveMessage = "¿Desea guardar la nota?",
+  onApprove,
+  onReject,
+  canApproveReject = false,
 }: RequestActionsCardProps) => {
   const [note, setNote] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -79,6 +88,20 @@ export const RequestActionsCard = ({
   return (
     <Card variant="elevated" className="request-actions-card">
       <h2 className="request-actions-card__title">Acciones y estado</h2>
+      {canApproveReject && (onApprove || onReject) && (
+        <div className="request-actions-card__approve-section">
+          {onApprove && (
+            <Button variant="success" size="small" onClick={onApprove}>
+              Aprobar
+            </Button>
+          )}
+          {onReject && (
+            <Button variant="danger" size="small" onClick={onReject}>
+              Rechazar
+            </Button>
+          )}
+        </div>
+      )}
       <div className="request-actions-card__section">
         <h3 className="request-actions-card__section-title">Observaciones administrativas</h3>
         <div className="request-actions-card__textarea-wrapper">
@@ -104,7 +127,7 @@ export const RequestActionsCard = ({
       {confirmBeforeSave && (
         <ConfirmModal
           open={showConfirmModal}
-          title="Guardar nota"
+          label="Aplicar"
           message={confirmSaveMessage}
           confirmLabel="Sí, guardar"
           cancelLabel="No"

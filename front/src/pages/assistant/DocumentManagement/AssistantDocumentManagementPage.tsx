@@ -5,6 +5,7 @@ import { ExpedientSelectCard } from "@/components/organisms/ExpedientSelectCard"
 import { ExpedientDocumentsCard } from "@/components/organisms/ExpedientDocumentsCard";
 import { UploadDocumentCard } from "@/components/organisms/UploadDocumentCard";
 import { Card } from "@/components/molecules/Card";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import type { ExpedientSelectCardData } from "@/components/organisms/ExpedientSelectCard";
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
 import { ASSISTANT_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
@@ -38,6 +39,8 @@ export const AssistantDocumentManagementPage = () => {
   });
   const [documents, setDocuments] = useState<ExpedientDocumentItem[]>(MOCK_DOCUMENTS);
   const [uploadTypeError, setUploadTypeError] = useState(false);
+  const [confirmDeleteDocOpen, setConfirmDeleteDocOpen] = useState(false);
+  const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [selectedTypeId, setSelectedTypeId] = useState("");
 
   const documentTypesForSelect = useMemo(
@@ -56,8 +59,17 @@ export const AssistantDocumentManagementPage = () => {
   const handleViewDocument = useCallback((id: string) => console.log("Ver documento", id), []);
   const handleObservation = useCallback((id: string) => console.log("Observación", id), []);
   const handleDeleteDocument = useCallback((id: string) => {
-    setDocuments((prev) => prev.filter((d) => d.id !== id));
+    setDeletingDocId(id);
+    setConfirmDeleteDocOpen(true);
   }, []);
+
+  const handleConfirmDeleteDocument = useCallback(() => {
+    if (deletingDocId) {
+      setDocuments((prev) => prev.filter((d) => d.id !== deletingDocId));
+      setConfirmDeleteDocOpen(false);
+      setDeletingDocId(null);
+    }
+  }, [deletingDocId]);
 
   return (
     <DashboardTemplate
@@ -122,6 +134,13 @@ export const AssistantDocumentManagementPage = () => {
           </div>
         </div>
       </div>
+      <ConfirmModal
+        open={confirmDeleteDocOpen}
+        onCancel={() => { setConfirmDeleteDocOpen(false); setDeletingDocId(null); }}
+        label="Eliminar"
+        message="¿Seguro que desea eliminar el documento?"
+        onConfirm={handleConfirmDeleteDocument}
+      />
     </DashboardTemplate>
   );
 };

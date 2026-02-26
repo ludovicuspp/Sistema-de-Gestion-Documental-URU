@@ -5,6 +5,7 @@ import { StudentList } from "@/components/organisms/StudentList";
 import { StudentDetails } from "@/components/organisms/StudentDetails";
 import { RecentActivity } from "@/components/organisms/RecentActivity";
 import { StudentFormModal } from "@/components/molecules/StudentFormModal";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import type { StudentListItem } from "@/components/organisms/StudentList";
 import type { StudentDetail } from "@/components/organisms/StudentDetails";
 import type { ActivityEntry } from "@/components/organisms/RecentActivity";
@@ -74,6 +75,8 @@ export const StudentManagementPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [studentModalOpen, setStudentModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<StudentDetail | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deletingStudentId, setDeletingStudentId] = useState<string | null>(null);
 
   const selectedStudent =
     selectedStudentId ? (MOCK_DETAILS[selectedStudentId] ?? null) : null;
@@ -100,8 +103,18 @@ export const StudentManagementPage = () => {
   }, []);
 
   const handleDelete = useCallback((id: string) => {
-    console.log("Eliminar estudiante", id);
+    setDeletingStudentId(id);
+    setConfirmDeleteOpen(true);
   }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (deletingStudentId) {
+      setStudents((prev) => prev.filter((s) => s.id !== deletingStudentId));
+      if (selectedStudentId === deletingStudentId) setSelectedStudentId(null);
+      setConfirmDeleteOpen(false);
+      setDeletingStudentId(null);
+    }
+  }, [deletingStudentId, selectedStudentId]);
 
   const handleViewExpedientes = useCallback((_id: string) => {
     navigate("/admin/records");
@@ -200,6 +213,13 @@ export const StudentManagementPage = () => {
         onClose={() => setStudentModalOpen(false)}
         student={editingStudent}
         onSubmit={handleStudentSubmit}
+      />
+      <ConfirmModal
+        open={confirmDeleteOpen}
+        onCancel={() => { setConfirmDeleteOpen(false); setDeletingStudentId(null); }}
+        label="Eliminar"
+        message="¿Seguro que desea eliminar?"
+        onConfirm={handleConfirmDelete}
       />
     </DashboardTemplate>
   );

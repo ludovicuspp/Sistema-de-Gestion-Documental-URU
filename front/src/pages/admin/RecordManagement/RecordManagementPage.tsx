@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { RecordFormModal } from "@/components/molecules/RecordFormModal";
 import { RecordDocumentsList } from "@/components/organisms/RecordDocumentsList";
 import { RecentActivity } from "@/components/organisms/RecentActivity";
@@ -69,6 +70,8 @@ export const RecordManagementPage = () => {
   const [selectedRecord, setSelectedRecord] = useState<RecordDetailData | null>(MOCK_RECORD);
   const [expedientModalOpen, setExpedientModalOpen] = useState(false);
   const [editingExpedient, setEditingExpedient] = useState<RecordDetailData | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmCreateOpen, setConfirmCreateOpen] = useState(false);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -79,7 +82,12 @@ export const RecordManagementPage = () => {
   }, []);
 
   const handleNewRecord = useCallback(() => {
+    setConfirmCreateOpen(true);
+  }, []);
+
+  const handleConfirmCreate = useCallback(() => {
     setEditingExpedient(null);
+    setConfirmCreateOpen(false);
     setExpedientModalOpen(true);
   }, []);
 
@@ -106,7 +114,12 @@ export const RecordManagementPage = () => {
   }, [selectedRecord]);
 
   const handleDelete = useCallback(() => {
-    console.log("Eliminar expediente");
+    setConfirmDeleteOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    setSelectedRecord(null);
+    setConfirmDeleteOpen(false);
   }, []);
 
   const handleViewDocument = useCallback((id: string) => {
@@ -212,6 +225,20 @@ export const RecordManagementPage = () => {
         onClose={() => setExpedientModalOpen(false)}
         record={editingExpedient}
         onSubmit={handleExpedientSubmit}
+      />
+      <ConfirmModal
+        open={confirmDeleteOpen}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        label="Eliminar"
+        message="¿Seguro que desea eliminar?"
+        onConfirm={handleConfirmDelete}
+      />
+      <ConfirmModal
+        open={confirmCreateOpen}
+        onCancel={() => setConfirmCreateOpen(false)}
+        label="Crear expediente"
+        message="¿Desea crear un expediente?"
+        onConfirm={handleConfirmCreate}
       />
     </DashboardTemplate>
   );

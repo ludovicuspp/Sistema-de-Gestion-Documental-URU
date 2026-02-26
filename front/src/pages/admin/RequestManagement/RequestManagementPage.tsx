@@ -4,6 +4,7 @@ import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { RequestList, type RequestListItem } from "@/components/organisms/RequestList";
 import { RequestDetailCard, type RequestDetailData } from "@/components/organisms/RequestDetailCard";
 import { RequestActionsCard } from "@/components/organisms/RequestActionsCard";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import "./RequestManagementPage.css";
 
 const MOCK_REQUESTS: RequestListItem[] = [
@@ -78,6 +79,8 @@ export const RequestManagementPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>("1");
+  const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
+  const [confirmRejectOpen, setConfirmRejectOpen] = useState(false);
 
   const filteredRequests = useMemo(() => {
     if (!searchQuery.trim()) return MOCK_REQUESTS;
@@ -117,6 +120,20 @@ export const RequestManagementPage = () => {
     console.log("Limpiar nota");
   }, []);
 
+  const handleApprove = useCallback(() => {
+    console.log("Aprobar solicitud", selectedRequestId);
+    setConfirmApproveOpen(false);
+    // TODO: actualizar estado en API
+  }, [selectedRequestId]);
+
+  const handleReject = useCallback(() => {
+    console.log("Rechazar solicitud", selectedRequestId);
+    setConfirmRejectOpen(false);
+    // TODO: actualizar estado en API
+  }, [selectedRequestId]);
+
+  const canApproveReject = selectedRequest?.status === "not-validated";
+
   return (
     <DashboardTemplate
       currentView="Gestión de solicitudes"
@@ -148,10 +165,27 @@ export const RequestManagementPage = () => {
             <RequestActionsCard
               onSaveNote={handleSaveNote}
               onClear={handleClearNote}
+              onApprove={() => setConfirmApproveOpen(true)}
+              onReject={() => setConfirmRejectOpen(true)}
+              canApproveReject={canApproveReject}
             />
           </div>
         </div>
       </div>
+      <ConfirmModal
+        open={confirmApproveOpen}
+        onCancel={() => setConfirmApproveOpen(false)}
+        label="aprobar"
+        message="¿Seguro que desea aprobar?"
+        onConfirm={handleApprove}
+      />
+      <ConfirmModal
+        open={confirmRejectOpen}
+        onCancel={() => setConfirmRejectOpen(false)}
+        label="Rechazar"
+        message="¿Seguro que desea rechazar?"
+        onConfirm={handleReject}
+      />
     </DashboardTemplate>
   );
 };

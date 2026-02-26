@@ -19,6 +19,8 @@ export interface ModalProps {
   headerContent?: React.ReactNode;
   /** Contenido del footer. Ej: botón Aplicar cambios. */
   footerContent?: React.ReactNode;
+  /** Si true, no muestra header dentro de la caja (solo label fuera, para Confirm). */
+  hideHeader?: boolean;
   /** Contenido del modal. */
   children: React.ReactNode;
 }
@@ -38,6 +40,7 @@ export const Modal = ({
   label,
   headerContent,
   footerContent,
+  hideHeader = false,
   children,
 }: ModalProps) => {
   useEffect(() => {
@@ -55,7 +58,7 @@ export const Modal = ({
 
   if (!open) return null;
 
-  const hasHeader = headerContent ?? title ?? label;
+  const hasHeader = !hideHeader && (headerContent ?? title ?? label);
   const backdropClass = [
     "modal__backdrop",
     variant === "form" && "modal__backdrop--form",
