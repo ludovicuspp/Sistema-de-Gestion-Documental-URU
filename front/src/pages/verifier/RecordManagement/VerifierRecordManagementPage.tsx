@@ -1,6 +1,9 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
+import { Modal } from "@/components/molecules/Modal";
+import { NewExpedientForm } from "@/components/molecules/NewExpedientForm";
+import type { NewExpedientFormData } from "@/components/molecules/NewExpedientForm";
 import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
 import { RecordDocumentsList } from "@/components/organisms/RecordDocumentsList";
@@ -67,6 +70,7 @@ export const VerifierRecordManagementPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<RecordStatusFilter>("pending");
   const [selectedRecord, setSelectedRecord] = useState<RecordDetailData | null>(MOCK_RECORD);
+  const [showNewExpedientModal, setShowNewExpedientModal] = useState(false);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -77,7 +81,27 @@ export const VerifierRecordManagementPage = () => {
   }, []);
 
   const handleNewRecord = useCallback(() => {
-    console.log("Nuevo expediente");
+    setShowNewExpedientModal(true);
+  }, []);
+
+  const handleNewExpedientSubmit = useCallback((data: NewExpedientFormData) => {
+    console.log("Crear expediente", data);
+    setShowNewExpedientModal(false);
+    setSelectedRecord({
+      studentId: "",
+      studentName: data.studentName,
+      studentCI: data.studentCI,
+      studentBirthDate: data.studentBirthDate,
+      studentEmail: data.studentEmail,
+      recordType: data.recordType,
+      recordCreatedDate: new Date().toISOString().slice(0, 10),
+      recordLocation: data.recordLocation,
+      recordStatus: "pending",
+    });
+  }, []);
+
+  const handleNewExpedientCancel = useCallback(() => {
+    setShowNewExpedientModal(false);
   }, []);
 
   const handleRefresh = useCallback(() => {
@@ -169,6 +193,17 @@ export const VerifierRecordManagementPage = () => {
           </div>
         </div>
       </div>
+      <Modal
+        open={showNewExpedientModal}
+        onClose={handleNewExpedientCancel}
+        title="Nuevo expediente"
+        size="md"
+      >
+        <NewExpedientForm
+          onSubmit={handleNewExpedientSubmit}
+          onCancel={handleNewExpedientCancel}
+        />
+      </Modal>
     </DashboardTemplate>
   );
 };

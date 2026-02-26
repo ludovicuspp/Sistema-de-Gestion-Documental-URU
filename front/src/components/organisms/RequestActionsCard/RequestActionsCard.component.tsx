@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/molecules/Card";
 import { Button } from "@/components/atoms/Button";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import "./RequestActionsCard.css";
 
 const MAX_CHARS = 200;
@@ -8,6 +9,10 @@ const MAX_CHARS = 200;
 export interface RequestActionsCardProps {
   onSaveNote?: (note: string) => void;
   onClear?: () => void;
+  /** Si es true, muestra confirmación antes de guardar (ej. vista verificador). */
+  confirmBeforeSave?: boolean;
+  /** Mensaje de la confirmación. Por defecto: "¿Desea guardar la nota?" */
+  confirmSaveMessage?: string;
 }
 
 /**
@@ -15,8 +20,14 @@ export interface RequestActionsCardProps {
  *
  * Actions and status panel with administrative observations textarea.
  */
-export const RequestActionsCard = ({ onSaveNote, onClear }: RequestActionsCardProps) => {
+export const RequestActionsCard = ({
+  onSaveNote,
+  onClear,
+  confirmBeforeSave = false,
+  confirmSaveMessage = "¿Desea guardar la nota?",
+}: RequestActionsCardProps) => {
   const [note, setNote] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const charCount = note.length;
   const isAtLimit = charCount >= MAX_CHARS;
@@ -34,14 +45,26 @@ export const RequestActionsCard = ({ onSaveNote, onClear }: RequestActionsCardPr
     }
   };
 
+  const performSaveNote = () => {
+    const text = note.trim();
+    if (text) {
+      onSaveNote?.(text);
+      setNote("");
+    }
+    setShowConfirmModal(false);
+  };
+
   const handleSaveNote = () => {
     if (note.length >= MAX_CHARS) {
       alert(`Ha superado el límite de caracteres permitidos (${MAX_CHARS}). Por favor, reduzca el texto antes de guardar.`);
       return;
     }
     if (note.trim()) {
-      onSaveNote?.(note.trim());
-      setNote("");
+      if (confirmBeforeSave) {
+        setShowConfirmModal(true);
+        return;
+      }
+      performSaveNote();
     }
   };
 
@@ -78,6 +101,17 @@ export const RequestActionsCard = ({ onSaveNote, onClear }: RequestActionsCardPr
           </Button>
         </div>
       </div>
+      {confirmBeforeSave && (
+        <ConfirmModal
+          open={showConfirmModal}
+          title="Guardar nota"
+          message={confirmSaveMessage}
+          confirmLabel="Sí, guardar"
+          cancelLabel="No"
+          onConfirm={performSaveNote}
+          onCancel={() => setShowConfirmModal(false)}
+        />
+      )}
     </Card>
   );
 };

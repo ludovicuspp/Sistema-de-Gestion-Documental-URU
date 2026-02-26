@@ -1,0 +1,47 @@
+.new-expedient-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.new-expedient-form__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.new-expedient-form__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.new-expedient-form__required {
+  color: #dc2626;
+}
+
+.new-expedient-form__select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #111827;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+}
+
+.new-expedient-form__select:focus {
+  outline: none;
+  border-color: #284483;
+  box-shadow: 0 0 0 2px rgba(40, 68, 131, 0.15);
+}
+
+.new-expedient-form__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}

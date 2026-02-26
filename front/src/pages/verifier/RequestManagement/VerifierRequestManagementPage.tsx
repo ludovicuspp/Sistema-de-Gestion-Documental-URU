@@ -151,6 +151,8 @@ export const VerifierRequestManagementPage = () => {
             <RequestActionsCard
               onSaveNote={handleSaveNote}
               onClear={handleClearNote}
+              confirmBeforeSave
+              confirmSaveMessage="¿Desea guardar la nota?"
             />
           </div>
         </div>
