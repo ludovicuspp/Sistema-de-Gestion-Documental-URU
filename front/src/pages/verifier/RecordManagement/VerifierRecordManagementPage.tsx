@@ -1,9 +1,7 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
-import { Modal } from "@/components/molecules/Modal";
-import { NewExpedientForm } from "@/components/molecules/NewExpedientForm";
-import type { NewExpedientFormData } from "@/components/molecules/NewExpedientForm";
+import { RecordFormModal } from "@/components/molecules/RecordFormModal";
 import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
 import { RecordDocumentsList } from "@/components/organisms/RecordDocumentsList";
@@ -70,7 +68,8 @@ export const VerifierRecordManagementPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<RecordStatusFilter>("pending");
   const [selectedRecord, setSelectedRecord] = useState<RecordDetailData | null>(MOCK_RECORD);
-  const [showNewExpedientModal, setShowNewExpedientModal] = useState(false);
+  const [expedientModalOpen, setExpedientModalOpen] = useState(false);
+  const [editingExpedient, setEditingExpedient] = useState<RecordDetailData | null>(null);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -81,28 +80,42 @@ export const VerifierRecordManagementPage = () => {
   }, []);
 
   const handleNewRecord = useCallback(() => {
-    setShowNewExpedientModal(true);
+    setEditingExpedient(null);
+    setExpedientModalOpen(true);
   }, []);
 
-  const handleNewExpedientSubmit = useCallback((data: NewExpedientFormData) => {
-    console.log("Crear expediente", data);
-    setShowNewExpedientModal(false);
-    setSelectedRecord({
-      studentId: "",
-      studentName: data.studentName,
-      studentCI: data.studentCI,
-      studentBirthDate: data.studentBirthDate,
-      studentEmail: data.studentEmail,
-      recordType: data.recordType,
-      recordCreatedDate: new Date().toISOString().slice(0, 10),
-      recordLocation: data.recordLocation,
-      recordStatus: "pending",
-    });
-  }, []);
-
-  const handleNewExpedientCancel = useCallback(() => {
-    setShowNewExpedientModal(false);
-  }, []);
+  const handleExpedientSubmit = useCallback(
+    (data: { studentCI: string; studentName: string; recordType: string; studentEmail?: string; studentBirthDate?: string; recordLocation?: string }) => {
+      if (editingExpedient) {
+        setSelectedRecord((prev) =>
+          prev
+            ? {
+                ...prev,
+                studentCI: data.studentCI,
+                studentName: data.studentName,
+                recordType: data.recordType,
+                studentEmail: data.studentEmail,
+                studentBirthDate: data.studentBirthDate,
+                recordLocation: data.recordLocation,
+              }
+            : null
+        );
+      } else {
+        setSelectedRecord({
+          studentId: "",
+          studentName: data.studentName,
+          studentCI: data.studentCI,
+          studentBirthDate: data.studentBirthDate,
+          studentEmail: data.studentEmail,
+          recordType: data.recordType,
+          recordCreatedDate: new Date().toISOString().slice(0, 10),
+          recordLocation: data.recordLocation ?? "",
+          recordStatus: "pending",
+        });
+      }
+    },
+    [editingExpedient]
+  );
 
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
@@ -120,8 +133,11 @@ export const VerifierRecordManagementPage = () => {
   }, []);
 
   const handleEdit = useCallback(() => {
-    console.log("Editar expediente");
-  }, []);
+    if (selectedRecord) {
+      setEditingExpedient(selectedRecord);
+      setExpedientModalOpen(true);
+    }
+  }, [selectedRecord]);
 
   const handleDelete = useCallback(() => {
     console.log("Eliminar expediente");
@@ -193,17 +209,12 @@ export const VerifierRecordManagementPage = () => {
           </div>
         </div>
       </div>
-      <Modal
-        open={showNewExpedientModal}
-        onClose={handleNewExpedientCancel}
-        title="Nuevo expediente"
-        size="md"
-      >
-        <NewExpedientForm
-          onSubmit={handleNewExpedientSubmit}
-          onCancel={handleNewExpedientCancel}
-        />
-      </Modal>
+      <RecordFormModal
+        open={expedientModalOpen}
+        onClose={() => setExpedientModalOpen(false)}
+        record={editingExpedient}
+        onSubmit={handleExpedientSubmit}
+      />
     </DashboardTemplate>
   );
 };

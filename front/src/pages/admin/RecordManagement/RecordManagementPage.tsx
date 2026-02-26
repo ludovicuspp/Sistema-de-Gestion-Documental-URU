@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
+import { RecordFormModal } from "@/components/molecules/RecordFormModal";
 import { RecordDocumentsList } from "@/components/organisms/RecordDocumentsList";
 import { RecentActivity } from "@/components/organisms/RecentActivity";
 import type { RecordStatusFilter } from "@/components/organisms/RecordSearchCard";
@@ -66,6 +67,8 @@ export const RecordManagementPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<RecordStatusFilter>("pending");
   const [selectedRecord, setSelectedRecord] = useState<RecordDetailData | null>(MOCK_RECORD);
+  const [expedientModalOpen, setExpedientModalOpen] = useState(false);
+  const [editingExpedient, setEditingExpedient] = useState<RecordDetailData | null>(null);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -76,7 +79,8 @@ export const RecordManagementPage = () => {
   }, []);
 
   const handleNewRecord = useCallback(() => {
-    console.log("Nuevo expediente");
+    setEditingExpedient(null);
+    setExpedientModalOpen(true);
   }, []);
 
   const handleRefresh = useCallback(() => {
@@ -95,8 +99,11 @@ export const RecordManagementPage = () => {
   }, []);
 
   const handleEdit = useCallback(() => {
-    console.log("Editar expediente");
-  }, []);
+    if (selectedRecord) {
+      setEditingExpedient(selectedRecord);
+      setExpedientModalOpen(true);
+    }
+  }, [selectedRecord]);
 
   const handleDelete = useCallback(() => {
     console.log("Eliminar expediente");
@@ -113,6 +120,39 @@ export const RecordManagementPage = () => {
   const handleViewHistory = useCallback(() => {
     console.log("Ver historial");
   }, []);
+
+  const handleExpedientSubmit = useCallback(
+    (data: { studentCI: string; studentName: string; recordType: string; studentEmail?: string; studentBirthDate?: string; recordLocation?: string }) => {
+      if (editingExpedient) {
+        setSelectedRecord((prev) =>
+          prev
+            ? {
+                ...prev,
+                studentCI: data.studentCI,
+                studentName: data.studentName,
+                recordType: data.recordType,
+                studentEmail: data.studentEmail,
+                studentBirthDate: data.studentBirthDate,
+                recordLocation: data.recordLocation,
+              }
+            : null
+        );
+      } else {
+        setSelectedRecord({
+          studentId: "1",
+          studentName: data.studentName,
+          studentCI: data.studentCI,
+          studentBirthDate: data.studentBirthDate,
+          studentEmail: data.studentEmail,
+          recordType: data.recordType,
+          recordCreatedDate: new Date().toISOString().slice(0, 10),
+          recordLocation: data.recordLocation,
+          recordStatus: "pending",
+        });
+      }
+    },
+    [editingExpedient]
+  );
 
   return (
     <DashboardTemplate
@@ -167,6 +207,12 @@ export const RecordManagementPage = () => {
           </div>
         </div>
       </div>
+      <RecordFormModal
+        open={expedientModalOpen}
+        onClose={() => setExpedientModalOpen(false)}
+        record={editingExpedient}
+        onSubmit={handleExpedientSubmit}
+      />
     </DashboardTemplate>
   );
 };

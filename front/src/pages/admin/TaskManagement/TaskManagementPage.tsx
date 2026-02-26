@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { TaskFiltersCard } from "@/components/organisms/TaskFiltersCard";
 import { TaskListCard } from "@/components/organisms/TaskListCard";
 import { TaskDetailCard } from "@/components/organisms/TaskDetailCard";
 import { TaskRecentCard } from "@/components/organisms/TaskRecentCard";
+import { TaskFormModal } from "@/components/molecules/TaskFormModal";
 import type { TaskFilterTab } from "@/components/organisms/TaskFiltersCard";
 import type { TaskListItem } from "@/components/organisms/TaskListCard";
 import type { TaskDetail } from "@/components/organisms/TaskDetailCard";
@@ -93,8 +94,10 @@ export const TaskManagementPage = () => {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<TaskFilterTab>("pending");
   const [selectedId, setSelectedId] = useState<string | null>("1");
-  const [list] = useState<TaskListItem[]>(MOCK_LIST);
-  const [recent] = useState<TaskListItem[]>(MOCK_RECENT);
+  const [list, setList] = useState<TaskListItem[]>(MOCK_LIST);
+  const [recent, setRecent] = useState<TaskListItem[]>(MOCK_RECENT);
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<TaskDetail | null>(null);
 
   const filteredList = useMemo(() => {
     let out = list;
@@ -111,6 +114,52 @@ export const TaskManagementPage = () => {
 
   const selectedDetail =
     selectedId == null ? null : (MOCK_DETAILS[selectedId] ?? null);
+
+  const handleCreateTask = useCallback(() => {
+    setEditingTask(null);
+    setTaskModalOpen(true);
+  }, []);
+
+  const handleTaskSubmit = useCallback(
+    (data: {
+      title: string;
+      assignee: string;
+      assignmentDate: string;
+      dueDate: string;
+      status: "Pendiente" | "Finalizada";
+      description: string;
+      workDetail: string[];
+    }) => {
+      if (editingTask) {
+        setList((prev) =>
+          prev.map((t) =>
+            t.id === editingTask.id
+              ? {
+                  ...t,
+                  title: data.title,
+                  assignee: data.assignee,
+                  assignmentDate: data.assignmentDate,
+                  status: data.status,
+                }
+              : t
+          )
+        );
+      } else {
+        const newId = String(Math.max(...list.map((t) => parseInt(t.id, 10)), 0) + 1);
+        setList((prev) => [
+          ...prev,
+          {
+            id: newId,
+            title: data.title,
+            assignee: data.assignee,
+            assignmentDate: data.assignmentDate,
+            status: data.status,
+          },
+        ]);
+      }
+    },
+    [editingTask, list]
+  );
 
   const handleLogout = () => navigate("/");
 
@@ -130,7 +179,7 @@ export const TaskManagementPage = () => {
           onSearchChange={setSearch}
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          onCreateTask={() => {}}
+          onCreateTask={handleCreateTask}
         />
         <TaskListCard
           items={filteredList}
@@ -153,6 +202,12 @@ export const TaskManagementPage = () => {
           onDelete={() => {}}
         />
       </div>
+      <TaskFormModal
+        open={taskModalOpen}
+        onClose={() => setTaskModalOpen(false)}
+        task={editingTask}
+        onSubmit={handleTaskSubmit}
+      />
     </DashboardTemplate>
   );
 };

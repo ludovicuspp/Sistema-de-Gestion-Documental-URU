@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
+import { RecordFormModal } from "@/components/molecules/RecordFormModal";
 import { RecordDocumentsList } from "@/components/organisms/RecordDocumentsList";
 import { RecentActivity } from "@/components/organisms/RecentActivity";
 import type { RecordStatusFilter } from "@/components/organisms/RecordSearchCard";
@@ -40,10 +41,28 @@ export const AssistantRecordManagementPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<RecordStatusFilter>("pending");
   const [selectedRecord, setSelectedRecord] = useState<RecordDetailData | null>(MOCK_RECORD);
+  const [expedientModalOpen, setExpedientModalOpen] = useState(false);
 
   const handleSearchChange = useCallback((value: string) => setSearchQuery(value), []);
   const handleFilterChange = useCallback((filter: RecordStatusFilter) => setActiveFilter(filter), []);
-  const handleNewRecord = useCallback(() => console.log("Nuevo expediente"), []);
+  const handleNewRecord = useCallback(() => setExpedientModalOpen(true), []);
+
+  const handleExpedientSubmit = useCallback(
+    (data: { studentCI: string; studentName: string; recordType: string; studentEmail?: string; studentBirthDate?: string; recordLocation?: string }) => {
+      setSelectedRecord({
+        studentId: "1",
+        studentName: data.studentName,
+        studentCI: data.studentCI,
+        studentBirthDate: data.studentBirthDate,
+        studentEmail: data.studentEmail,
+        recordType: data.recordType,
+        recordCreatedDate: new Date().toISOString().slice(0, 10),
+        recordLocation: data.recordLocation ?? "",
+        recordStatus: "pending",
+      });
+    },
+    []
+  );
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
     setActiveFilter("pending");
@@ -116,6 +135,12 @@ export const AssistantRecordManagementPage = () => {
           </div>
         </div>
       </div>
+      <RecordFormModal
+        open={expedientModalOpen}
+        onClose={() => setExpedientModalOpen(false)}
+        record={null}
+        onSubmit={handleExpedientSubmit}
+      />
     </DashboardTemplate>
   );
 };
