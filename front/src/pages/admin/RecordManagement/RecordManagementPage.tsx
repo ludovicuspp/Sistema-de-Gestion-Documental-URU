@@ -5,6 +5,8 @@ import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { RecordFormModal } from "@/components/molecules/RecordFormModal";
+import { AlertModal } from "@/components/molecules/AlertModal";
+import { Button } from "@/components/atoms/Button";
 import { RecordDocumentsList } from "@/components/organisms/RecordDocumentsList";
 import { RecentActivity } from "@/components/organisms/RecentActivity";
 import type { RecordStatusFilter } from "@/components/organisms/RecordSearchCard";
@@ -72,9 +74,19 @@ export const RecordManagementPage = () => {
   const [editingExpedient, setEditingExpedient] = useState<RecordDetailData | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [confirmCreateOpen, setConfirmCreateOpen] = useState(false);
+  const [noRecordAlert, setNoRecordAlert] = useState(false);
+
+  // TEMPORAL: Función para probar alert - ELIMINAR después
+  const handleTestNoRecordAlert = useCallback(() => {
+    setNoRecordAlert(true);
+  }, []);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
+    // Simular búsqueda sin resultado
+    if (value.toLowerCase().includes("inexistente")) {
+      setNoRecordAlert(true);
+    }
   }, []);
 
   const handleFilterChange = useCallback((filter: RecordStatusFilter) => {
@@ -179,6 +191,16 @@ export const RecordManagementPage = () => {
       onPrivacyClick={() => {}}
     >
       <div className="record-management-page">
+        {/* TEMPORAL: Botón de prueba - ELIMINAR después */}
+        <div style={{ padding: "1rem", background: "#fff3cd", marginBottom: "1rem", borderRadius: "4px" }}>
+          <strong>🧪 Botón de prueba (eliminar después):</strong>
+          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+            <Button variant="secondary" size="small" onClick={handleTestNoRecordAlert}>
+              4. Sin expediente asociado
+            </Button>
+          </div>
+        </div>
+        
         <div className="record-management-page__content">
           <div className="record-management-page__left">
             <div className="record-management-page__search">
@@ -240,6 +262,34 @@ export const RecordManagementPage = () => {
         message="¿Desea crear un expediente?"
         onConfirm={handleConfirmCreate}
       />
+      <AlertModal
+        open={noRecordAlert}
+        type="warning"
+        title="Sin expediente asociado"
+        message="El estudiante no posee expedientes en el sistema."
+        buttonLabel="Cerrar"
+        onClose={() => setNoRecordAlert(false)}
+        actions={
+          <Button
+            variant="secondary"
+            size="medium"
+            onClick={() => {
+              setNoRecordAlert(false);
+              handleNewRecord();
+            }}
+          >
+            Crear expediente
+          </Button>
+        }
+      >
+        <p style={{ marginTop: "0.75rem", marginBottom: "0.25rem", fontSize: "0.875rem", color: "var(--color-text-primary)" }}>
+          Opciones disponibles:
+        </p>
+        <ul className="alert-modal__list">
+          <li>Crear expediente nuevo</li>
+          <li>Buscar por otro identificador</li>
+        </ul>
+      </AlertModal>
     </DashboardTemplate>
   );
 };

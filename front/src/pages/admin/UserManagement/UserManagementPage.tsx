@@ -5,6 +5,8 @@ import { UserDetails } from "@/components/organisms/UserDetails";
 import { ActionHistory } from "@/components/organisms/ActionHistory";
 import { UserFormModal } from "@/components/molecules/UserFormModal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
+import { AlertModal } from "@/components/molecules/AlertModal";
+import { Button } from "@/components/atoms/Button";
 import type { UserListItem } from "@/components/organisms/UserList";
 import type { UserDetail } from "@/components/organisms/UserDetails";
 import "./UserManagementPage.css";
@@ -73,6 +75,15 @@ export const UserManagementPage = () => {
   const [editingUser, setEditingUser] = useState<{ user: UserDetail; name: string } | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [incompleteFieldsAlert, setIncompleteFieldsAlert] = useState(false);
+  const [userExistsAlert, setUserExistsAlert] = useState(false);
+  const [invalidRoleAlert, setInvalidRoleAlert] = useState(false);
+  const [saveUserErrorAlert, setSaveUserErrorAlert] = useState(false);
+  const [userNotFoundAlert, setUserNotFoundAlert] = useState(false);
+  const [userDeletedAlert, setUserDeletedAlert] = useState(false);
+  const [invalidRoleForDeletionAlert, setInvalidRoleForDeletionAlert] = useState(false);
+  const [userWithPendingTasksAlert, setUserWithPendingTasksAlert] = useState(false);
+  const [noUsersFoundAlert, setNoUsersFoundAlert] = useState(false);
 
   const selectedUser = selectedUserId ? MOCK_DETAILS[selectedUserId] ?? null : null;
 
@@ -90,6 +101,43 @@ export const UserManagementPage = () => {
     setSelectedUserId(null);
     // TODO: recargar lista desde API
     console.log("Refrescar");
+  }, []);
+
+  // TEMPORAL: Funciones para probar alertas - ELIMINAR después
+  const handleTestIncompleteFields = useCallback(() => {
+    setIncompleteFieldsAlert(true);
+  }, []);
+
+  const handleTestUserExists = useCallback(() => {
+    setUserExistsAlert(true);
+  }, []);
+
+  const handleTestInvalidRole = useCallback(() => {
+    setInvalidRoleAlert(true);
+  }, []);
+
+  const handleTestSaveUserError = useCallback(() => {
+    setSaveUserErrorAlert(true);
+  }, []);
+
+  const handleTestUserNotFound = useCallback(() => {
+    setUserNotFoundAlert(true);
+  }, []);
+
+  const handleTestUserDeleted = useCallback(() => {
+    setUserDeletedAlert(true);
+  }, []);
+
+  const handleTestInvalidRoleForDeletion = useCallback(() => {
+    setInvalidRoleForDeletionAlert(true);
+  }, []);
+
+  const handleTestUserWithPendingTasks = useCallback(() => {
+    setUserWithPendingTasksAlert(true);
+  }, []);
+
+  const handleTestNoUsersFound = useCallback(() => {
+    setNoUsersFoundAlert(true);
   }, []);
 
   const handleEdit = useCallback((id: string) => {
@@ -169,6 +217,40 @@ export const UserManagementPage = () => {
       onRefresh={handleRefresh}
     >
       <div className="user-management-page">
+        {/* TEMPORAL: Botones de prueba - ELIMINAR después */}
+        <div style={{ padding: "1rem", background: "#fff3cd", marginBottom: "1rem", borderRadius: "4px" }}>
+          <strong>🧪 Botones de prueba (eliminar después):</strong>
+          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
+            <Button variant="secondary" size="small" onClick={handleTestIncompleteFields}>
+              23. Campos obligatorios
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestUserExists}>
+              24. Usuario ya existe
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestInvalidRole}>
+              25. Rol no válido
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestSaveUserError}>
+              26. Error al guardar usuario
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestUserNotFound}>
+              27. Usuario no encontrado
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestUserDeleted}>
+              28. Usuario ya eliminado
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestInvalidRoleForDeletion}>
+              29. Rol no válido (eliminar)
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestUserWithPendingTasks}>
+              30. Usuario con tareas
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestNoUsersFound}>
+              31. No se encontraron usuarios
+            </Button>
+          </div>
+        </div>
+        
         <div className="user-management-page__top">
           <UserList
             users={filteredUsers}
@@ -206,6 +288,90 @@ export const UserManagementPage = () => {
         label="Eliminar"
         message="¿Seguro que desea eliminar?"
         onConfirm={handleConfirmDelete}
+      />
+      <AlertModal
+        open={incompleteFieldsAlert}
+        type="warning"
+        title="Complete los campos obligatorios"
+        message="Nombre, cédula, correo, rol y credenciales son requeridos."
+        buttonLabel="Corregir"
+        onClose={() => setIncompleteFieldsAlert(false)}
+      />
+      <AlertModal
+        open={userExistsAlert}
+        type="warning"
+        title="Usuario ya existe"
+        message="Se encontró un usuario con la misma cédula o correo."
+        buttonLabel="Cerrar"
+        onClose={() => setUserExistsAlert(false)}
+      />
+      <AlertModal
+        open={invalidRoleAlert}
+        type="error"
+        title="Rol no válido"
+        message="El rol suministrado no es admitido por el sistema."
+        buttonLabel="Cerrar"
+        onClose={() => setInvalidRoleAlert(false)}
+      />
+      <AlertModal
+        open={saveUserErrorAlert}
+        type="error"
+        title="Error al guardar usuario"
+        message="No se pudo guardar el registro en la base de datos."
+        buttonLabel="Cerrar"
+        onClose={() => setSaveUserErrorAlert(false)}
+      />
+      <AlertModal
+        open={userNotFoundAlert}
+        type="warning"
+        title="Usuario no encontrado"
+        message="No existe un usuario con esos criterios."
+        buttonLabel="Cerrar"
+        onClose={() => setUserNotFoundAlert(false)}
+      />
+      <AlertModal
+        open={userDeletedAlert}
+        type="warning"
+        title="Usuario ya fue eliminado"
+        message="Este usuario se encuentra inactivo o eliminado."
+        buttonLabel="Cerrar"
+        onClose={() => setUserDeletedAlert(false)}
+      />
+      <AlertModal
+        open={invalidRoleForDeletionAlert}
+        type="error"
+        title="Rol no válido para eliminación"
+        message="El rol seleccionado no puede ser eliminado."
+        buttonLabel="Cerrar"
+        onClose={() => setInvalidRoleForDeletionAlert(false)}
+      />
+      <AlertModal
+        open={userWithPendingTasksAlert}
+        type="warning"
+        title="Usuario con tareas pendientes"
+        message="No se puede eliminar mientras existan tareas o validaciones pendientes."
+        buttonLabel="Cerrar"
+        onClose={() => setUserWithPendingTasksAlert(false)}
+        actions={
+          <Button
+            variant="secondary"
+            size="medium"
+            onClick={() => {
+              setUserWithPendingTasksAlert(false);
+              console.log("Ver tareas pendientes");
+            }}
+          >
+            Ver tareas
+          </Button>
+        }
+      />
+      <AlertModal
+        open={noUsersFoundAlert}
+        type="warning"
+        title="No se encontraron usuarios"
+        message=""
+        buttonLabel="Cerrar"
+        onClose={() => setNoUsersFoundAlert(false)}
       />
     </DashboardTemplate>
   );

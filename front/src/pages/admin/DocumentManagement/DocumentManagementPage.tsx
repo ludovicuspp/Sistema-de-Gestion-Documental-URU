@@ -10,6 +10,8 @@ import type { VerificationInboxItem } from "@/components/organisms/VerificationI
 import type { ExpedientSelectCardData } from "@/components/organisms/ExpedientSelectCard";
 import { DocumentTypeFormModal } from "@/components/molecules/DocumentTypeFormModal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
+import { AlertModal } from "@/components/molecules/AlertModal";
+import { Button } from "@/components/atoms/Button";
 import type { DocumentTypeItem } from "@/components/organisms/DocumentTypesCard";
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
 import "./DocumentManagementPage.css";
@@ -105,6 +107,53 @@ export const DocumentManagementPage = () => {
   const [deletingTypeId, setDeletingTypeId] = useState<string | null>(null);
   const [confirmDeleteDocOpen, setConfirmDeleteDocOpen] = useState(false);
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
+  const [documentNotAvailableAlert, setDocumentNotAvailableAlert] = useState(false);
+
+  // TEMPORAL: Función para probar alert - ELIMINAR después
+  const handleTestDocumentNotAvailable = useCallback(() => {
+    setDocumentNotAvailableAlert(true);
+  }, []);
+
+  const [saveErrorAlert, setSaveErrorAlert] = useState(false);
+  const [cannotApproveAlert, setCannotApproveAlert] = useState(false);
+  const [incompleteDataAlert2, setIncompleteDataAlert2] = useState(false);
+  const [duplicateDocTypeAlert, setDuplicateDocTypeAlert] = useState(false);
+  const [recordNotFoundAlert2, setRecordNotFoundAlert2] = useState(false);
+  const [formatNotAllowedAlert, setFormatNotAllowedAlert] = useState(false);
+  const [fileSizeExceededAlert, setFileSizeExceededAlert] = useState(false);
+  const [duplicateDocumentAlert, setDuplicateDocumentAlert] = useState(false);
+
+  const handleTestSaveError = useCallback(() => {
+    setSaveErrorAlert(true);
+  }, []);
+
+  const handleTestCannotApprove = useCallback(() => {
+    setCannotApproveAlert(true);
+  }, []);
+
+  const handleTestIncompleteData2 = useCallback(() => {
+    setIncompleteDataAlert2(true);
+  }, []);
+
+  const handleTestDuplicateDocType = useCallback(() => {
+    setDuplicateDocTypeAlert(true);
+  }, []);
+
+  const handleTestRecordNotFound2 = useCallback(() => {
+    setRecordNotFoundAlert2(true);
+  }, []);
+
+  const handleTestFormatNotAllowed = useCallback(() => {
+    setFormatNotAllowedAlert(true);
+  }, []);
+
+  const handleTestFileSizeExceeded = useCallback(() => {
+    setFileSizeExceededAlert(true);
+  }, []);
+
+  const handleTestDuplicateDocument = useCallback(() => {
+    setDuplicateDocumentAlert(true);
+  }, []);
 
   const filteredVerificationItems = useMemo(() => {
     if (!verificationSearch.trim()) return verificationItems;
@@ -212,6 +261,40 @@ export const DocumentManagementPage = () => {
       onPrivacyClick={() => {}}
     >
       <div className="document-management-page">
+        {/* TEMPORAL: Botón de prueba - ELIMINAR después */}
+        <div style={{ position: "fixed", top: "5rem", right: "1rem", zIndex: 1000, background: "#fff3cd", padding: "1rem", borderRadius: "4px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+          <strong>🧪 Prueba:</strong>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.5rem" }}>
+            <Button variant="secondary" size="small" onClick={handleTestDocumentNotAvailable}>
+              3. Documento no disponible
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestSaveError}>
+              7. Error al guardar
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestCannotApprove}>
+              8. No se puede aprobar
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestIncompleteData2}>
+              17. Datos incompletos (v2)
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestDuplicateDocType}>
+              18. Tipo documento duplicado
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestRecordNotFound2}>
+              19. Expediente no encontrado
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestFormatNotAllowed}>
+              20. Formato no permitido
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestFileSizeExceeded}>
+              21. Tamaño excedido
+            </Button>
+            <Button variant="secondary" size="small" onClick={handleTestDuplicateDocument}>
+              22. Documento duplicado
+            </Button>
+          </div>
+        </div>
+        
         <aside className="document-management-page__bandeja">
           <VerificationInbox
             title="Bandeja de verificación"
@@ -237,7 +320,14 @@ export const DocumentManagementPage = () => {
             title="Documentos del expediente"
             generalStatus="pending"
             documents={documents}
-            onViewDocument={(id) => console.log("Ver documento", id)}
+            onViewDocument={(id) => {
+              const doc = documents.find((d) => d.id === id);
+              if (!doc || doc.validationStatus === "pending") {
+                setDocumentNotAvailableAlert(true);
+              } else {
+                console.log("Ver documento", id);
+              }
+            }}
             onObservation={(id) => console.log("Observación", id)}
             onDeleteDocument={handleDeleteDocument}
           />
@@ -290,6 +380,114 @@ export const DocumentManagementPage = () => {
         label="Eliminar"
         message="¿Seguro que desea eliminar el documento?"
         onConfirm={handleConfirmDeleteDocument}
+      />
+      <AlertModal
+        open={documentNotAvailableAlert}
+        type="warning"
+        title="Documento no disponible"
+        message="El documento seleccionado no esta disponible"
+        buttonLabel="Cerrar"
+        onClose={() => setDocumentNotAvailableAlert(false)}
+      />
+      <AlertModal
+        open={saveErrorAlert}
+        type="error"
+        title="Error al guardar expediente"
+        message="Ocurrió un error al guardar en la base de datos."
+        buttonLabel="Cerrar"
+        onClose={() => setSaveErrorAlert(false)}
+      />
+      <AlertModal
+        open={cannotApproveAlert}
+        type="warning"
+        title="No se puede aprobar"
+        message="Faltan documentos obligatorios para el expediente."
+        buttonLabel="Cerrar"
+        onClose={() => setCannotApproveAlert(false)}
+        actions={
+          <Button
+            variant="secondary"
+            size="medium"
+            onClick={() => {
+              setCannotApproveAlert(false);
+              console.log("Ver documentos faltantes");
+            }}
+          >
+            Ver faltantes
+          </Button>
+        }
+      />
+      <AlertModal
+        open={incompleteDataAlert2}
+        type="warning"
+        title="Datos incompletos o inválidos"
+        message="Rellena toda la información requerida"
+        buttonLabel="Corregir"
+        onClose={() => setIncompleteDataAlert2(false)}
+      />
+      <AlertModal
+        open={duplicateDocTypeAlert}
+        type="warning"
+        title="Tipo de documento duplicado"
+        message="Se encontró un tipo de documento con el mismo nombre"
+        buttonLabel="Cancelar"
+        onClose={() => setDuplicateDocTypeAlert(false)}
+        actions={
+          <Button
+            variant="secondary"
+            size="medium"
+            onClick={() => {
+              setDuplicateDocTypeAlert(false);
+              console.log("Corregir nombre");
+            }}
+          >
+            Corregir
+          </Button>
+        }
+      />
+      <AlertModal
+        open={recordNotFoundAlert2}
+        type="warning"
+        title="Expediente no encontrado"
+        message="No existe el expediente indicado."
+        buttonLabel="Cerrar"
+        onClose={() => setRecordNotFoundAlert2(false)}
+      />
+      <AlertModal
+        open={formatNotAllowedAlert}
+        type="error"
+        title="Formato no permitido"
+        message="Solo se permiten PDF, JPG y PNG."
+        buttonLabel="Cerrar"
+        onClose={() => setFormatNotAllowedAlert(false)}
+      />
+      <AlertModal
+        open={fileSizeExceededAlert}
+        type="error"
+        title="Tamaño excedido"
+        message="El archivo supera el límite permitido. Ejemplo: límite 10 MB por archivo."
+        buttonLabel="Cerrar"
+        onClose={() => setFileSizeExceededAlert(false)}
+      />
+      <AlertModal
+        open={duplicateDocumentAlert}
+        type="warning"
+        title="Documento duplicado"
+        message="Se encontró un documento del mismo tipo. ¿Deseas reemplazarlo?"
+        buttonLabel="Cancelar"
+        onClose={() => setDuplicateDocumentAlert(false)}
+        actions={
+          <Button
+            variant="secondary"
+            size="medium"
+            onClick={() => {
+              setDuplicateDocumentAlert(false);
+              console.log("Reemplazar documento");
+            }}
+          >
+            Reemplazar
+          </Button>
+        }
       />
     </DashboardTemplate>
   );

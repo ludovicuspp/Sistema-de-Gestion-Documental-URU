@@ -5,6 +5,7 @@ import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
 import { RecordFormModal } from "@/components/molecules/RecordFormModal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
+import { AlertModal } from "@/components/molecules/AlertModal";
 import { RecordDocumentsList } from "@/components/organisms/RecordDocumentsList";
 import { RecentActivity } from "@/components/organisms/RecentActivity";
 import type { RecordStatusFilter } from "@/components/organisms/RecordSearchCard";
@@ -45,8 +46,15 @@ export const AssistantRecordManagementPage = () => {
   const [expedientModalOpen, setExpedientModalOpen] = useState(false);
   const [confirmCreateOpen, setConfirmCreateOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [studentNotFoundAlert, setStudentNotFoundAlert] = useState(false);
 
-  const handleSearchChange = useCallback((value: string) => setSearchQuery(value), []);
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    // Simular búsqueda sin resultado para estudiante inexistente
+    if (value.toLowerCase().includes("inexistente")) {
+      setStudentNotFoundAlert(true);
+    }
+  }, []);
   const handleFilterChange = useCallback((filter: RecordStatusFilter) => setActiveFilter(filter), []);
   const handleNewRecord = useCallback(() => setConfirmCreateOpen(true), []);
 
@@ -167,6 +175,14 @@ export const AssistantRecordManagementPage = () => {
         label="Eliminar"
         message="¿Seguro que desea eliminar el expediente?"
         onConfirm={handleConfirmDelete}
+      />
+      <AlertModal
+        open={studentNotFoundAlert}
+        type="warning"
+        title="Estudiante no registrado"
+        message="No se encontró el estudiante al procesar la solicitud."
+        buttonLabel="Cerrar"
+        onClose={() => setStudentNotFoundAlert(false)}
       />
     </DashboardTemplate>
   );
