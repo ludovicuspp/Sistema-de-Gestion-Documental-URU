@@ -1,0 +1,14 @@
+.character-counter {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #6b7280);
+  align-self: flex-end;
+}
+
+.character-counter--warning {
+  color: #b45309;
+}
+
+.character-counter--error {
+  color: #dc2626;
+  font-weight: 600;
+}

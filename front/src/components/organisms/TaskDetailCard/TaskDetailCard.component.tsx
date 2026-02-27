@@ -63,9 +63,15 @@ export const TaskDetailCard = ({
             <h4 className="task-detail-card__task-title">{task.title}</h4>
             <div className="task-detail-card__actions">
               {isVerifier ? (
-                <Button variant="outline" size="small" onClick={onMarkCompleted} className="task-detail-card__btn-complete">
-                  Marcar como completada
-                </Button>
+                task.status === "Finalizada" ? (
+                  <Button variant="secondary" size="small" onClick={onMarkPending} className="task-detail-card__btn-pending">
+                    Marcar como pendiente
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="small" onClick={onMarkCompleted} className="task-detail-card__btn-complete">
+                    Marcar como completada
+                  </Button>
+                )
               ) : (
                 <>
                   <Button variant="secondary" size="small" onClick={onMarkPending}>

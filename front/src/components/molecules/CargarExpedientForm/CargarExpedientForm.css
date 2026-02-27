@@ -1,0 +1,51 @@
+.cargar-expedient-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cargar-expedient-form__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.cargar-expedient-form__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.cargar-expedient-form__required {
+  color: #dc2626;
+}
+
+.cargar-expedient-form__file-input {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: #374151;
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+}
+
+.cargar-expedient-form__file-input:focus {
+  outline: none;
+  border-color: #284483;
+}
+
+.cargar-expedient-form__file-name {
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.cargar-expedient-form__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}

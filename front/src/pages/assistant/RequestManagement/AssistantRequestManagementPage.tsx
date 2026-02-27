@@ -98,7 +98,12 @@ export const AssistantRequestManagementPage = () => {
             </div>
           </div>
           <div className="request-management-page__right">
-            <RequestActionsCard onSaveNote={handleSaveNote} onClear={handleClearNote} />
+            <RequestActionsCard
+              onSaveNote={handleSaveNote}
+              onClear={handleClearNote}
+              confirmBeforeSave
+              confirmSaveMessage="¿Desea guardar la nota?"
+            />
           </div>
         </div>
       </div>
