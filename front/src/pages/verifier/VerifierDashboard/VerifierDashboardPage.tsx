@@ -5,6 +5,8 @@ import { Reminders } from "@/components/organisms/Reminders";
 import { QuickAccess } from "@/components/organisms/QuickAccess";
 import { RecentActivity } from "@/components/organisms/RecentActivity";
 import { TaskPanelCard } from "@/components/organisms/TaskPanelCard";
+import { FormModal } from "@/components/molecules/FormModal";
+import { CharacterCounter } from "@/components/atoms/CharacterCounter";
 import type { QuickAccessItem } from "@/components/organisms/QuickAccess";
 import type { ActivityEntry } from "@/components/organisms/RecentActivity";
 import { VERIFIER_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
@@ -28,6 +30,8 @@ const TASK_PANEL_TODO = ["Revisar expediente 00060-001", "Subir actas lote 12"];
 const TASK_PANEL_IN_PROGRESS = ["Validar documentos Verificador A"];
 const TASK_PANEL_COMPLETED = ["Generar reporte mensual"];
 
+const MAX_REMINDER_CHARS = 200;
+
 /**
  * VerifierDashboardPage - Page (Verifier)
  *
@@ -39,6 +43,8 @@ export const VerifierDashboardPage = () => {
   const [reminders, setReminders] = useState<string[]>([]);
   const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>(ACTIVITY_MOCK);
   const [loading, setLoading] = useState(true);
+  const [addReminderOpen, setAddReminderOpen] = useState(false);
+  const [newReminderText, setNewReminderText] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -72,6 +78,19 @@ export const VerifierDashboardPage = () => {
     onClick: () => handleQuickAccess(i),
   }));
 
+  const handleCloseAddReminder = () => {
+    setAddReminderOpen(false);
+    setNewReminderText("");
+  };
+
+  const handleSubmitAddReminder = () => {
+    const text = newReminderText.trim();
+    if (text) {
+      setReminders((prev) => [...prev, text]);
+      handleCloseAddReminder();
+    }
+  };
+
   return (
     <DashboardTemplate
       currentView="Panel principal"
@@ -89,8 +108,37 @@ export const VerifierDashboardPage = () => {
           <div className="verifier-dashboard__left">
             <Reminders
               items={loading ? [] : reminders}
-              onAddReminder={() => {}}
+              onAddReminder={() => setAddReminderOpen(true)}
             />
+            <FormModal
+              open={addReminderOpen}
+              onClose={handleCloseAddReminder}
+              label="Añadir recordatorio"
+              size="md"
+              submitLabel="Añadir"
+              onSubmit={handleSubmitAddReminder}
+            >
+              <div className="form-modal__field">
+                <label htmlFor="verifier-reminder-text" className="form-modal__field-label">
+                  Texto del recordatorio
+                </label>
+                <div className="verifier-dashboard__reminder-field-wrapper">
+                  <textarea
+                    id="verifier-reminder-text"
+                    className="form-modal__field-textarea"
+                    value={newReminderText}
+                    onChange={(e) => setNewReminderText(e.target.value)}
+                    placeholder="Ej: Revisar expedientes pendientes..."
+                    maxLength={MAX_REMINDER_CHARS}
+                    rows={3}
+                  />
+                  <CharacterCounter
+                    current={newReminderText.length}
+                    max={MAX_REMINDER_CHARS}
+                  />
+                </div>
+              </div>
+            </FormModal>
             <TaskPanelCard
               todo={TASK_PANEL_TODO}
               inProgress={TASK_PANEL_IN_PROGRESS}
