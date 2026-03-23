@@ -49,6 +49,9 @@ export const LoginPage = () => {
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
         <LoginForm onSubmit={handleLogin} loading={loading} error={error} />
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
+          <Link to="/solicitud-expediente" style={{ fontSize: "0.875rem", color: "#284483" }}>
+            Ir al formulario de estudiante (demo)
+          </Link>
           <Link to="/admin" style={{ fontSize: "0.875rem", color: "#284483" }}>
             Ir al panel admin (demo)
           </Link>

@@ -1,0 +1,234 @@
+.solicitud-expediente {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f3f4f6;
+  overflow: hidden;
+}
+
+.solicitud-expediente__main {
+  flex: 1;
+  min-height: 0;
+  padding: 1.5rem 2rem 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.solicitud-expediente__breadcrumb {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+.solicitud-expediente__grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.solicitud-expediente__card {
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.solicitud-expediente__card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1rem;
+}
+
+.solicitud-expediente__intro {
+  font-size: 0.9375rem;
+  color: #4b5563;
+  margin: 0 0 1.25rem;
+}
+
+.solicitud-expediente__info-block {
+  margin-bottom: 1.25rem;
+}
+
+.solicitud-expediente__info-block:last-child {
+  margin-bottom: 0;
+}
+
+.solicitud-expediente__info-subtitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.5rem;
+}
+
+.solicitud-expediente__list {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.solicitud-expediente__list--bullets {
+  list-style-type: disc;
+}
+
+.solicitud-expediente__list li {
+  margin-bottom: 0.25rem;
+}
+
+.solicitud-expediente__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.solicitud-expediente__form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.solicitud-expediente__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.solicitud-expediente__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.solicitud-expediente__select {
+  width: 100%;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1f2937;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 2.5rem;
+  cursor: pointer;
+}
+
+.solicitud-expediente__select:hover {
+  border-color: #9ca3af;
+}
+
+.solicitud-expediente__select:focus {
+  outline: none;
+  border-color: #284483;
+  box-shadow: 0 0 0 3px rgba(40, 68, 131, 0.1);
+}
+
+.solicitud-expediente__checkgrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem 1.5rem;
+}
+
+.solicitud-expediente__checkbox-label {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.solicitud-expediente__checkbox {
+  margin-top: 0.2rem;
+  width: 1rem;
+  height: 1rem;
+  accent-color: #284483;
+  flex-shrink: 0;
+}
+
+.solicitud-expediente__hint {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0;
+}
+
+.solicitud-expediente__textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1f2937;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  resize: vertical;
+  min-height: 5rem;
+}
+
+.solicitud-expediente__textarea::placeholder {
+  color: #9ca3af;
+}
+
+.solicitud-expediente__textarea:focus {
+  outline: none;
+  border-color: #284483;
+  box-shadow: 0 0 0 3px rgba(40, 68, 131, 0.1);
+}
+
+.solicitud-expediente__error {
+  font-size: 0.875rem;
+  color: #ef4444;
+}
+
+.solicitud-expediente__submit-area {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.solicitud-expediente__politica {
+  margin-bottom: 0.75rem;
+}
+
+.solicitud-expediente__buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.solicitud-expediente__buttons .button--outline {
+  border-color: #374151;
+  color: #374151;
+}
+
+.solicitud-expediente__buttons .button--outline:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  border-color: #1f2937;
+  color: #1f2937;
+}
+
+@media (max-width: 900px) {
+  .solicitud-expediente__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .solicitud-expediente__form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .solicitud-expediente__checkgrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .solicitud-expediente__main {
+    padding: 1rem;
+  }
+}

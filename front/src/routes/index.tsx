@@ -23,6 +23,7 @@ import {
   AssistantShortcutsPage,
   AssistantConfigurationPage,
 } from "@/pages/assistant";
+import { SolicitudExpedientePage } from "@/pages/public";
 
 /**
  * Routes grouped by role/functionality:
@@ -38,6 +39,10 @@ const router = createBrowserRouter([
         <LoginPage />
       </Layout>
     ),
+  },
+  {
+    path: "/solicitud-expediente",
+    element: <SolicitudExpedientePage />,
   },
   {
     path: "/admin/users",
