@@ -1,1 +1,1 @@
-export { SolicitudExpedientePage } from "./SolicitudExpediente";
+export { ExpedientRequestPage } from "./ExpedientRequest";
