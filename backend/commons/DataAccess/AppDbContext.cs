@@ -13,10 +13,14 @@ public class AppDbContext : DbContext
 
     public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Person> Persons => Set<Person>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new DocumentTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new RoleConfiguration());
+        modelBuilder.ApplyConfiguration(new PersonConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
     }
 }

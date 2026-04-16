@@ -24,13 +24,15 @@ public sealed class TokenService(IConfiguration configuration)
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Email, user.Email),
-            new("email", user.Email)
+            new("email", user.Email),
+            new(ClaimTypes.Name, user.Username),
+            new("username", user.Username)
         };
 
-        if (!string.IsNullOrWhiteSpace(user.FullName))
+        if (!string.IsNullOrWhiteSpace(user.Role?.Name))
         {
-            claims.Add(new Claim(ClaimTypes.Name, user.FullName));
-            claims.Add(new Claim("name", user.FullName));
+            claims.Add(new Claim(ClaimTypes.Role, user.Role.Name));
+            claims.Add(new Claim("role", user.Role.Name));
         }
 
         var token = new JwtSecurityToken(

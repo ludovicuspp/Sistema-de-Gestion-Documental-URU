@@ -8,7 +8,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        builder.ToTable("Users");
+        builder.ToTable("User", "Security");
 
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
@@ -16,13 +16,16 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(e => e.GuidId).IsRequired();
         builder.HasIndex(e => e.GuidId).IsUnique();
 
-        builder.Property(e => e.Email).HasMaxLength(320).IsRequired();
-        builder.HasIndex(e => e.Email).IsUnique();
-
+        builder.Property(e => e.Username).HasMaxLength(100).IsRequired();
         builder.Property(e => e.PasswordHash).HasMaxLength(255).IsRequired();
-        builder.Property(e => e.FullName).HasMaxLength(256);
+        builder.Property(e => e.Email).HasMaxLength(60).IsRequired();
+        builder.Property(e => e.IsActive).IsRequired();
 
-        builder.Property(e => e.CreatedAt).IsRequired();
-        builder.Property(e => e.UpdatedAt);
+        builder.HasIndex(e => e.Email);
+
+        builder.HasOne(e => e.Role)
+            .WithMany()
+            .HasForeignKey(e => e.RoleId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

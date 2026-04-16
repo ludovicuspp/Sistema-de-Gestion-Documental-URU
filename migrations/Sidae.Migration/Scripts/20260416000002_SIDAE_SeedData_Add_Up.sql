@@ -5,6 +5,14 @@
 -- Secciones por dominio para mantener orden al crecer el proyecto.
 -- =============================================
 
+-- ── Security.Role — rol por defecto para registro público (Auth:DefaultRegisterRoleName)
+INSERT INTO "Security"."Role" ("GuidId", "Name")
+SELECT gen_random_uuid(), v."Name"
+FROM (VALUES ('Usuario')) AS v("Name")
+WHERE NOT EXISTS (
+    SELECT 1 FROM "Security"."Role" r WHERE r."Name" = v."Name"
+);
+
 -- ── Document.Type — Tipos de documentos del expediente estudiantil ───────────
 -- RequiredLevel: 'Todos' | 'Pregrado' | 'Postgrado' | 'Egresado'
 -- IsMandatory  : true = obligatorio para ese nivel, false = opcional

@@ -20,3 +20,8 @@ WHERE "Name" IN (
     'Veredicto',
     'Repetición de Expediente'
 );
+
+-- Rol de registro (solo si ningún usuario lo referencia)
+DELETE FROM "Security"."Role" r
+WHERE r."Name" = 'Usuario'
+  AND NOT EXISTS (SELECT 1 FROM "Security"."User" u WHERE u."RoleId" = r."Id");

@@ -43,7 +43,7 @@ DROP TABLE IF EXISTS "Task"."Status"             CASCADE;
 -- Security
 DROP TABLE IF EXISTS "Security"."RoleUser"       CASCADE;
 DROP TABLE IF EXISTS "Security"."Permission"     CASCADE;
-DROP TABLE IF EXISTS "Security"."Users"          CASCADE;
+DROP TABLE IF EXISTS "Security"."User"           CASCADE;
 DROP TABLE IF EXISTS "Security"."Role"           CASCADE;
 DROP TABLE IF EXISTS "Security"."Endpoint"       CASCADE;
 DROP TABLE IF EXISTS "Security"."Action"         CASCADE;

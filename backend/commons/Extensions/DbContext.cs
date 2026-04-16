@@ -16,15 +16,28 @@ public static class DbContextExtensions
         IConfigurationSection configuration,
         IHostEnvironment environment)
     {
-        var connectionString = configuration["ConnectionString"];
+        var connectionString = configuration["ConnectionString"] ?? string.Empty;
+        var useNpgsql = configuration.GetValue("UseNpgsql", false)
+            || connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase);
 
         void ConfigureOptions(DbContextOptionsBuilder options)
         {
-            options.UseSqlServer(connectionString, sqlOptions =>
-                sqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 5,
-                    maxRetryDelay: TimeSpan.FromSeconds(10),
-                    errorNumbersToAdd: null));
+            if (useNpgsql)
+            {
+                options.UseNpgsql(connectionString, npgsql =>
+                    npgsql.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorCodesToAdd: null));
+            }
+            else
+            {
+                options.UseSqlServer(connectionString, sqlOptions =>
+                    sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorNumbersToAdd: null));
+            }
 
             if (environment.IsDevelopment())
                 options.LogTo(Console.WriteLine, LogLevel.Information);

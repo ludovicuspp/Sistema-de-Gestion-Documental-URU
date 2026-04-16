@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS "General"."Career" (
 
 -- =============================================
 -- SECURITY
--- Orden: Action → Endpoint → Role → Users → Permission → RoleUser
+-- Orden: Action → Endpoint → Role → User → Permission → RoleUser
 -- =============================================
 
 CREATE TABLE IF NOT EXISTS "Security"."Action" (
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS "Security"."Role" (
     CONSTRAINT "UQ_Security_Role_GuidId" UNIQUE ("GuidId")
 );
 
-CREATE TABLE IF NOT EXISTS "Security"."Users" (
+CREATE TABLE IF NOT EXISTS "Security"."User" (
     "Id"           SERIAL       PRIMARY KEY,
     "GuidId"       UUID         NOT NULL DEFAULT gen_random_uuid(),
     "Username"     VARCHAR(100) NOT NULL,
@@ -71,8 +71,8 @@ CREATE TABLE IF NOT EXISTS "Security"."Users" (
     "Email"        VARCHAR(60)  NOT NULL,
     "IsActive"     BOOLEAN      NOT NULL DEFAULT TRUE,
     "RoleId"       INT          NOT NULL,
-    CONSTRAINT "UQ_Security_Users_GuidId" UNIQUE ("GuidId"),
-    CONSTRAINT "FK_Security_Users_Role"
+    CONSTRAINT "UQ_Security_User_GuidId" UNIQUE ("GuidId"),
+    CONSTRAINT "FK_Security_User_Role"
         FOREIGN KEY ("RoleId") REFERENCES "Security"."Role" ("Id")
 );
 
@@ -104,9 +104,9 @@ CREATE TABLE IF NOT EXISTS "Security"."RoleUser" (
     CONSTRAINT "FK_Security_RoleUser_Role"
         FOREIGN KEY ("RoleId")    REFERENCES "Security"."Role"  ("Id"),
     CONSTRAINT "FK_Security_RoleUser_User"
-        FOREIGN KEY ("UserId")    REFERENCES "Security"."Users" ("Id"),
+        FOREIGN KEY ("UserId")    REFERENCES "Security"."User" ("Id"),
     CONSTRAINT "FK_Security_RoleUser_CreatedBy"
-        FOREIGN KEY ("CreatedBy") REFERENCES "Security"."Users" ("Id")
+        FOREIGN KEY ("CreatedBy") REFERENCES "Security"."User" ("Id")
 );
 
 -- =============================================
@@ -135,14 +135,14 @@ CREATE TABLE IF NOT EXISTS "Task"."Task" (
     CONSTRAINT "FK_Task_Task_Status"
         FOREIGN KEY ("StatusId")     REFERENCES "Task"."Status"    ("Id"),
     CONSTRAINT "FK_Task_Task_AssignedTo"
-        FOREIGN KEY ("AssignedToId") REFERENCES "Security"."Users" ("Id"),
+        FOREIGN KEY ("AssignedToId") REFERENCES "Security"."User" ("Id"),
     CONSTRAINT "FK_Task_Task_AssignedBy"
-        FOREIGN KEY ("AssignedById") REFERENCES "Security"."Users" ("Id")
+        FOREIGN KEY ("AssignedById") REFERENCES "Security"."User" ("Id")
 );
 
 -- =============================================
 -- PERSON
--- Depende de: Security.Users
+-- Depende de: Security.User
 -- =============================================
 
 CREATE TABLE IF NOT EXISTS "Person"."Person" (
@@ -163,11 +163,11 @@ CREATE TABLE IF NOT EXISTS "Person"."Person" (
     "UpdatedById" INT,
     CONSTRAINT "UQ_Person_Person_GuidId" UNIQUE ("GuidId"),
     CONSTRAINT "FK_Person_Person_User"
-        FOREIGN KEY ("UserId")      REFERENCES "Security"."Users" ("Id"),
+        FOREIGN KEY ("UserId")      REFERENCES "Security"."User" ("Id"),
     CONSTRAINT "FK_Person_Person_CreatedBy"
-        FOREIGN KEY ("CreatedById") REFERENCES "Security"."Users" ("Id"),
+        FOREIGN KEY ("CreatedById") REFERENCES "Security"."User" ("Id"),
     CONSTRAINT "FK_Person_Person_UpdatedBy"
-        FOREIGN KEY ("UpdatedById") REFERENCES "Security"."Users" ("Id")
+        FOREIGN KEY ("UpdatedById") REFERENCES "Security"."User" ("Id")
 );
 
 -- =============================================
@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS "Student"."Student" (
     CONSTRAINT "FK_Student_Student_StudentStatus"
         FOREIGN KEY ("StudentStatusId") REFERENCES "Student"."Status"         ("Id"),
     CONSTRAINT "FK_Student_Student_AssignedBy"
-        FOREIGN KEY ("AssignedById")    REFERENCES "Security"."Users"         ("Id")
+        FOREIGN KEY ("AssignedById")    REFERENCES "Security"."User"         ("Id")
 );
 
 CREATE TABLE IF NOT EXISTS "Student"."Career" (
@@ -264,7 +264,7 @@ CREATE TABLE IF NOT EXISTS "Record"."Folder" (
     CONSTRAINT "FK_Record_Folder_PhysicalLocation"
         FOREIGN KEY ("PhysicalLocationId") REFERENCES "Record"."PhysicalLocation" ("Id"),
     CONSTRAINT "FK_Record_Folder_CreatedBy"
-        FOREIGN KEY ("CreatedById")        REFERENCES "Security"."Users"          ("Id")
+        FOREIGN KEY ("CreatedById")        REFERENCES "Security"."User"          ("Id")
 );
 
 -- =============================================
@@ -311,9 +311,9 @@ CREATE TABLE IF NOT EXISTS "Document"."Document" (
     CONSTRAINT "FK_Document_Document_DocumentType"
         FOREIGN KEY ("DocumentTypeId") REFERENCES "Document"."Type"     ("Id"),
     CONSTRAINT "FK_Document_Document_CreatedBy"
-        FOREIGN KEY ("CreatedById")    REFERENCES "Security"."Users"    ("Id"),
+        FOREIGN KEY ("CreatedById")    REFERENCES "Security"."User"    ("Id"),
     CONSTRAINT "FK_Document_Document_UpdatedBy"
-        FOREIGN KEY ("UpdatedById")    REFERENCES "Security"."Users"    ("Id")
+        FOREIGN KEY ("UpdatedById")    REFERENCES "Security"."User"    ("Id")
 );
 
 -- =============================================
@@ -336,7 +336,7 @@ CREATE TABLE IF NOT EXISTS "Record"."Observation" (
     CONSTRAINT "FK_Record_Observation_Document"
         FOREIGN KEY ("DocumentId") REFERENCES "Document"."Document" ("Id"),
     CONSTRAINT "FK_Record_Observation_Author"
-        FOREIGN KEY ("AuthorId")   REFERENCES "Security"."Users"    ("Id")
+        FOREIGN KEY ("AuthorId")   REFERENCES "Security"."User"    ("Id")
 );
 
 -- =============================================
