@@ -18,9 +18,38 @@ export interface StudentFormModalProps {
 }
 
 const NIVELES = [
-  { value: "todos", label: "Todos" },
-  { value: "pregrado", label: "Pregrado" },
-  { value: "postgrado", label: "Postgrado" },
+  { value: "",               label: "Seleccionar"       },
+  { value: "pregrado",       label: "Pregrado"          },
+  { value: "postgrado",      label: "Postgrado"         },
+  { value: "cursos_avanzados", label: "Cursos Avanzados" },
+];
+
+const CARRERAS_PREGRADO = [
+  { value: "",                     label: "Seleccionar carrera"                  },
+  { value: "ing_computacion",      label: "Ingeniería en Computación"            },
+  { value: "ing_industrial",       label: "Ingeniería Industrial"                },
+  { value: "ing_civil",            label: "Ingeniería Civil"                     },
+  { value: "ing_mecanica",         label: "Ingeniería Mecánica"                  },
+  { value: "ing_electronica",      label: "Ingeniería Electrónica"               },
+  { value: "ing_quimica",          label: "Ingeniería Química"                   },
+  { value: "ing_produccion_animal",label: "Ingeniería en Producción Animal"      },
+  { value: "ciencias_politicas",   label: "Ciencias Políticas y Administrativas" },
+  { value: "administracion",       label: "Administración de Empresas"           },
+  { value: "contaduria",           label: "Contaduría Pública"                   },
+  { value: "derecho",              label: "Derecho"                              },
+  { value: "educacion",            label: "Educación"                            },
+  { value: "medicina",             label: "Medicina"                             },
+  { value: "enfermeria",           label: "Enfermería"                           },
+  { value: "arquitectura",         label: "Arquitectura"                         },
+  { value: "matematica",           label: "Matemática"                           },
+  { value: "fisica",               label: "Física"                               },
+  { value: "biologia",             label: "Biología"                             },
+  { value: "quimica",              label: "Química"                              },
+  { value: "comunicacion",         label: "Comunicación Social"                  },
+  { value: "psicologia",           label: "Psicología"                           },
+  { value: "trabajo_social",       label: "Trabajo Social"                       },
+  { value: "turismo",              label: "Turismo"                              },
+  { value: "otra",                 label: "Otra"                                 },
 ];
 
 const ESTADOS = [
@@ -43,7 +72,7 @@ export const StudentFormModal = ({
 }: StudentFormModalProps) => {
   const [name, setName] = useState("");
   const [cedula, setCedula] = useState("");
-  const [nivel, setNivel] = useState("todos");
+  const [nivel, setNivel] = useState("");
   const [carrera, setCarrera] = useState("");
   const [estado, setEstado] = useState("");
 
@@ -52,22 +81,27 @@ export const StudentFormModal = ({
       if (student) {
         setName(student.name ?? "");
         setCedula(student.cedula ?? "");
-        setNivel(
-          student.nivel?.toLowerCase() === "postgrado" ? "postgrado" : "pregrado"
-        );
+        const nivelLower = student.nivel?.toLowerCase() ?? "";
+        if (nivelLower === "postgrado") setNivel("postgrado");
+        else if (nivelLower === "cursos avanzados" || nivelLower === "cursos_avanzados") setNivel("cursos_avanzados");
+        else if (nivelLower === "pregrado") setNivel("pregrado");
+        else setNivel("");
         setCarrera(student.carrera ?? "");
-        setEstado(
-          student.estado?.toLowerCase() === "activo" ? "activo" : "inactivo"
-        );
+        setEstado(student.estado?.toLowerCase() === "activo" ? "activo" : "inactivo");
       } else {
         setName("");
         setCedula("");
-        setNivel("todos");
+        setNivel("");
         setCarrera("");
         setEstado("");
       }
     }
   }, [open, student]);
+
+  const handleNivelChange = (value: string) => {
+    setNivel(value);
+    if (value !== "pregrado") setCarrera("");
+  };
 
   const handleSubmit = () => {
     onSubmit({ name, cedula, nivel, carrera, estado });
@@ -116,7 +150,7 @@ export const StudentFormModal = ({
           id="student-nivel"
           className="form-modal__field-select"
           value={nivel}
-          onChange={(e) => setNivel(e.target.value)}
+          onChange={(e) => handleNivelChange(e.target.value)}
         >
           {NIVELES.map((o) => (
             <option key={o.value} value={o.value}>
@@ -125,19 +159,26 @@ export const StudentFormModal = ({
           ))}
         </select>
       </div>
-      <div className="form-modal__field">
-        <label htmlFor="student-carrera" className="form-modal__field-label">
-          Carrera
-        </label>
-        <input
-          id="student-carrera"
-          type="text"
-          className="form-modal__field-input"
-          value={carrera}
-          onChange={(e) => setCarrera(e.target.value)}
-          placeholder="Ej: Ingeniería Informática"
-        />
-      </div>
+
+      {nivel === "pregrado" && (
+        <div className="form-modal__field">
+          <label htmlFor="student-carrera" className="form-modal__field-label">
+            Carrera
+          </label>
+          <select
+            id="student-carrera"
+            className="form-modal__field-select"
+            value={carrera}
+            onChange={(e) => setCarrera(e.target.value)}
+          >
+            {CARRERAS_PREGRADO.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="form-modal__field">
         <label htmlFor="student-estado" className="form-modal__field-label">
           Estado

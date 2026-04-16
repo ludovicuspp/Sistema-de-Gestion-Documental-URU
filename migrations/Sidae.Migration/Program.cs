@@ -7,9 +7,9 @@ static class Program
     static void Main(string[] args)
     {
         // Connection string - update this with your database connection string
-        string connectionString = args.Length > 0 
-            ? args[0] 
-            : "Server=localhost;Database=YourDatabase;Integrated Security=True;TrustServerCertificate=True;";
+        string connectionString = args.Length > 0
+            ? args[0]
+            : "Host=localhost;Port=5432;Database=sidae_db;Username=postgres;Password=your_password;";
 
         IServiceProvider serviceProvider = CreateServices(connectionString);
 
@@ -28,8 +28,8 @@ static class Program
             // Add common FluentMigrator services
             .AddFluentMigratorCore()
             .ConfigureRunner(rb => rb
-                // Add SQL Server support to FluentMigrator
-                .AddSqlServer()
+                // Add PostgreSQL support to FluentMigrator
+                .AddPostgres()
                 // Set the connection string
                 .WithGlobalConnectionString(connectionString)
                 // Define the assembly containing the migrations

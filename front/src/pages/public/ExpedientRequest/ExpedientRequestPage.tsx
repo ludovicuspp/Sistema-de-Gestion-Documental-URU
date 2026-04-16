@@ -5,24 +5,75 @@ import { Input } from "@/components/atoms/Input";
 import { Button } from "@/components/atoms/Button";
 import "./ExpedientRequestPage.css";
 
-const DOCUMENTOS_OPCIONES = [
-  "Partida de Nacimiento",
-  "Fotocopia de la Cédula",
-  "Fondo Negro Titular de Bachiller",
-  "Fondo Negro Notas Certificadas",
-  "Certificado de participación OPSU",
-  "Veredicto",
-  "Acta aprobación Servicio comunitario",
-  "Acta aprobación de pasantías",
-  "Reconocimientos internos",
-] as const;
+type DocLevel = "todos" | "pregrado" | "postgrado" | "egresado";
+
+interface DocOption {
+  label: string;
+  level: DocLevel;
+}
+
+const DOCUMENTOS_OPCIONES: DocOption[] = [
+  // ── Comunes a todos los niveles ──────────────────────────
+  { label: "Cédula de Identidad",                level: "todos"    },
+  { label: "Partida de Nacimiento",              level: "todos"    },
+  { label: "Fondo Negro Título de Bachiller",    level: "todos"    },
+  { label: "Notas Certificadas",                 level: "todos"    },
+  { label: "Suscripción Militar",                level: "todos"    },
+  { label: "Manejo de Idioma",                   level: "todos"    },
+  { label: "Constancia de Servicio Comunitario", level: "todos"    },
+  { label: "Constancia de Pasantías",            level: "todos"    },
+  // ── Solo Pregrado ────────────────────────────────────────
+  { label: "Certificado de Aprobación OPSU",     level: "pregrado" },
+  // ── Egresado (Pregrado y Postgrado) ──────────────────────
+  { label: "Veredicto",                          level: "egresado" },
+  { label: "Repetición de Expediente",           level: "egresado" },
+];
+
+/** Devuelve los documentos visibles según el tipo de estudiante seleccionado. */
+function getDocumentosFiltrados(estudianteDe: string): DocOption[] {
+  if (!estudianteDe) return [];
+  return DOCUMENTOS_OPCIONES.filter(({ level }) => {
+    if (level === "todos") return true;
+    if (level === "pregrado")  return estudianteDe === "pregrado";
+    if (level === "postgrado") return estudianteDe === "postgrado";
+    if (level === "egresado")  return estudianteDe === "pregrado" || estudianteDe === "postgrado";
+    return false;
+  });
+}
+
+const CARRERAS_PREGRADO = [
+  { value: "", label: "Seleccionar carrera" },
+  { value: "ing_computacion", label: "Ingeniería en Computación" },
+  { value: "ing_industrial", label: "Ingeniería Industrial" },
+  { value: "ing_civil", label: "Ingeniería Civil" },
+  { value: "ing_mecanica", label: "Ingeniería Mecánica" },
+  { value: "ing_electronica", label: "Ingeniería Electrónica" },
+  { value: "ing_quimica", label: "Ingeniería Química" },
+  { value: "ing_produccion_animal", label: "Ingeniería en Producción Animal" },
+  { value: "ciencias_politicas", label: "Ciencias Políticas y Administrativas" },
+  { value: "administracion", label: "Administración de Empresas" },
+  { value: "contaduria", label: "Contaduría Pública" },
+  { value: "derecho", label: "Derecho" },
+  { value: "educacion", label: "Educación" },
+  { value: "medicina", label: "Medicina" },
+  { value: "enfermeria", label: "Enfermería" },
+  { value: "arquitectura", label: "Arquitectura" },
+  { value: "matematica", label: "Matemática" },
+  { value: "fisica", label: "Física" },
+  { value: "biologia", label: "Biología" },
+  { value: "quimica", label: "Química" },
+  { value: "comunicacion", label: "Comunicación Social" },
+  { value: "psicologia", label: "Psicología" },
+  { value: "trabajo_social", label: "Trabajo Social" },
+  { value: "turismo", label: "Turismo" },
+  { value: "otra", label: "Otra" },
+];
 
 const ESTUDIANTE_OPCIONES = [
   { value: "", label: "Seleccionar" },
   { value: "pregrado", label: "Pregrado" },
   { value: "postgrado", label: "Postgrado" },
-  { value: "extension", label: "Extensión" },
-  { value: "egresado", label: "Egresado" },
+  { value: "cursos_avanzados", label: "Cursos Avanzados" },
 ];
 
 const initialForm = {
@@ -30,8 +81,11 @@ const initialForm = {
   apellidos: "",
   cedula: "",
   estudianteDe: "",
+  fechaIngreso: "",
+  carrera: "",
   documentos: [] as string[],
   correo: "",
+  telefono: "",
   comentario: "",
 };
 
@@ -46,7 +100,17 @@ export const ExpedientRequestPage = () => {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (field: keyof typeof form, value: string | string[]) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "estudianteDe") {
+        next.documentos = [];
+        if (value !== "pregrado") {
+          next.fechaIngreso = "";
+          next.carrera = "";
+        }
+      }
+      return next;
+    });
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
@@ -67,6 +131,10 @@ export const ExpedientRequestPage = () => {
     if (!form.apellidos.trim()) next.apellidos = "Requerido";
     if (!form.cedula.trim()) next.cedula = "Requerido";
     if (!form.estudianteDe) next.estudianteDe = "Selecciona una opción";
+    if (form.estudianteDe === "pregrado") {
+      if (!form.fechaIngreso) next.fechaIngreso = "Requerido";
+      if (!form.carrera) next.carrera = "Selecciona una carrera";
+    }
     if (form.documentos.length === 0)
       next.documentos = "Selecciona al menos un documento";
     if (!form.correo.trim()) next.correo = "Requerido";
@@ -221,6 +289,49 @@ export const ExpedientRequestPage = () => {
                   )}
                 </div>
 
+                {form.estudianteDe === "pregrado" && (
+                  <>
+                    <div className="expedient-request__field">
+                      <Input
+                        label="Fecha de inicio de estudios"
+                        type="date"
+                        value={form.fechaIngreso}
+                        onChange={(e) => handleChange("fechaIngreso", e.target.value)}
+                        error={!!errors.fechaIngreso}
+                        errorMessage={errors.fechaIngreso}
+                        fullWidth
+                        className="expedient-request__control"
+                      />
+                    </div>
+                    <div className="expedient-request__field">
+                      <label
+                        className="expedient-request__label"
+                        htmlFor="expedient-request-carrera"
+                      >
+                        Carrera
+                      </label>
+                      <select
+                        id="expedient-request-carrera"
+                        className="expedient-request__select"
+                        value={form.carrera}
+                        onChange={(e) => handleChange("carrera", e.target.value)}
+                        aria-invalid={!!errors.carrera}
+                      >
+                        {CARRERAS_PREGRADO.map((opt) => (
+                          <option key={opt.value || "sel"} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.carrera && (
+                        <span className="expedient-request__error" role="alert">
+                          {errors.carrera}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
+
                 <div className="expedient-request__field">
                   <span
                     className="expedient-request__label"
@@ -232,7 +343,9 @@ export const ExpedientRequestPage = () => {
                     className="expedient-request__hint"
                     id="expedient-request-documents-hint"
                   >
-                    Selecciona al menos un documento para enviar la solicitud
+                    {form.estudianteDe
+                      ? "Selecciona al menos un documento para enviar la solicitud"
+                      : "Primero selecciona el tipo de estudiante para ver los documentos disponibles"}
                   </p>
                   <div
                     className="expedient-request__checkgrid"
@@ -240,22 +353,18 @@ export const ExpedientRequestPage = () => {
                     aria-labelledby="expedient-request-documents-label"
                     aria-describedby="expedient-request-documents-hint"
                   >
-                    {DOCUMENTOS_OPCIONES.map((doc) => (
+                    {getDocumentosFiltrados(form.estudianteDe).map(({ label }) => (
                       <label
-                        key={doc}
-                        className={`expedient-request__checkbox-cell${
-                          doc === "Reconocimientos internos"
-                            ? " expedient-request__checkbox-cell--full"
-                            : ""
-                        }`}
+                        key={label}
+                        className="expedient-request__checkbox-cell"
                       >
                         <input
                           type="checkbox"
-                          checked={form.documentos.includes(doc)}
-                          onChange={() => toggleDocumento(doc)}
+                          checked={form.documentos.includes(label)}
+                          onChange={() => toggleDocumento(label)}
                           className="expedient-request__checkbox"
                         />
-                        <span>{doc}</span>
+                        <span>{label}</span>
                       </label>
                     ))}
                   </div>
@@ -281,11 +390,25 @@ export const ExpedientRequestPage = () => {
                 </div>
 
                 <div className="expedient-request__field">
+                  <Input
+                    label="7. Número de teléfono"
+                    type="tel"
+                    placeholder="Ej: 0414-1234567"
+                    value={form.telefono}
+                    onChange={(e) => handleChange("telefono", e.target.value)}
+                    error={!!errors.telefono}
+                    errorMessage={errors.telefono}
+                    fullWidth
+                    className="expedient-request__control"
+                  />
+                </div>
+
+                <div className="expedient-request__field">
                   <label
                     className="expedient-request__label"
                     htmlFor="expedient-request-comment"
                   >
-                    7. Comentario (opcional)
+                    8. Observaciones (notas)
                   </label>
                   <textarea
                     id="expedient-request-comment"
