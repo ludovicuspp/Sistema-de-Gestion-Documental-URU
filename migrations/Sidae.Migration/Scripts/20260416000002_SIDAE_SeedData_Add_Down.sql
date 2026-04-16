@@ -1,7 +1,11 @@
 -- =============================================
--- Seed Down: Eliminar tipos de documentos del expediente estudiantil
+-- SIDAE — SeedData_Add (revertir datos estáticos)
+-- =============================================
+-- Debe deshacer en orden inverso o con DELETE acotado por claves naturales,
+-- según lo insertado en SeedData_Add_Up.sql.
 -- =============================================
 
+-- Document.Type — tipos de documentos del expediente estudiantil
 DELETE FROM "Document"."Type"
 WHERE "Name" IN (
     'Cédula de Identidad',

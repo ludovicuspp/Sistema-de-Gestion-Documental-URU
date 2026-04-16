@@ -33,7 +33,7 @@ static class Program
                 // Set the connection string
                 .WithGlobalConnectionString(connectionString)
                 // Define the assembly containing the migrations
-                .ScanIn(typeof(SM_DataModel_Add_Table).Assembly).For.Migrations())
+                .ScanIn(typeof(SIDAE_DataModel_Add_Table).Assembly).For.Migrations())
             // Enable logging to console in the FluentMigrator way
             .AddLogging(lb => lb.AddFluentMigratorConsole())
             // Build the service provider

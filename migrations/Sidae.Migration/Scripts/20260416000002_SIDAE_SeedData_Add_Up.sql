@@ -1,12 +1,17 @@
 -- =============================================
--- Seed: Document.Type — Tipos de documentos del expediente estudiantil
+-- SIDAE — SeedData_Add (datos estáticos)
 -- =============================================
+-- Incluir aquí todos los INSERT de datos de referencia / catálogos.
+-- Secciones por dominio para mantener orden al crecer el proyecto.
+-- =============================================
+
+-- ── Document.Type — Tipos de documentos del expediente estudiantil ───────────
 -- RequiredLevel: 'Todos' | 'Pregrado' | 'Postgrado' | 'Egresado'
 -- IsMandatory  : true = obligatorio para ese nivel, false = opcional
 
 INSERT INTO "Document"."Type" ("Name", "IsMandatory", "RequiredLevel") VALUES
 
--- ── Documentos comunes a todos los niveles ──────────────────────────────────
+-- Documentos comunes a todos los niveles
 ('Cédula de Identidad',                    TRUE,  'Todos'),
 ('Partida de Nacimiento',                  TRUE,  'Todos'),
 ('Fondo Negro Título de Bachiller',        TRUE,  'Todos'),
@@ -16,9 +21,9 @@ INSERT INTO "Document"."Type" ("Name", "IsMandatory", "RequiredLevel") VALUES
 ('Constancia de Servicio Comunitario',     TRUE,  'Todos'),
 ('Constancia de Pasantías',                TRUE,  'Todos'),
 
--- ── Pregrado ────────────────────────────────────────────────────────────────
+-- Pregrado
 ('Certificado de Aprobación OPSU',         TRUE,  'Pregrado'),
 
--- ── Egresado ────────────────────────────────────────────────────────────────
+-- Egresado
 ('Veredicto',                              TRUE,  'Egresado'),
 ('Repetición de Expediente',               FALSE, 'Egresado');
