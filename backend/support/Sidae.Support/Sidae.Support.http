@@ -1,0 +1,6 @@
+@Sidae.Support_HostAddress = http://localhost:5265
+
+GET {{Sidae.Support_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
