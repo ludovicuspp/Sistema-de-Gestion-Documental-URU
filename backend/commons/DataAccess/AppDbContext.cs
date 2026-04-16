@@ -12,9 +12,11 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
+    public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new DocumentTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new UserConfiguration());
     }
 }

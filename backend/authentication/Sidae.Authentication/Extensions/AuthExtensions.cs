@@ -1,4 +1,4 @@
-namespace Sidae.Support.Extensions;
+namespace Sidae.Authentication.Extensions;
 
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

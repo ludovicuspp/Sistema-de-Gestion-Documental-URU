@@ -1,0 +1,105 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+resources:
+  repositories:
+    - repository: CommonsRepo
+      type: git
+      name: Commons
+      ref: $(Build.SourceBranch)
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+  - checkout: self
+  - checkout: CommonsRepo
+
+  # ProjectReference en Sidae.Authentication apunta a ../../Sidae.Commons (desde el .csproj).
+  # Con checkout multi-repo, Commons suele quedar en $(Pipeline.Workspace)/Commons: se copia a Backend/Sidae.Commons.
+  - bash: |
+      set -e
+      S="$(Build.SourcesDirectory)"
+      COMM=""
+      for c in "$S/Commons" "$(Pipeline.Workspace)/Commons"; do
+        if [ -f "$c/Sidae.Commons.csproj" ]; then COMM="$c"; break; fi
+      done
+      B="$S/Backend"
+      if [ -n "$COMM" ] && [ -d "$B/support" ] && [ ! -d "$B/Sidae.Commons" ]; then
+        cp -a "$COMM" "$B/Sidae.Commons"
+        echo "Commons disponible en Backend/Sidae.Commons para ProjectReference"
+      elif [ -d "$B/Sidae.Commons" ]; then
+        echo "Backend/Sidae.Commons ya existe (monorepo u otro paso)"
+      else
+        echo "##[warning]No se encontró Sidae.Commons junto a Backend; ajusta rutas o el checkout."
+      fi
+    displayName: 'Alinear Sidae.Commons con ProjectReference'
+
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '10.x'
+
+  - script: |
+      dotnet restore Backend/Sidae.Authentication.sln
+      dotnet build Backend/Sidae.Authentication.sln --configuration $(buildConfiguration)
+    displayName: 'Restore and Build'
+
+  - script: |
+      dotnet test Backend/Sidae.Authentication.sln --configuration $(buildConfiguration) \
+        -p:ExcludeByFile="**/program.cs" \
+        -p:CollectCoverage=true \
+        -p:CoverletOutput=TestResults/coverage.opencover.xml \
+        -p:CoverletOutputFormat=opencover \
+        --logger "trx;LogFileName=TestResults/test-results.trx"
+    displayName: 'Run xUnit Tests with Coverage'
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '**/TestResults/*.trx'
+      testRunTitle: 'xUnit Tests'
+    condition: succeededOrFailed()
+
+  # SonarQube - comentado hasta tener SonarQube
+  # - task: SonarQubePrepare@7
+  #   inputs:
+  #     SonarQube: 'img-sonaranalyzer'
+  #     dotnetScannerVersion: '8.0.3.99785'
+  #     scannerMode: 'dotnet'
+  #     projectKey: 'dev-clb-bloqueos-documents'
+  #     projectName: 'dev-clb-bloqueos-documents'
+  #     projectVersion: '$(Build.BuildID)'
+  #     extraProperties: |
+  #       sonar.verbose=true
+  #       sonar.cs.opencover.reportsPaths=**/coverage.opencover.xml
+  #       sonar.dotnet.visualstudio.testResultsPaths=**/test-results.trx
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Build Solution'
+    inputs:
+      command: 'build'
+      projects: 'Backend/Sidae.Authentication.sln'
+      arguments: '--configuration Release'
+
+  # - task: SonarQubeAnalyze@7
+
+  # - task: SonarQubePublish@7
+  #   inputs:
+  #     pollingTimeoutSec: '300'
+
+  - task: Docker@2
+    inputs:
+      containerRegistry: 'dockerhub-connection'
+      repository: 'montflowsolutions/stellaris-mind-backend'
+      command: 'buildAndPush'
+      tags: 'latest'
+      Dockerfile: 'Backend/support/Dockerfile'
+      buildContext: '$(Build.SourcesDirectory)/Backend'

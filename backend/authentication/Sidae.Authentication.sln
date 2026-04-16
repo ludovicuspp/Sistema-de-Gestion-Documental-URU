@@ -4,7 +4,7 @@ VisualStudioVersion = 18.5.11612.153
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sidae.Tests", "Sidae.Tests\Sidae.Tests.csproj", "{6CBAFE9E-9CB0-48D3-8B29-82BC492A87F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sidae.Support", "Sidae.Support\Sidae.Support.csproj", "{317E0C28-C37D-A7CA-7918-671C757F516E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sidae.Authentication", "Sidae.Authentication\Sidae.Authentication.csproj", "{317E0C28-C37D-A7CA-7918-671C757F516E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker", "docker", "{2B28E65C-ED0C-4FF2-BA2C-83150AC1ABB7}"
 	ProjectSection(SolutionItems) = preProject

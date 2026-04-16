@@ -1,0 +1,85 @@
+# FluentMigrator Migration Patterns
+
+## Project Prefix
+- **{ProjectPrefix}** is the identifier of the project (project name or its abbreviation).
+- Use a short, consistent prefix per project (e.g. `SM` for Sidae, `PT` for another project).
+- In **this project (Sidae)** the prefix is **SM** (or define the one you use in this repo).
+
+## File Naming Convention
+- Migration files must use the format: `{yyyyMMdd0000{n}}_{ProjectPrefix}_{TableName}_{Action}_{Object}.cs`
+- The file name must match the Migration attribute ID exactly
+- **Pattern Components:**
+  - `yyyyMMdd0000{n}` - Migration ID (date + sequence number)
+  - `{ProjectPrefix}` - Project identifier (see "Project Prefix" above)
+  - `TableName` - Name of the table being modified
+  - `Action` - One of: `Add`, `Modify`, `Remove`
+  - `Object` - One of: `Table`, `Column`, `View`
+- **Examples (prefix SM / Sidae):**
+  - `20240101000001_SM_Demo_Add_Table.cs` - Adds a new Demo table
+  - `20240101000002_SM_Demo_Add_Column.cs` - Adds a column to Demo table
+  - `20240101000003_SM_Demo_Modify_Column.cs` - Modifies a column in Demo table
+  - `20240101000004_SM_Demo_Remove_Column.cs` - Removes a column from Demo table
+  - `20240101000005_SM_Reports_Add_View.cs` - Adds a new view
+- The class name should match the file name **excluding the timestamp prefix** (e.g., file `20240101000004_SM_Demo_Add_Column.cs` has class name `SM_Demo_Add_Column`)
+
+## SQL Script Organization
+- SQL scripts must be placed in the `Scripts` folder
+- SQL script files must use the same base name as the migration file (without .cs extension)
+- For migrations that execute SQL scripts:
+  - Use `{MigrationId}_{ProjectPrefix}_{TableName}_{Action}_{Object}_Up.sql` for the Up() method
+  - Use `{MigrationId}_{ProjectPrefix}_{TableName}_{Action}_{Object}_Down.sql` for the Down() method
+- **Examples (prefix SM):**
+  - For `20240101000004_SM_Demo_Add_Column.cs`, create:
+    - `20240101000004_SM_Demo_Add_Column_Up.sql`
+    - `20240101000004_SM_Demo_Add_Column_Down.sql`
+
+## Migration Class Structure
+- All migrations must inherit from `Migration` or `BaseMigration`
+- Migration attribute must use format: `[Migration(yyyyMMdd0000{n})]`
+- Must implement both `Up()` and `Down()` methods
+- When using SQL scripts, inherit from `BaseMigration` to use the `ReadScriptFile()` method
+
+## BaseMigration Class
+- Use `BaseMigration` as the base class when migrations need to read SQL script files
+- The `BaseMigration` class provides a protected `ReadScriptFile(string fileName)` method
+- **Example (prefix SM):**
+```csharp
+[Migration(20240101000004)]
+public class SM_Demo_Add_Column : BaseMigration
+{
+    public override void Up()
+    {
+        var sql = ReadScriptFile("20240101000004_SM_Demo_Add_Column_Up.sql");
+        Execute.Sql(sql);
+    }
+
+    public override void Down()
+    {
+        var sql = ReadScriptFile("20240101000004_SM_Demo_Add_Column_Down.sql");
+        Execute.Sql(sql);
+    }
+}
+```
+
+## Naming Pattern Reference
+- **Format:** `yyyyMMdd0000{n}_{ProjectPrefix}_TableName_Action_Object`
+- **Actions:**
+  - `Add` - Creates/adds a new object
+  - `Modify` - Alters/changes an existing object
+  - `Remove` - Deletes/removes an object
+- **Objects:**
+  - `Table` - Database table
+  - `Column` - Table column
+  - `View` - Database view
+
+## Project Configuration
+- SQL files in the `Scripts` folder must be copied to output directory
+- Add to `.csproj`:
+```xml
+<ItemGroup>
+  <None Include="Scripts\*.sql">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+</ItemGroup>
+```
+
