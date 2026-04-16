@@ -42,10 +42,17 @@ const MOCK_VERIFICATION_ITEMS: VerificationInboxItem[] = [
 ];
 
 const MOCK_DOCUMENT_TYPES: DocumentTypeItem[] = [
-  { id: "1", name: "Partida de Nacimiento", description: "Obligatorio - Pregrado" },
-  { id: "2", name: "Cédula de Identidad", description: "Obligatorio - Todos los niveles" },
-  { id: "3", name: "Notas Certificadas", description: "Opcional - Pregrado" },
-  { id: "4", name: "Veredicto", description: "Opcional - Pregrado" },
+  { id:  "1", name: "Cédula de Identidad",                description: "Obligatorio - Todos"     },
+  { id:  "2", name: "Partida de Nacimiento",              description: "Obligatorio - Todos"     },
+  { id:  "3", name: "Fondo Negro Título de Bachiller",    description: "Obligatorio - Todos"     },
+  { id:  "4", name: "Notas Certificadas",                 description: "Obligatorio - Todos"     },
+  { id:  "5", name: "Suscripción Militar",                description: "Opcional - Todos"        },
+  { id:  "6", name: "Manejo de Idioma",                   description: "Opcional - Todos"        },
+  { id:  "7", name: "Constancia de Servicio Comunitario", description: "Obligatorio - Todos"     },
+  { id:  "8", name: "Constancia de Pasantías",            description: "Obligatorio - Todos"     },
+  { id:  "9", name: "Certificado de Aprobación OPSU",     description: "Obligatorio - Pregrado"  },
+  { id: "10", name: "Veredicto",                          description: "Obligatorio - Egresado"  },
+  { id: "11", name: "Repetición de Expediente",           description: "Opcional - Egresado"     },
 ];
 
 const MOCK_DOCUMENTS: ExpedientDocumentItem[] = [

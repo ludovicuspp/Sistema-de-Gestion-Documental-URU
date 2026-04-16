@@ -5,17 +5,41 @@ import { Input } from "@/components/atoms/Input";
 import { Button } from "@/components/atoms/Button";
 import "./ExpedientRequestPage.css";
 
-const DOCUMENTOS_OPCIONES = [
-  "Partida de Nacimiento",
-  "Fotocopia de la Cédula",
-  "Fondo Negro Titular de Bachiller",
-  "Fondo Negro Notas Certificadas",
-  "Certificado de participación OPSU",
-  "Veredicto",
-  "Acta aprobación Servicio comunitario",
-  "Acta aprobación de pasantías",
-  "Reconocimientos internos",
-] as const;
+type DocLevel = "todos" | "pregrado" | "postgrado" | "egresado";
+
+interface DocOption {
+  label: string;
+  level: DocLevel;
+}
+
+const DOCUMENTOS_OPCIONES: DocOption[] = [
+  // ── Comunes a todos los niveles ──────────────────────────
+  { label: "Cédula de Identidad",                level: "todos"    },
+  { label: "Partida de Nacimiento",              level: "todos"    },
+  { label: "Fondo Negro Título de Bachiller",    level: "todos"    },
+  { label: "Notas Certificadas",                 level: "todos"    },
+  { label: "Suscripción Militar",                level: "todos"    },
+  { label: "Manejo de Idioma",                   level: "todos"    },
+  { label: "Constancia de Servicio Comunitario", level: "todos"    },
+  { label: "Constancia de Pasantías",            level: "todos"    },
+  // ── Solo Pregrado ────────────────────────────────────────
+  { label: "Certificado de Aprobación OPSU",     level: "pregrado" },
+  // ── Egresado (Pregrado y Postgrado) ──────────────────────
+  { label: "Veredicto",                          level: "egresado" },
+  { label: "Repetición de Expediente",           level: "egresado" },
+];
+
+/** Devuelve los documentos visibles según el tipo de estudiante seleccionado. */
+function getDocumentosFiltrados(estudianteDe: string): DocOption[] {
+  if (!estudianteDe) return [];
+  return DOCUMENTOS_OPCIONES.filter(({ level }) => {
+    if (level === "todos") return true;
+    if (level === "pregrado")  return estudianteDe === "pregrado";
+    if (level === "postgrado") return estudianteDe === "postgrado";
+    if (level === "egresado")  return estudianteDe === "pregrado" || estudianteDe === "postgrado";
+    return false;
+  });
+}
 
 const CARRERAS_PREGRADO = [
   { value: "", label: "Seleccionar carrera" },
@@ -78,9 +102,12 @@ export const ExpedientRequestPage = () => {
   const handleChange = (field: keyof typeof form, value: string | string[]) => {
     setForm((prev) => {
       const next = { ...prev, [field]: value };
-      if (field === "estudianteDe" && value !== "pregrado") {
-        next.fechaIngreso = "";
-        next.carrera = "";
+      if (field === "estudianteDe") {
+        next.documentos = [];
+        if (value !== "pregrado") {
+          next.fechaIngreso = "";
+          next.carrera = "";
+        }
       }
       return next;
     });
@@ -316,7 +343,9 @@ export const ExpedientRequestPage = () => {
                     className="expedient-request__hint"
                     id="expedient-request-documents-hint"
                   >
-                    Selecciona al menos un documento para enviar la solicitud
+                    {form.estudianteDe
+                      ? "Selecciona al menos un documento para enviar la solicitud"
+                      : "Primero selecciona el tipo de estudiante para ver los documentos disponibles"}
                   </p>
                   <div
                     className="expedient-request__checkgrid"
@@ -324,22 +353,18 @@ export const ExpedientRequestPage = () => {
                     aria-labelledby="expedient-request-documents-label"
                     aria-describedby="expedient-request-documents-hint"
                   >
-                    {DOCUMENTOS_OPCIONES.map((doc) => (
+                    {getDocumentosFiltrados(form.estudianteDe).map(({ label }) => (
                       <label
-                        key={doc}
-                        className={`expedient-request__checkbox-cell${
-                          doc === "Reconocimientos internos"
-                            ? " expedient-request__checkbox-cell--full"
-                            : ""
-                        }`}
+                        key={label}
+                        className="expedient-request__checkbox-cell"
                       >
                         <input
                           type="checkbox"
-                          checked={form.documentos.includes(doc)}
-                          onChange={() => toggleDocumento(doc)}
+                          checked={form.documentos.includes(label)}
+                          onChange={() => toggleDocumento(label)}
                           className="expedient-request__checkbox"
                         />
-                        <span>{doc}</span>
+                        <span>{label}</span>
                       </label>
                     ))}
                   </div>

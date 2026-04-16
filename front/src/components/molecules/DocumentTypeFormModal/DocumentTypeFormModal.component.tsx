@@ -12,9 +12,10 @@ export interface DocumentTypeFormModalProps {
 }
 
 const NIVELES = [
-  { value: "todos", label: "Todos" },
-  { value: "pregrado", label: "Pregrado" },
-  { value: "postgrado", label: "Postgrado" },
+  { value: "todos",    label: "Todos"     },
+  { value: "pregrado", label: "Pregrado"  },
+  { value: "postgrado",label: "Postgrado" },
+  { value: "egresado", label: "Egresado"  },
 ];
 
 const OBLIGATORIEDAD = [
