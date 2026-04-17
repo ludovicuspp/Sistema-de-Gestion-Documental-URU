@@ -80,13 +80,13 @@ public sealed class AuditSaveChangesInterceptor : SaveChangesInterceptor
 
         foreach (var p in props)
         {
-            if (p.Name == nameof(DocumentType.CreatedAt) && p.PropertyType == typeof(DateTime) && p.CanWrite)
+            if (p.Name == "CreatedAt" && p.PropertyType == typeof(DateTime) && p.CanWrite)
                 createdAt = p;
-            else if (p.Name == nameof(DocumentType.CreatedBy) && p.PropertyType == typeof(int?) && p.CanWrite)
+            else if (p.Name == "CreatedBy" && p.PropertyType == typeof(int?) && p.CanWrite)
                 createdBy = p;
-            else if (p.Name == nameof(DocumentType.UpdatedAt) && p.PropertyType == typeof(DateTime?) && p.CanWrite)
+            else if (p.Name == "UpdatedAt" && p.PropertyType == typeof(DateTime?) && p.CanWrite)
                 updatedAt = p;
-            else if (p.Name == nameof(DocumentType.UpdatedBy) && p.PropertyType == typeof(int?) && p.CanWrite)
+            else if (p.Name == "UpdatedBy" && p.PropertyType == typeof(int?) && p.CanWrite)
                 updatedBy = p;
         }
 

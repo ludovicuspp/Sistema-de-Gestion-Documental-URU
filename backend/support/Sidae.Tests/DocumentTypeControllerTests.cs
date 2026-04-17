@@ -57,9 +57,9 @@ public sealed class DocumentTypeControllerTests
     public async Task Create_Posts_To_Service()
     {
         var mock = new Mock<IDocumentTypeService>();
-        var dto = new CreateDocumentTypeRequest { Nombre = "A" };
+        var dto = new CreateDocumentTypeRequest { Name = "A" };
         mock.Setup(s => s.CreateAsync(dto, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<DocumentTypeResponse>.Success(new DocumentTypeResponse { Id = 1, Nombre = "A", GuidId = Guid.NewGuid() }));
+            .ReturnsAsync(Result<DocumentTypeResponse>.Success(new DocumentTypeResponse { Id = 1, Name = "A", GuidId = Guid.NewGuid() }));
 
         var cacheMock = new Mock<ICacheService>();
         cacheMock.Setup(c => c.Get<Result<List<DocumentTypeResponse>>>(It.IsAny<string>()))
@@ -76,9 +76,9 @@ public sealed class DocumentTypeControllerTests
     public async Task Update_Puts_To_Service()
     {
         var mock = new Mock<IDocumentTypeService>();
-        var dto = new UpdateDocumentTypeRequest { Nombre = "B" };
+        var dto = new UpdateDocumentTypeRequest { Name = "B" };
         mock.Setup(s => s.UpdateAsync(2, dto, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<DocumentTypeResponse>.Success(new DocumentTypeResponse { Id = 2, Nombre = "B", GuidId = Guid.NewGuid() }));
+            .ReturnsAsync(Result<DocumentTypeResponse>.Success(new DocumentTypeResponse { Id = 2, Name = "B", GuidId = Guid.NewGuid() }));
 
         var cacheMock = new Mock<ICacheService>();
         cacheMock.Setup(c => c.Get<Result<List<DocumentTypeResponse>>>(It.IsAny<string>()))

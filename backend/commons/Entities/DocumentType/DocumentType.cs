@@ -9,13 +9,9 @@ public sealed class DocumentType
 
     public Guid GuidId { get; set; }
 
-    public string Nombre { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 
-    public DateTime CreatedAt { get; set; }
+    public bool IsMandatory { get; set; }
 
-    public int? CreatedBy { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
-
-    public int? UpdatedBy { get; set; }
+    public string? RequiredLevel { get; set; }
 }

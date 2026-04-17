@@ -22,18 +22,18 @@ public sealed class DocumentTypeServiceTests
         await using var db = CreateContext();
         var service = new DocumentTypeService(db);
 
-        var created = await service.CreateAsync(new CreateDocumentTypeRequest { Nombre = "Contrato" }, default);
+        var created = await service.CreateAsync(new CreateDocumentTypeRequest { Name = "Contrato" }, default);
         Assert.True(created.Ok);
         Assert.NotNull(created.Response);
         Assert.True(created.Response!.Id > 0);
 
         var byId = await service.GetByIdAsync(created.Response.Id, default);
         Assert.True(byId.Ok);
-        Assert.Equal("Contrato", byId.Response!.Nombre);
+        Assert.Equal("Contrato", byId.Response!.Name);
 
-        var updated = await service.UpdateAsync(created.Response.Id, new UpdateDocumentTypeRequest { Nombre = "Contrato v2" }, default);
+        var updated = await service.UpdateAsync(created.Response.Id, new UpdateDocumentTypeRequest { Name = "Contrato v2" }, default);
         Assert.True(updated.Ok);
-        Assert.Equal("Contrato v2", updated.Response!.Nombre);
+        Assert.Equal("Contrato v2", updated.Response!.Name);
 
         var all = await service.GetAllAsync(cancellationToken: default);
         Assert.True(all.Ok);
@@ -46,20 +46,20 @@ public sealed class DocumentTypeServiceTests
         await using var db = CreateContext();
         var service = new DocumentTypeService(db);
 
-        var createdA = await service.CreateAsync(new CreateDocumentTypeRequest { Nombre = "Contrato" }, default);
-        var createdB = await service.CreateAsync(new CreateDocumentTypeRequest { Nombre = "Factura" }, default);
+        var createdA = await service.CreateAsync(new CreateDocumentTypeRequest { Name = "Contrato" }, default);
+        var createdB = await service.CreateAsync(new CreateDocumentTypeRequest { Name = "Factura" }, default);
         Assert.True(createdA.Ok);
         Assert.True(createdB.Ok);
 
-        var byNombre = await service.GetAllAsync(new GetDocumentTypeRequest { Nombre = "Contr" }, default);
+        var byNombre = await service.GetAllAsync(new GetDocumentTypeRequest { Name = "Contr" }, default);
         Assert.True(byNombre.Ok);
         Assert.Single(byNombre.Response!);
-        Assert.Equal("Contrato", byNombre.Response![0].Nombre);
+        Assert.Equal("Contrato", byNombre.Response![0].Name);
 
         var byId = await service.GetAllAsync(new GetDocumentTypeRequest { Id = createdB.Response!.Id }, default);
         Assert.True(byId.Ok);
         Assert.Single(byId.Response!);
-        Assert.Equal("Factura", byId.Response![0].Nombre);
+        Assert.Equal("Factura", byId.Response![0].Name);
     }
 
     [Fact]

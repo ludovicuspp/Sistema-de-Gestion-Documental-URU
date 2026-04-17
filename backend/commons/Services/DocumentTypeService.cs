@@ -28,36 +28,31 @@ public sealed class DocumentTypeService : IDocumentTypeService
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
-            if (!string.IsNullOrWhiteSpace(request.Nombre))
+            if (!string.IsNullOrWhiteSpace(request.Name))
             {
-                var nombre = request.Nombre.Trim();
-                query = query.Where(e => e.Nombre.Contains(nombre));
+                var name = request.Name.Trim();
+                query = query.Where(e => e.Name.Contains(name));
             }
 
-            if (request.CreatedAt.HasValue)
-                query = query.Where(e => e.CreatedAt == request.CreatedAt.Value);
+            if (request.IsMandatory.HasValue)
+                query = query.Where(e => e.IsMandatory == request.IsMandatory.Value);
 
-            if (request.CreatedBy.HasValue)
-                query = query.Where(e => e.CreatedBy == request.CreatedBy.Value);
-
-            if (request.UpdatedAt.HasValue)
-                query = query.Where(e => e.UpdatedAt == request.UpdatedAt.Value);
-
-            if (request.UpdatedBy.HasValue)
-                query = query.Where(e => e.UpdatedBy == request.UpdatedBy.Value);
+            if (!string.IsNullOrWhiteSpace(request.RequiredLevel))
+            {
+                var requiredLevel = request.RequiredLevel.Trim();
+                query = query.Where(e => e.RequiredLevel != null && e.RequiredLevel.Contains(requiredLevel));
+            }
         }
 
         var list = await query
-            .OrderBy(e => e.Nombre)
+            .OrderBy(e => e.Name)
             .Select(e => new DocumentTypeResponse
             {
                 Id = e.Id,
                 GuidId = e.GuidId,
-                Nombre = e.Nombre,
-                CreatedAt = e.CreatedAt,
-                CreatedBy = e.CreatedBy,
-                UpdatedAt = e.UpdatedAt,
-                UpdatedBy = e.UpdatedBy
+                Name = e.Name,
+                IsMandatory = e.IsMandatory,
+                RequiredLevel = e.RequiredLevel
             })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -80,15 +75,15 @@ public sealed class DocumentTypeService : IDocumentTypeService
 
     public async Task<Result<DocumentTypeResponse>> CreateAsync(CreateDocumentTypeRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Nombre))
-            return Result<DocumentTypeResponse>.Failure(new Error("VALIDATION", "Nombre es obligatorio."));
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Result<DocumentTypeResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
-        var utc = DateTime.UtcNow;
         var entity = new DocumentType
         {
             GuidId = Guid.NewGuid(),
-            Nombre = request.Nombre.Trim(),
-            CreatedAt = utc,
+            Name = request.Name.Trim(),
+            IsMandatory = request.IsMandatory,
+            RequiredLevel = string.IsNullOrWhiteSpace(request.RequiredLevel) ? null : request.RequiredLevel.Trim(),
         };
 
         _db.DocumentTypes.Add(entity);
@@ -99,8 +94,8 @@ public sealed class DocumentTypeService : IDocumentTypeService
 
     public async Task<Result<DocumentTypeResponse>> UpdateAsync(int id, UpdateDocumentTypeRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Nombre))
-            return Result<DocumentTypeResponse>.Failure(new Error("VALIDATION", "Nombre es obligatorio."));
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Result<DocumentTypeResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = await _db.DocumentTypes
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
@@ -109,7 +104,9 @@ public sealed class DocumentTypeService : IDocumentTypeService
         if (entity is null)
             return Result<DocumentTypeResponse>.Failure(new Error("NOT_FOUND", "DocumentType no encontrado."));
 
-        entity.Nombre = request.Nombre.Trim();
+        entity.Name = request.Name.Trim();
+        entity.IsMandatory = request.IsMandatory;
+        entity.RequiredLevel = string.IsNullOrWhiteSpace(request.RequiredLevel) ? null : request.RequiredLevel.Trim();
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return Result<DocumentTypeResponse>.Success(Map(entity));
@@ -119,10 +116,8 @@ public sealed class DocumentTypeService : IDocumentTypeService
     {
         Id = e.Id,
         GuidId = e.GuidId,
-        Nombre = e.Nombre,
-        CreatedAt = e.CreatedAt,
-        CreatedBy = e.CreatedBy,
-        UpdatedAt = e.UpdatedAt,
-        UpdatedBy = e.UpdatedBy,
+        Name = e.Name,
+        IsMandatory = e.IsMandatory,
+        RequiredLevel = e.RequiredLevel,
     };
 }

@@ -8,7 +8,7 @@ public sealed class DocumentTypeConfiguration : IEntityTypeConfiguration<Documen
 {
     public void Configure(EntityTypeBuilder<DocumentType> builder)
     {
-        builder.ToTable("DocumentTypes");
+        builder.ToTable("Type", "Document");
 
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
@@ -16,11 +16,8 @@ public sealed class DocumentTypeConfiguration : IEntityTypeConfiguration<Documen
         builder.Property(e => e.GuidId).IsRequired();
         builder.HasIndex(e => e.GuidId).IsUnique();
 
-        builder.Property(e => e.Nombre).HasMaxLength(256).IsRequired();
-
-        builder.Property(e => e.CreatedAt).IsRequired();
-        builder.Property(e => e.CreatedBy);
-        builder.Property(e => e.UpdatedAt);
-        builder.Property(e => e.UpdatedBy);
+        builder.Property(e => e.Name).HasColumnName("Name").HasMaxLength(100).IsRequired();
+        builder.Property(e => e.IsMandatory).HasColumnName("IsMandatory").IsRequired();
+        builder.Property(e => e.RequiredLevel).HasColumnName("RequiredLevel").HasMaxLength(50);
     }
 }

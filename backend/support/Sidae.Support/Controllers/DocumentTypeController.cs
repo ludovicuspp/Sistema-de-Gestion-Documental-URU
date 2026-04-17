@@ -9,7 +9,7 @@ using Sidae.Support.Helpers;
 
 [ApiController]
 [Route("api/v1/document-types")]
-[AllowAnonymous]
+[Authorize]
 public sealed class DocumentTypeController(
     IDocumentTypeService documentTypeService,
     ICacheService cacheService) : ControllerBase
@@ -21,11 +21,9 @@ public sealed class DocumentTypeController(
         var hasFilters = request is not null &&
                          (request.Id.HasValue
                           || request.GuidId.HasValue
-                          || !string.IsNullOrWhiteSpace(request.Nombre)
-                          || request.CreatedAt.HasValue
-                          || request.CreatedBy.HasValue
-                          || request.UpdatedAt.HasValue
-                          || request.UpdatedBy.HasValue);
+                          || !string.IsNullOrWhiteSpace(request.Name)
+                          || request.IsMandatory.HasValue
+                          || !string.IsNullOrWhiteSpace(request.RequiredLevel));
 
         if (!hasFilters)
         {

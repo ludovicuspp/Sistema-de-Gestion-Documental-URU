@@ -6,13 +6,9 @@ public sealed class GetDocumentTypeRequest
 
     public Guid? GuidId { get; set; }
 
-    public string? Nombre { get; set; }
+    public string? Name { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
+    public bool? IsMandatory { get; set; }
 
-    public int? CreatedBy { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
-
-    public int? UpdatedBy { get; set; }
+    public string? RequiredLevel { get; set; }
 }

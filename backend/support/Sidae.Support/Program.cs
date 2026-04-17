@@ -3,18 +3,19 @@ using Sidae.Commons.DataAccess;
 using Sidae.Commons.Extensions;
 using Sidae.Commons.Middlewares;
 using Sidae.Support.Extensions;
+using Sidae.Support.OpenApi;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 
 builder.Services.AddControllers();
 builder.Services.AddSidaeJwtAuthentication(builder.Configuration);
 builder.Services.AddSidaeCommonsApplicationServices();
 builder.Services.AddBusinessRateLimiting(builder.Configuration);
 builder.Services.AddSidaeRateLimiting(builder.Configuration);
-builder.Services.AddCloudflareR2Storage(builder.Configuration);
+//builder.Services.AddCloudflareR2Storage(builder.Configuration);
 builder.Services.AddAppDbContext(builder.Configuration.GetAppDatabaseSection(), builder.Environment);
 
 builder.Services.AddHealthChecks()

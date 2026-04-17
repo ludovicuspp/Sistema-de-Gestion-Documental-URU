@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Sidae.Authentication.Services;
 using Sidae.Commons.DataAccess;
 using Sidae.Commons.Entities;
+using Sidae.Commons.Patterns;
 
 [ApiController]
 [Route("api/v1/auth")]
@@ -17,14 +18,14 @@ public sealed class AuthController(
 {
     [AllowAnonymous]
     [HttpPost("register")]
-    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(Result<AuthResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Result<AuthResponse>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Result<AuthResponse>), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
     {
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
         if (normalizedEmail.Length > 60)
-            return BadRequest(new { message = "El email supera el máximo permitido (60 caracteres)." });
+            return BadRequest(Result<AuthResponse>.Failure(new Error("VALIDATION", "El email supera el maximo permitido (60 caracteres).")));
 
         var existingUser = await dbContext.Users
             .AsNoTracking()
@@ -32,7 +33,7 @@ public sealed class AuthController(
             .ConfigureAwait(false);
 
         if (existingUser is not null)
-            return BadRequest(new { message = "El email ya se encuentra registrado." });
+            return BadRequest(Result<AuthResponse>.Failure(new Error("ALREADY_EXISTS", "El email ya se encuentra registrado.")));
 
         var defaultRoleName = configuration["Auth:DefaultRegisterRoleName"] ?? "Usuario";
         var role = await dbContext.Roles
@@ -42,7 +43,9 @@ public sealed class AuthController(
 
         if (role is null)
             return StatusCode(StatusCodes.Status500InternalServerError,
-                new { message = $"No existe el rol '{defaultRoleName}'. Ejecute la migración de datos estáticos (SeedData)." });
+                Result<AuthResponse>.Failure(new Error(
+                    "CONFIGURATION",
+                    $"No existe el rol '{defaultRoleName}'. Ejecute la migracion de datos estaticos (SeedData).")));
 
         var username = string.IsNullOrWhiteSpace(request.Username)
             ? normalizedEmail
@@ -70,13 +73,13 @@ public sealed class AuthController(
             .ConfigureAwait(false);
 
         var token = tokenService.Generate(created);
-        return Ok(new AuthResponse(token, created.Email, created.Username, created.Role?.Name ?? role.Name));
+        return Ok(Result<AuthResponse>.Success(new AuthResponse(token, created.Email, created.Username, created.Role?.Name ?? role.Name)));
     }
 
     [AllowAnonymous]
     [HttpPost("login")]
-    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(Result<AuthResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Result<AuthResponse>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
@@ -87,25 +90,25 @@ public sealed class AuthController(
             .ConfigureAwait(false);
 
         if (user is null || !user.IsActive)
-            return Unauthorized(new { message = "Credenciales invalidas." });
+            return Unauthorized(Result<AuthResponse>.Failure(new Error("UNAUTHORIZED", "Credenciales invalidas.")));
 
         var isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
         if (!isPasswordValid)
-            return Unauthorized(new { message = "Credenciales invalidas." });
+            return Unauthorized(Result<AuthResponse>.Failure(new Error("UNAUTHORIZED", "Credenciales invalidas.")));
 
         var token = tokenService.Generate(user);
-        return Ok(new AuthResponse(token, user.Email, user.Username, user.Role?.Name ?? string.Empty));
+        return Ok(Result<AuthResponse>.Success(new AuthResponse(token, user.Email, user.Username, user.Role?.Name ?? string.Empty)));
     }
 
     [Authorize]
     [HttpGet("me")]
-    [ProducesResponseType(typeof(MeResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(Result<MeResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Result<MeResponse>), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Me(CancellationToken cancellationToken)
     {
         var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
         if (!int.TryParse(idClaim, out var userId))
-            return Unauthorized();
+            return Unauthorized(Result<MeResponse>.Failure(new Error("UNAUTHORIZED", "Token invalido.")));
 
         var user = await dbContext.Users
             .AsNoTracking()
@@ -114,21 +117,21 @@ public sealed class AuthController(
             .ConfigureAwait(false);
 
         if (user is null || !user.IsActive)
-            return Unauthorized();
+            return Unauthorized(Result<MeResponse>.Failure(new Error("UNAUTHORIZED", "Usuario no autorizado.")));
 
         var person = await dbContext.Persons
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.UserId == userId, cancellationToken)
             .ConfigureAwait(false);
 
-        return Ok(new MeResponse(
+        return Ok(Result<MeResponse>.Success(new MeResponse(
             user.Id.ToString(),
             user.Email,
             user.Username,
             user.Role?.Name ?? string.Empty,
             user.IsActive,
             person?.FirstName,
-            person?.LastName));
+            person?.LastName)));
     }
 
     /// <param name="Username">Opcional; por defecto se usa el email. <c>Security.User.Username</c>.</param>
