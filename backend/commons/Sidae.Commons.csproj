@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -26,5 +26,6 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Copy SourceFiles="$(OutputPath)Sidae.Commons.dll" DestinationFolder="..\authentication\Sidae.Authentication\Binaries" />
     <Copy SourceFiles="$(OutputPath)Sidae.Commons.dll" DestinationFolder="..\support\Sidae.Support\Binaries" />
+    <Copy SourceFiles="$(OutputPath)Sidae.Commons.dll" DestinationFolder="..\documents\Sidae.Documents\Binaries" />
   </Target>
 </Project>
