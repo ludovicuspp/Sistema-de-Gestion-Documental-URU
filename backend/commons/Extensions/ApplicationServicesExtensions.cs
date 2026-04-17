@@ -12,6 +12,8 @@ public static class ApplicationServicesExtensions
         services.AddSingleton<ICacheService, CacheService>();
         services.AddSidaeIdentity();
         services.AddScoped<IDocumentTypeService, DocumentTypeService>();
+        services.AddScoped<IAcademicLevelService, AcademicLevelService>();
+        services.AddScoped<ICareerService, CareerService>();
         services.AddScoped<IRecordFolderStatusService, RecordFolderStatusService>();
         services.AddScoped<IRecordFolderTypeService, RecordFolderTypeService>();
         services.AddScoped<IRecordPhysicalLocationService, RecordPhysicalLocationService>();

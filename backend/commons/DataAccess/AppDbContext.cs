@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
+    public DbSet<AcademicLevel> AcademicLevels => Set<AcademicLevel>();
+    public DbSet<Career> Careers => Set<Career>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Person> Persons => Set<Person>();
@@ -28,6 +30,8 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new DocumentTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new AcademicLevelConfiguration());
+        modelBuilder.ApplyConfiguration(new CareerConfiguration());
         modelBuilder.ApplyConfiguration(new RoleConfiguration());
         modelBuilder.ApplyConfiguration(new PersonConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
