@@ -16,11 +16,28 @@ public class AppDbContext : DbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Person> Persons => Set<Person>();
 
+    public DbSet<RecordFolderStatus> RecordFolderStatuses => Set<RecordFolderStatus>();
+    public DbSet<RecordFolderType> RecordFolderTypes => Set<RecordFolderType>();
+    public DbSet<RecordPhysicalLocation> RecordPhysicalLocations => Set<RecordPhysicalLocation>();
+    public DbSet<RecordFolder> RecordFolders => Set<RecordFolder>();
+    public DbSet<RecordObservation> RecordObservations => Set<RecordObservation>();
+    public DbSet<RequestStatus> RequestStatuses => Set<RequestStatus>();
+    public DbSet<RequestItem> RequestItems => Set<RequestItem>();
+    public DbSet<RequestDocumentType> RequestDocumentTypes => Set<RequestDocumentType>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new DocumentTypeConfiguration());
         modelBuilder.ApplyConfiguration(new RoleConfiguration());
         modelBuilder.ApplyConfiguration(new PersonConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
+        modelBuilder.ApplyConfiguration(new RecordFolderStatusConfiguration());
+        modelBuilder.ApplyConfiguration(new RecordFolderTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new RecordPhysicalLocationConfiguration());
+        modelBuilder.ApplyConfiguration(new RecordFolderConfiguration());
+        modelBuilder.ApplyConfiguration(new RecordObservationConfiguration());
+        modelBuilder.ApplyConfiguration(new RequestStatusConfiguration());
+        modelBuilder.ApplyConfiguration(new RequestItemConfiguration());
+        modelBuilder.ApplyConfiguration(new RequestDocumentTypeConfiguration());
     }
 }
