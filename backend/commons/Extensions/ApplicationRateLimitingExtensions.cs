@@ -24,12 +24,19 @@ public static class ApplicationRateLimitingExtensions
             .GetSection(RateLimitingSettings.SectionName)
             .Get<RateLimitingSettings>() ?? new RateLimitingSettings();
 
-        if (!options.Enabled)
-            return services;
-
+        // UseRateLimiter() exige AddRateLimiter en el contenedor; si Enabled=false igual hay que registrar
+        // servicios (política sin efecto) porque UseSidaeRequestGuards y RequireRateLimiting siguen activos.
         services.AddRateLimiter(rateLimiterOptions =>
         {
             rateLimiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            if (!options.Enabled)
+            {
+                rateLimiterOptions.AddPolicy(RateLimitPolicies.PerIp, _ =>
+                    RateLimitPartition.GetNoLimiter<string>("rate-limiting-disabled"));
+                return;
+            }
+
             rateLimiterOptions.OnRejected = async (context, cancellationToken) =>
             {
                 var httpContext = context.HttpContext;
