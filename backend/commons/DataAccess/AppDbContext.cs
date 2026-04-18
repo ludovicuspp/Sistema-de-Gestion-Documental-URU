@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
 
     public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
     public DbSet<DocumentTypeAcademicLevel> DocumentTypeAcademicLevels => Set<DocumentTypeAcademicLevel>();
+    public DbSet<DocumentEntry> DocumentEntries => Set<DocumentEntry>();
     public DbSet<MimeType> MimeTypes => Set<MimeType>();
     public DbSet<AcademicLevel> AcademicLevels => Set<AcademicLevel>();
     public DbSet<Career> Careers => Set<Career>();
@@ -36,6 +37,7 @@ public class AppDbContext : DbContext
     {
         modelBuilder.ApplyConfiguration(new DocumentTypeConfiguration());
         modelBuilder.ApplyConfiguration(new DocumentTypeAcademicLevelConfiguration());
+        modelBuilder.ApplyConfiguration(new DocumentEntryConfiguration());
         modelBuilder.ApplyConfiguration(new MimeTypeConfiguration());
         modelBuilder.ApplyConfiguration(new AcademicLevelConfiguration());
         modelBuilder.ApplyConfiguration(new CareerConfiguration());

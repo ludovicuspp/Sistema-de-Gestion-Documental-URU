@@ -12,7 +12,7 @@ builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecu
 
 builder.Services.AddControllers();
 builder.Services.AddSidaeJwtAuthentication(builder.Configuration);
-builder.Services.AddSidaeCommonsApplicationServices();
+builder.Services.AddSidaeDocumentsApplicationServices();
 builder.Services.AddBusinessRateLimiting(builder.Configuration);
 builder.Services.AddSidaeRateLimiting(builder.Configuration);
 //builder.Services.AddCloudflareR2Storage(builder.Configuration);

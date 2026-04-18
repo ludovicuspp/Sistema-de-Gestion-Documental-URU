@@ -11,6 +11,7 @@ public static class ApplicationServicesExtensions
         services.AddMemoryCache();
         services.AddSingleton<ICacheService, CacheService>();
         services.AddSidaeIdentity();
+        services.AddScoped<IDocumentEntryService, DocumentEntryService>();
         services.AddScoped<IDocumentTypeService, DocumentTypeService>();
         services.AddScoped<IMimeTypeService, MimeTypeService>();
         services.AddScoped<IAcademicLevelService, AcademicLevelService>();
@@ -40,6 +41,18 @@ public static class ApplicationServicesExtensions
         services.AddSidaeIdentity();
         services.AddScoped<ISecurityActionService, SecurityActionService>();
         services.AddScoped<ISecurityRoleService, SecurityRoleService>();
+        return services;
+    }
+
+    /// <summary>
+    /// Servicios mínimos para el API Documents (filas de Document.Document).
+    /// </summary>
+    public static IServiceCollection AddSidaeDocumentsApplicationServices(this IServiceCollection services)
+    {
+        services.AddMemoryCache();
+        services.AddSingleton<ICacheService, CacheService>();
+        services.AddSidaeIdentity();
+        services.AddScoped<IDocumentEntryService, DocumentEntryService>();
         return services;
     }
 }
