@@ -40,6 +40,18 @@ DELETE FROM "Task"."Status" s
 WHERE s."Name" IN ('Pendiente', 'En progreso', 'Completado')
   AND NOT EXISTS (SELECT 1 FROM "Task"."Task" t WHERE t."StatusId" = s."Id");
 
+-- Student.Status (solo si ningún Student.Student lo usa)
+DELETE FROM "Student"."Status" st
+WHERE st."Name" IN (
+    'Activo',
+    'Inactivo',
+    'Suspendido',
+    'En prórroga',
+    'Egresado',
+    'Retirado'
+)
+  AND NOT EXISTS (SELECT 1 FROM "Student"."Student" s WHERE s."StudentStatusId" = st."Id");
+
 -- Document.Type — tipos de documentos del expediente estudiantil
 DELETE FROM "Document"."Type"
 WHERE "Name" IN (

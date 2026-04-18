@@ -52,7 +52,7 @@ CREATE INDEX IF NOT EXISTS "IX_Person_Person_CreatedById" ON "Person"."Person" (
 CREATE INDEX IF NOT EXISTS "IX_Person_Person_UpdatedById" ON "Person"."Person" ("UpdatedById");
 
 -- Student
-CREATE INDEX IF NOT EXISTS "IX_Student_Status_Description" ON "Student"."Status" ("Description");
+CREATE INDEX IF NOT EXISTS "IX_Student_Status_Name" ON "Student"."Status" ("Name");
 CREATE INDEX IF NOT EXISTS "IX_Student_Student_CreatedAt" ON "Student"."Student" ("CreatedAt");
 CREATE INDEX IF NOT EXISTS "IX_Student_Student_AcademicLevelId" ON "Student"."Student" ("AcademicLevelId");
 CREATE INDEX IF NOT EXISTS "IX_Student_Student_PersonId" ON "Student"."Student" ("PersonId");

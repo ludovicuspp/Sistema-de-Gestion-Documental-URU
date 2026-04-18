@@ -65,6 +65,21 @@ WHERE NOT EXISTS (
     SELECT 1 FROM "Task"."Status" s WHERE s."Name" = v."Name"
 );
 
+-- ── Student.Status — situación académica del estudiante ───────────────────────
+INSERT INTO "Student"."Status" ("GuidId", "Name")
+SELECT gen_random_uuid(), v."Name"
+FROM (VALUES
+    ('Activo'),
+    ('Inactivo'),
+    ('Suspendido'),
+    ('En prórroga'),
+    ('Egresado'),
+    ('Retirado')
+) AS v("Name")
+WHERE NOT EXISTS (
+    SELECT 1 FROM "Student"."Status" st WHERE st."Name" = v."Name"
+);
+
 -- ── Document.Type — Tipos de documentos del expediente estudiantil ───────────
 -- RequiredLevel: 'Todos' | 'Pregrado' | 'Postgrado' | 'Egresado'
 -- IsMandatory  : true = obligatorio para ese nivel, false = opcional

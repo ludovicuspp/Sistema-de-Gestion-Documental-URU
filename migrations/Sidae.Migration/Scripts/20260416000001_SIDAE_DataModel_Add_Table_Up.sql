@@ -176,9 +176,9 @@ CREATE TABLE IF NOT EXISTS "Person"."Person" (
 -- =============================================
 
 CREATE TABLE IF NOT EXISTS "Student"."Status" (
-    "Id"          SERIAL      PRIMARY KEY,
-    "GuidId"      UUID        NOT NULL DEFAULT gen_random_uuid(),
-    "Description" VARCHAR(20) NOT NULL,
+    "Id"          SERIAL       PRIMARY KEY,
+    "GuidId"      UUID         NOT NULL DEFAULT gen_random_uuid(),
+    "Name"        VARCHAR(100) NOT NULL,
     CONSTRAINT "UQ_Student_Status_GuidId" UNIQUE ("GuidId")
 );
 

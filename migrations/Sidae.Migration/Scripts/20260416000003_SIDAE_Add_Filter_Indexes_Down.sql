@@ -50,7 +50,7 @@ DROP INDEX IF EXISTS "Person"."IX_Person_Person_CreatedById";
 DROP INDEX IF EXISTS "Person"."IX_Person_Person_UpdatedById";
 
 -- Student
-DROP INDEX IF EXISTS "Student"."IX_Student_Status_Description";
+DROP INDEX IF EXISTS "Student"."IX_Student_Status_Name";
 DROP INDEX IF EXISTS "Student"."IX_Student_Student_CreatedAt";
 DROP INDEX IF EXISTS "Student"."IX_Student_Student_AcademicLevelId";
 DROP INDEX IF EXISTS "Student"."IX_Student_Student_PersonId";
