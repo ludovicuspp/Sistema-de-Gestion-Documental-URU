@@ -43,12 +43,13 @@ public sealed class DocumentTypeControllerTests
     [Fact]
     public async Task GetById_Returns_NotFound_When_Service_Fails_NotFound()
     {
+        var id = Guid.NewGuid();
         var mock = new Mock<IDocumentTypeService>();
-        mock.Setup(s => s.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+        mock.Setup(s => s.GetByIdAsync(id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<DocumentTypeResponse>.Failure(new Error("NOT_FOUND", "x")));
 
         var controller = CreateController(mock);
-        var result = await controller.GetById(1, default);
+        var result = await controller.GetById(id, default);
 
         Assert.IsType<NotFoundObjectResult>(result);
     }
@@ -75,17 +76,18 @@ public sealed class DocumentTypeControllerTests
     [Fact]
     public async Task Update_Puts_To_Service()
     {
+        var guidId = Guid.NewGuid();
         var mock = new Mock<IDocumentTypeService>();
         var dto = new UpdateDocumentTypeRequest { Name = "B" };
-        mock.Setup(s => s.UpdateAsync(2, dto, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<DocumentTypeResponse>.Success(new DocumentTypeResponse { Id = 2, Name = "B", GuidId = Guid.NewGuid() }));
+        mock.Setup(s => s.UpdateAsync(guidId, dto, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<DocumentTypeResponse>.Success(new DocumentTypeResponse { Id = 2, Name = "B", GuidId = guidId }));
 
         var cacheMock = new Mock<ICacheService>();
         cacheMock.Setup(c => c.Get<Result<List<DocumentTypeResponse>>>(It.IsAny<string>()))
             .Returns((Result<List<DocumentTypeResponse>>?)null);
 
         var controller = new DocumentTypeController(mock.Object, cacheMock.Object);
-        var result = await controller.Update(2, dto, default);
+        var result = await controller.Update(guidId, dto, default);
 
         Assert.IsType<OkObjectResult>(result);
         cacheMock.Verify(c => c.Remove(It.IsAny<string>()), Times.Once);

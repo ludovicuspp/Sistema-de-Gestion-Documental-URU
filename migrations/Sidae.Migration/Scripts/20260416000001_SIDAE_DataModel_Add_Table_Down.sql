@@ -18,9 +18,10 @@ DROP TABLE IF EXISTS "System"."Setting"          CASCADE;
 DROP TABLE IF EXISTS "Record"."Observation"      CASCADE;
 
 -- Document
-DROP TABLE IF EXISTS "Document"."Document"       CASCADE;
-DROP TABLE IF EXISTS "Document"."Type"           CASCADE;
-DROP TABLE IF EXISTS "Document"."MimeType"       CASCADE;
+DROP TABLE IF EXISTS "Document"."Document"          CASCADE;
+DROP TABLE IF EXISTS "Document"."TypeAcademicLevel" CASCADE;
+DROP TABLE IF EXISTS "Document"."Type"            CASCADE;
+DROP TABLE IF EXISTS "Document"."MimeType"        CASCADE;
 
 -- Record
 DROP TABLE IF EXISTS "Record"."Folder"           CASCADE;

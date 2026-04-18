@@ -22,7 +22,7 @@ public sealed class DocumentTypeController(
                          (request.GuidId.HasValue
                           || !string.IsNullOrWhiteSpace(request.Name)
                           || request.IsMandatory.HasValue
-                          || !string.IsNullOrWhiteSpace(request.RequiredLevel));
+                          || request.AcademicLevelId.HasValue);
 
         if (!hasFilters)
         {

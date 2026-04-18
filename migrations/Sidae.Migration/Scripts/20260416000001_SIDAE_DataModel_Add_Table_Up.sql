@@ -268,7 +268,7 @@ CREATE TABLE IF NOT EXISTS "Record"."Folder" (
 
 -- =============================================
 -- DOCUMENT
--- Orden: MimeType → Type → Document
+-- Orden: MimeType → Type → TypeAcademicLevel → Document
 -- Document depende de: Record.Folder
 -- =============================================
 
@@ -284,8 +284,20 @@ CREATE TABLE IF NOT EXISTS "Document"."Type" (
     "GuidId"        UUID         NOT NULL DEFAULT gen_random_uuid(),
     "Name"          VARCHAR(100) NOT NULL,
     "IsMandatory"   BOOLEAN      NOT NULL DEFAULT FALSE,
-    "RequiredLevel" VARCHAR(50),
     CONSTRAINT "UQ_Document_Type_GuidId" UNIQUE ("GuidId")
+);
+
+CREATE TABLE IF NOT EXISTS "Document"."TypeAcademicLevel" (
+    "Id"               SERIAL PRIMARY KEY,
+    "GuidId"           UUID NOT NULL DEFAULT gen_random_uuid(),
+    "DocumentTypeId"   INT  NOT NULL,
+    "AcademicLevelId"  INT  NOT NULL,
+    CONSTRAINT "UQ_Document_TypeAcademicLevel_GuidId" UNIQUE ("GuidId"),
+    CONSTRAINT "UQ_Document_TypeAcademicLevel_Type_Level" UNIQUE ("DocumentTypeId", "AcademicLevelId"),
+    CONSTRAINT "FK_Document_TypeAcademicLevel_Type"
+        FOREIGN KEY ("DocumentTypeId")  REFERENCES "Document"."Type"          ("Id"),
+    CONSTRAINT "FK_Document_TypeAcademicLevel_AcademicLevel"
+        FOREIGN KEY ("AcademicLevelId") REFERENCES "General"."AcademicLevel" ("Id")
 );
 
 CREATE TABLE IF NOT EXISTS "Document"."Document" (

@@ -8,5 +8,6 @@ public sealed class GetDocumentTypeRequest
 
     public bool? IsMandatory { get; set; }
 
-    public string? RequiredLevel { get; set; }
+    /// <summary>Filtra tipos asociados a este nivel académico (General.AcademicLevel.Id).</summary>
+    public int? AcademicLevelId { get; set; }
 }

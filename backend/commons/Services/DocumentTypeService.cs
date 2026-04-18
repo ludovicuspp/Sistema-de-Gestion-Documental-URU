@@ -34,26 +34,22 @@ public sealed class DocumentTypeService : IDocumentTypeService
             if (request.IsMandatory.HasValue)
                 query = query.Where(e => e.IsMandatory == request.IsMandatory.Value);
 
-            if (!string.IsNullOrWhiteSpace(request.RequiredLevel))
+            if (request.AcademicLevelId.HasValue)
             {
-                var requiredLevel = request.RequiredLevel.Trim();
-                query = query.Where(e => e.RequiredLevel != null && e.RequiredLevel.Contains(requiredLevel));
+                var levelId = request.AcademicLevelId.Value;
+                query = query.Where(e => e.TypeAcademicLevels.Any(t => t.AcademicLevelId == levelId));
             }
         }
 
-        var list = await query
+        var entities = await query
+            .Include(e => e.TypeAcademicLevels)
+            .ThenInclude(t => t.AcademicLevel)
             .OrderBy(e => e.Name)
-            .Select(e => new DocumentTypeResponse
-            {
-                Id = e.Id,
-                GuidId = e.GuidId,
-                Name = e.Name,
-                IsMandatory = e.IsMandatory,
-                RequiredLevel = e.RequiredLevel
-            })
+            .AsSplitQuery()
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        var list = entities.Select(Map).ToList();
         return Result<List<DocumentTypeResponse>>.Success(list);
     }
 
@@ -61,6 +57,8 @@ public sealed class DocumentTypeService : IDocumentTypeService
     {
         var entity = await _db.DocumentTypes
             .AsNoTracking()
+            .Include(e => e.TypeAcademicLevels)
+            .ThenInclude(t => t.AcademicLevel)
             .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
@@ -80,7 +78,6 @@ public sealed class DocumentTypeService : IDocumentTypeService
             GuidId = Guid.NewGuid(),
             Name = request.Name.Trim(),
             IsMandatory = request.IsMandatory,
-            RequiredLevel = string.IsNullOrWhiteSpace(request.RequiredLevel) ? null : request.RequiredLevel.Trim(),
         };
 
         _db.DocumentTypes.Add(entity);
@@ -103,10 +100,16 @@ public sealed class DocumentTypeService : IDocumentTypeService
 
         entity.Name = request.Name.Trim();
         entity.IsMandatory = request.IsMandatory;
-        entity.RequiredLevel = string.IsNullOrWhiteSpace(request.RequiredLevel) ? null : request.RequiredLevel.Trim();
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return Result<DocumentTypeResponse>.Success(Map(entity));
+        var reloaded = await _db.DocumentTypes
+            .AsNoTracking()
+            .Include(e => e.TypeAcademicLevels)
+            .ThenInclude(t => t.AcademicLevel)
+            .FirstAsync(e => e.Id == entity.Id, cancellationToken)
+            .ConfigureAwait(false);
+
+        return Result<DocumentTypeResponse>.Success(Map(reloaded));
     }
 
     private static DocumentTypeResponse Map(DocumentType e) => new()
@@ -115,6 +118,9 @@ public sealed class DocumentTypeService : IDocumentTypeService
         GuidId = e.GuidId,
         Name = e.Name,
         IsMandatory = e.IsMandatory,
-        RequiredLevel = e.RequiredLevel,
+        AcademicLevels = e.TypeAcademicLevels
+            .OrderBy(x => x.AcademicLevel.Name)
+            .Select(x => x.AcademicLevel.Name)
+            .ToList(),
     };
 }

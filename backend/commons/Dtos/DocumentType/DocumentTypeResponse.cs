@@ -10,5 +10,5 @@ public sealed class DocumentTypeResponse
 
     public bool IsMandatory { get; set; }
 
-    public string? RequiredLevel { get; set; }
+    public List<string> AcademicLevels { get; set; } = new();
 }

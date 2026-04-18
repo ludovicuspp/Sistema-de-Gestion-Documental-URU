@@ -27,11 +27,11 @@ public sealed class DocumentTypeServiceTests
         Assert.NotNull(created.Response);
         Assert.True(created.Response!.Id > 0);
 
-        var byId = await service.GetByIdAsync(created.Response.Id, default);
+        var byId = await service.GetByIdAsync(created.Response.GuidId, default);
         Assert.True(byId.Ok);
         Assert.Equal("Contrato", byId.Response!.Name);
 
-        var updated = await service.UpdateAsync(created.Response.Id, new UpdateDocumentTypeRequest { Name = "Contrato v2" }, default);
+        var updated = await service.UpdateAsync(created.Response.GuidId, new UpdateDocumentTypeRequest { Name = "Contrato v2" }, default);
         Assert.True(updated.Ok);
         Assert.Equal("Contrato v2", updated.Response!.Name);
 
@@ -56,7 +56,7 @@ public sealed class DocumentTypeServiceTests
         Assert.Single(byNombre.Response!);
         Assert.Equal("Contrato", byNombre.Response![0].Name);
 
-        var byId = await service.GetAllAsync(new GetDocumentTypeRequest { Id = createdB.Response!.Id }, default);
+        var byId = await service.GetAllAsync(new GetDocumentTypeRequest { GuidId = createdB.Response!.GuidId }, default);
         Assert.True(byId.Ok);
         Assert.Single(byId.Response!);
         Assert.Equal("Factura", byId.Response![0].Name);
@@ -68,7 +68,7 @@ public sealed class DocumentTypeServiceTests
         await using var db = CreateContext();
         var service = new DocumentTypeService(db);
 
-        var result = await service.GetByIdAsync(999, default);
+        var result = await service.GetByIdAsync(Guid.NewGuid(), default);
         Assert.False(result.Ok);
         Assert.Equal("NOT_FOUND", result.Error?.Code);
     }

@@ -8,7 +8,7 @@
 -- ── General.AcademicLevel — niveles académicos ────────────────────────────────
 INSERT INTO "General"."AcademicLevel" ("GuidId", "Name")
 SELECT gen_random_uuid(), v."Name"
-FROM (VALUES ('Pregrado'), ('Postgrado'), ('Cursos Avanzados')) AS v("Name")
+FROM (VALUES ('Pregrado'), ('Postgrado'), ('Cursos Avanzados'), ('Egresado')) AS v("Name")
 WHERE NOT EXISTS (
     SELECT 1 FROM "General"."AcademicLevel" a WHERE a."Name" = v."Name"
 );
@@ -122,27 +122,51 @@ WHERE NOT EXISTS (
 );
 
 -- ── Document.Type — Tipos de documentos del expediente estudiantil ───────────
--- RequiredLevel: 'Todos' | 'Pregrado' | 'Postgrado' | 'Egresado'
--- IsMandatory  : true = obligatorio para ese nivel, false = opcional
+-- Niveles asociados: Document.TypeAcademicLevel → General.AcademicLevel
 
-INSERT INTO "Document"."Type" ("Name", "IsMandatory", "RequiredLevel") VALUES
+INSERT INTO "Document"."Type" ("Name", "IsMandatory")
+SELECT v."Name", v."IsMandatory"
+FROM (VALUES
+    ('Cédula de identidad', TRUE),
+    ('Fondo negro del título de bachiller', TRUE),
+    ('Fondo negro del título de Pregrado', TRUE),
+    ('Fondo negro de notas certificadas', TRUE),
+    ('Partida de nacimiento', TRUE),
+    ('Certificado de participación de OPSU', TRUE),
+    ('Repetición de expediente', FALSE),
+    ('Veredicto', TRUE),
+    ('Inscripción militar', FALSE),
+    ('Manejo de idioma', FALSE),
+    ('Solvencia', TRUE)
+) AS v("Name", "IsMandatory")
+WHERE NOT EXISTS (SELECT 1 FROM "Document"."Type" t WHERE t."Name" = v."Name");
 
--- Documentos comunes a todos los niveles
-('Cédula de Identidad',                    TRUE,  'Todos'),
-('Partida de Nacimiento',                  TRUE,  'Todos'),
-('Fondo Negro Título de Bachiller',        TRUE,  'Todos'),
-('Notas Certificadas',                     TRUE,  'Todos'),
-('Suscripción Militar',                    FALSE, 'Todos'),
-('Manejo de Idioma',                       FALSE, 'Todos'),
-('Constancia de Servicio Comunitario',     TRUE,  'Todos'),
-('Constancia de Pasantías',                TRUE,  'Todos'),
-
--- Pregrado
-('Certificado de Aprobación OPSU',         TRUE,  'Pregrado'),
-
--- Egresado
-('Veredicto',                              TRUE,  'Egresado'),
-('Repetición de Expediente',               FALSE, 'Egresado');
+-- Asociación tipo de documento ↔ nivel académico (muchos a muchos)
+INSERT INTO "Document"."TypeAcademicLevel" ("GuidId", "DocumentTypeId", "AcademicLevelId")
+SELECT gen_random_uuid(), t."Id", l."Id"
+FROM (VALUES
+    ('Cédula de identidad', 'Pregrado'),
+    ('Cédula de identidad', 'Postgrado'),
+    ('Fondo negro del título de bachiller', 'Pregrado'),
+    ('Fondo negro del título de Pregrado', 'Postgrado'),
+    ('Fondo negro de notas certificadas', 'Pregrado'),
+    ('Fondo negro de notas certificadas', 'Postgrado'),
+    ('Partida de nacimiento', 'Pregrado'),
+    ('Partida de nacimiento', 'Postgrado'),
+    ('Certificado de participación de OPSU', 'Pregrado'),
+    ('Repetición de expediente', 'Egresado'),
+    ('Veredicto', 'Egresado'),
+    ('Inscripción militar', 'Pregrado'),
+    ('Manejo de idioma', 'Pregrado'),
+    ('Manejo de idioma', 'Postgrado'),
+    ('Solvencia', 'Postgrado')
+) AS v(doc_name, level_name)
+INNER JOIN "Document"."Type" t ON t."Name" = v.doc_name
+INNER JOIN "General"."AcademicLevel" l ON l."Name" = v.level_name
+WHERE NOT EXISTS (
+    SELECT 1 FROM "Document"."TypeAcademicLevel" x
+    WHERE x."DocumentTypeId" = t."Id" AND x."AcademicLevelId" = l."Id"
+);
 
 -- ── Request.Status — estados de solicitud ────────────────────────────────────
 INSERT INTO "Request"."Status" ("GuidId", "Name")

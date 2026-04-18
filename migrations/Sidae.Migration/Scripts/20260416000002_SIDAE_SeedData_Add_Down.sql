@@ -5,10 +5,29 @@
 -- según lo insertado en SeedData_Add_Up.sql.
 -- =============================================
 
--- General.AcademicLevel (solo si ningún estudiante lo referencia)
+-- Document.TypeAcademicLevel (antes de Document.Type y General.AcademicLevel)
+DELETE FROM "Document"."TypeAcademicLevel"
+WHERE "DocumentTypeId" IN (
+    SELECT "Id" FROM "Document"."Type" WHERE "Name" IN (
+        'Cédula de identidad',
+        'Fondo negro del título de bachiller',
+        'Fondo negro del título de Pregrado',
+        'Fondo negro de notas certificadas',
+        'Partida de nacimiento',
+        'Certificado de participación de OPSU',
+        'Repetición de expediente',
+        'Veredicto',
+        'Inscripción militar',
+        'Manejo de idioma',
+        'Solvencia'
+    )
+);
+
+-- General.AcademicLevel (semilla; no borrar si Student o TypeAcademicLevel referencian)
 DELETE FROM "General"."AcademicLevel" al
-WHERE al."Name" IN ('Pregrado', 'Postgrado', 'Cursos Avanzados')
-  AND NOT EXISTS (SELECT 1 FROM "Student"."Student" s WHERE s."AcademicLevelId" = al."Id");
+WHERE al."Name" IN ('Pregrado', 'Postgrado', 'Cursos Avanzados', 'Egresado')
+  AND NOT EXISTS (SELECT 1 FROM "Student"."Student" s WHERE s."AcademicLevelId" = al."Id")
+  AND NOT EXISTS (SELECT 1 FROM "Document"."TypeAcademicLevel" tal WHERE tal."AcademicLevelId" = al."Id");
 
 -- General.Career (solo si ningún estudiante la tiene en Student.Career)
 DELETE FROM "General"."Career" c
@@ -84,17 +103,17 @@ WHERE m."Name" IN ('application/pdf', 'application/x-pdf')
 -- Document.Type — tipos de documentos del expediente estudiantil
 DELETE FROM "Document"."Type"
 WHERE "Name" IN (
-    'Cédula de Identidad',
-    'Partida de Nacimiento',
-    'Fondo Negro Título de Bachiller',
-    'Notas Certificadas',
-    'Suscripción Militar',
-    'Manejo de Idioma',
-    'Constancia de Servicio Comunitario',
-    'Constancia de Pasantías',
-    'Certificado de Aprobación OPSU',
+    'Cédula de identidad',
+    'Fondo negro del título de bachiller',
+    'Fondo negro del título de Pregrado',
+    'Fondo negro de notas certificadas',
+    'Partida de nacimiento',
+    'Certificado de participación de OPSU',
+    'Repetición de expediente',
     'Veredicto',
-    'Repetición de Expediente'
+    'Inscripción militar',
+    'Manejo de idioma',
+    'Solvencia'
 );
 
 -- Request.Status (solo si ningún Request.Request lo usa)
