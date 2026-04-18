@@ -60,7 +60,7 @@ WHERE NOT EXISTS (
 -- ── Task.Status — estados de tarea ────────────────────────────────────────────
 INSERT INTO "Task"."Status" ("GuidId", "Name")
 SELECT gen_random_uuid(), v."Name"
-FROM (VALUES ('Pendiente'), ('En progreso'), ('Completado')) AS v("Name")
+FROM (VALUES ('Pendiente'), ('En progreso'), ('Finalizada')) AS v("Name")
 WHERE NOT EXISTS (
     SELECT 1 FROM "Task"."Status" s WHERE s."Name" = v."Name"
 );

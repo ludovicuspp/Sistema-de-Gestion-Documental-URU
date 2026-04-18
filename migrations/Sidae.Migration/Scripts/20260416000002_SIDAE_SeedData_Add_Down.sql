@@ -37,7 +37,7 @@ WHERE a."Name" IN ('GET', 'POST', 'PUT', 'PATCH', 'DELETE')
 
 -- Task.Status (solo si ninguna Task.Task lo usa)
 DELETE FROM "Task"."Status" s
-WHERE s."Name" IN ('Pendiente', 'En progreso', 'Completado')
+WHERE s."Name" IN ('Pendiente', 'En progreso', 'Finalizada')
   AND NOT EXISTS (SELECT 1 FROM "Task"."Task" t WHERE t."StatusId" = s."Id");
 
 -- Student.Status (solo si ningún Student.Student lo usa)
