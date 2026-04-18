@@ -44,10 +44,15 @@ WHERE NOT EXISTS (
     SELECT 1 FROM "Security"."Action" a WHERE a."Name" = v."Name"
 );
 
--- ── Security.Role — rol por defecto para registro público (Auth:DefaultRegisterRoleName)
+-- ── Security.Role — catálogo (incluye rol de registro público: Auth:DefaultRegisterRoleName = Usuario)
 INSERT INTO "Security"."Role" ("GuidId", "Name")
 SELECT gen_random_uuid(), v."Name"
-FROM (VALUES ('Usuario')) AS v("Name")
+FROM (VALUES
+    ('Usuario'),
+    ('Administrador'),
+    ('Verificador'),
+    ('Asistente')
+) AS v("Name")
 WHERE NOT EXISTS (
     SELECT 1 FROM "Security"."Role" r WHERE r."Name" = v."Name"
 );

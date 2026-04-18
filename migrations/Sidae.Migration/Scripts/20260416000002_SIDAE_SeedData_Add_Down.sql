@@ -51,7 +51,9 @@ WHERE "Name" IN (
     'Repetición de Expediente'
 );
 
--- Rol de registro (solo si ningún usuario lo referencia)
+-- Roles semilla (solo si no hay User, Permission ni RoleUser que los usen)
 DELETE FROM "Security"."Role" r
-WHERE r."Name" = 'Usuario'
-  AND NOT EXISTS (SELECT 1 FROM "Security"."User" u WHERE u."RoleId" = r."Id");
+WHERE r."Name" IN ('Usuario', 'Administrador', 'Verificador', 'Asistente')
+  AND NOT EXISTS (SELECT 1 FROM "Security"."User" u WHERE u."RoleId" = r."Id")
+  AND NOT EXISTS (SELECT 1 FROM "Security"."Permission" p WHERE p."RoleId" = r."Id")
+  AND NOT EXISTS (SELECT 1 FROM "Security"."RoleUser" ru WHERE ru."RoleId" = r."Id");
