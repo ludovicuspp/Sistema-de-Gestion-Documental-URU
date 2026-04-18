@@ -29,4 +29,17 @@ public static class ApplicationServicesExtensions
         services.AddScoped<IRequestDocumentTypeService, RequestDocumentTypeService>();
         return services;
     }
+
+    /// <summary>
+    /// Servicios mínimos para el API Security (roles y acciones); sin catálogos de otros dominios.
+    /// </summary>
+    public static IServiceCollection AddSidaeSecurityApplicationServices(this IServiceCollection services)
+    {
+        services.AddMemoryCache();
+        services.AddSingleton<ICacheService, CacheService>();
+        services.AddSidaeIdentity();
+        services.AddScoped<ISecurityActionService, SecurityActionService>();
+        services.AddScoped<ISecurityRoleService, SecurityRoleService>();
+        return services;
+    }
 }

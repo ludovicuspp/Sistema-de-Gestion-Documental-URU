@@ -5,11 +5,6 @@ namespace Sidae.Security.Helpers;
 /// </summary>
 public static class CatalogCacheKey
 {
-    public const string DocumentTypesAll = "catalog:document-types:all";
-
-    public const string AcademicLevelsAll = "catalog:general:academic-levels:all";
-    public const string CareersAll = "catalog:general:careers:all";
-
     public const string SecurityActionsAll = "catalog:security:actions:all";
     public const string SecurityRolesAll = "catalog:security:roles:all";
 
