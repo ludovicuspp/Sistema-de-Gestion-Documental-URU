@@ -21,6 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="Sidae.Commons">
+      <HintPath>..\Sidae.Authentication\Binaries\Sidae.Commons.dll</HintPath>
+    </Reference>
     <ProjectReference Include="..\\Sidae.Authentication\\Sidae.Authentication.csproj" />
   </ItemGroup>
 </Project>
