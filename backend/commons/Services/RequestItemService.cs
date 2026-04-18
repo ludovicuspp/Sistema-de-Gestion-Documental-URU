@@ -22,9 +22,6 @@ public sealed class RequestItemService : IRequestItemService
 
         if (request is not null)
         {
-            if (request.Id.HasValue)
-                query = query.Where(e => e.Id == request.Id.Value);
-
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
@@ -65,11 +62,11 @@ public sealed class RequestItemService : IRequestItemService
         return Result<List<RequestItemResponse>>.Success(list);
     }
 
-    public async Task<Result<RequestItemResponse>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<RequestItemResponse>> GetByIdAsync(Guid guidId, CancellationToken cancellationToken = default)
     {
         var entity = await _db.RequestItems
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)
@@ -99,13 +96,13 @@ public sealed class RequestItemService : IRequestItemService
         return Result<RequestItemResponse>.Success(Map(entity));
     }
 
-    public async Task<Result<RequestItemResponse>> UpdateAsync(int id, UpdateRequestItemRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<RequestItemResponse>> UpdateAsync(Guid guidId, UpdateRequestItemRequest request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.EmailContact))
             return Result<RequestItemResponse>.Failure(new Error("VALIDATION", "EmailContact es obligatorio."));
 
         var entity = await _db.RequestItems
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)

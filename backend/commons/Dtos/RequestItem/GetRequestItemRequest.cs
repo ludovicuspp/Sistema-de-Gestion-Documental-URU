@@ -2,8 +2,6 @@ namespace Sidae.Commons.Dtos.RequestItem;
 
 public sealed class GetRequestItemRequest
 {
-    public int? Id { get; set; }
-
     public Guid? GuidId { get; set; }
 
     public string? EmailContact { get; set; }

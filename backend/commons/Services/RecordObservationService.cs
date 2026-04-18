@@ -22,9 +22,6 @@ public sealed class RecordObservationService : IRecordObservationService
 
         if (request is not null)
         {
-            if (request.Id.HasValue)
-                query = query.Where(e => e.Id == request.Id.Value);
-
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
@@ -66,11 +63,11 @@ public sealed class RecordObservationService : IRecordObservationService
         return Result<List<RecordObservationResponse>>.Success(list);
     }
 
-    public async Task<Result<RecordObservationResponse>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<RecordObservationResponse>> GetByIdAsync(Guid guidId, CancellationToken cancellationToken = default)
     {
         var entity = await _db.RecordObservations
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)
@@ -98,10 +95,10 @@ public sealed class RecordObservationService : IRecordObservationService
         return Result<RecordObservationResponse>.Success(Map(entity));
     }
 
-    public async Task<Result<RecordObservationResponse>> UpdateAsync(int id, UpdateRecordObservationRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<RecordObservationResponse>> UpdateAsync(Guid guidId, UpdateRecordObservationRequest request, CancellationToken cancellationToken = default)
     {
         var entity = await _db.RecordObservations
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)

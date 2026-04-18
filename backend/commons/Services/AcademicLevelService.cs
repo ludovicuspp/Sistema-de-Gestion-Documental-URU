@@ -22,9 +22,6 @@ public sealed class AcademicLevelService : IAcademicLevelService
 
         if (request is not null)
         {
-            if (request.Id.HasValue)
-                query = query.Where(e => e.Id == request.Id.Value);
-
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
@@ -49,11 +46,11 @@ public sealed class AcademicLevelService : IAcademicLevelService
         return Result<List<AcademicLevelResponse>>.Success(list);
     }
 
-    public async Task<Result<AcademicLevelResponse>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<AcademicLevelResponse>> GetByIdAsync(Guid guidId, CancellationToken cancellationToken = default)
     {
         var entity = await _db.AcademicLevels
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)
@@ -79,13 +76,13 @@ public sealed class AcademicLevelService : IAcademicLevelService
         return Result<AcademicLevelResponse>.Success(Map(entity));
     }
 
-    public async Task<Result<AcademicLevelResponse>> UpdateAsync(int id, UpdateAcademicLevelRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<AcademicLevelResponse>> UpdateAsync(Guid guidId, UpdateAcademicLevelRequest request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
             return Result<AcademicLevelResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = await _db.AcademicLevels
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)

@@ -22,9 +22,6 @@ public sealed class RequestDocumentTypeService : IRequestDocumentTypeService
 
         if (request is not null)
         {
-            if (request.Id.HasValue)
-                query = query.Where(e => e.Id == request.Id.Value);
-
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
@@ -50,11 +47,11 @@ public sealed class RequestDocumentTypeService : IRequestDocumentTypeService
         return Result<List<RequestDocumentTypeResponse>>.Success(list);
     }
 
-    public async Task<Result<RequestDocumentTypeResponse>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<RequestDocumentTypeResponse>> GetByIdAsync(Guid guidId, CancellationToken cancellationToken = default)
     {
         var entity = await _db.RequestDocumentTypes
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)
@@ -78,10 +75,10 @@ public sealed class RequestDocumentTypeService : IRequestDocumentTypeService
         return Result<RequestDocumentTypeResponse>.Success(Map(entity));
     }
 
-    public async Task<Result<RequestDocumentTypeResponse>> UpdateAsync(int id, UpdateRequestDocumentTypeRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<RequestDocumentTypeResponse>> UpdateAsync(Guid guidId, UpdateRequestDocumentTypeRequest request, CancellationToken cancellationToken = default)
     {
         var entity = await _db.RequestDocumentTypes
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)

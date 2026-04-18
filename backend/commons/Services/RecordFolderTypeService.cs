@@ -22,9 +22,6 @@ public sealed class RecordFolderTypeService : IRecordFolderTypeService
 
         if (request is not null)
         {
-            if (request.Id.HasValue)
-                query = query.Where(e => e.Id == request.Id.Value);
-
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
@@ -49,11 +46,11 @@ public sealed class RecordFolderTypeService : IRecordFolderTypeService
         return Result<List<RecordFolderTypeResponse>>.Success(list);
     }
 
-    public async Task<Result<RecordFolderTypeResponse>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<RecordFolderTypeResponse>> GetByIdAsync(Guid guidId, CancellationToken cancellationToken = default)
     {
         var entity = await _db.RecordFolderTypes
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)
@@ -79,13 +76,13 @@ public sealed class RecordFolderTypeService : IRecordFolderTypeService
         return Result<RecordFolderTypeResponse>.Success(Map(entity));
     }
 
-    public async Task<Result<RecordFolderTypeResponse>> UpdateAsync(int id, UpdateRecordFolderTypeRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<RecordFolderTypeResponse>> UpdateAsync(Guid guidId, UpdateRecordFolderTypeRequest request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
             return Result<RecordFolderTypeResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = await _db.RecordFolderTypes
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)

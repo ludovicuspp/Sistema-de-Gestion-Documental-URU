@@ -22,9 +22,6 @@ public sealed class RecordFolderStatusService : IRecordFolderStatusService
 
         if (request is not null)
         {
-            if (request.Id.HasValue)
-                query = query.Where(e => e.Id == request.Id.Value);
-
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
@@ -49,11 +46,11 @@ public sealed class RecordFolderStatusService : IRecordFolderStatusService
         return Result<List<RecordFolderStatusResponse>>.Success(list);
     }
 
-    public async Task<Result<RecordFolderStatusResponse>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<RecordFolderStatusResponse>> GetByIdAsync(Guid guidId, CancellationToken cancellationToken = default)
     {
         var entity = await _db.RecordFolderStatuses
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)
@@ -79,13 +76,13 @@ public sealed class RecordFolderStatusService : IRecordFolderStatusService
         return Result<RecordFolderStatusResponse>.Success(Map(entity));
     }
 
-    public async Task<Result<RecordFolderStatusResponse>> UpdateAsync(int id, UpdateRecordFolderStatusRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<RecordFolderStatusResponse>> UpdateAsync(Guid guidId, UpdateRecordFolderStatusRequest request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
             return Result<RecordFolderStatusResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = await _db.RecordFolderStatuses
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)

@@ -7,9 +7,9 @@ public interface IRecordFolderStatusService
 {
     Task<Result<List<RecordFolderStatusResponse>>> GetAllAsync(GetRecordFolderStatusRequest? request = null, CancellationToken cancellationToken = default);
 
-    Task<Result<RecordFolderStatusResponse>> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Result<RecordFolderStatusResponse>> GetByIdAsync(Guid guidId, CancellationToken cancellationToken = default);
 
     Task<Result<RecordFolderStatusResponse>> CreateAsync(CreateRecordFolderStatusRequest request, CancellationToken cancellationToken = default);
 
-    Task<Result<RecordFolderStatusResponse>> UpdateAsync(int id, UpdateRecordFolderStatusRequest request, CancellationToken cancellationToken = default);
+    Task<Result<RecordFolderStatusResponse>> UpdateAsync(Guid guidId, UpdateRecordFolderStatusRequest request, CancellationToken cancellationToken = default);
 }

@@ -19,8 +19,7 @@ public sealed class DocumentTypeController(
     public async Task<IActionResult> GetAll([FromQuery] GetDocumentTypeRequest? request, CancellationToken cancellationToken)
     {
         var hasFilters = request is not null &&
-                         (request.Id.HasValue
-                          || request.GuidId.HasValue
+                         (request.GuidId.HasValue
                           || !string.IsNullOrWhiteSpace(request.Name)
                           || request.IsMandatory.HasValue
                           || !string.IsNullOrWhiteSpace(request.RequiredLevel));
@@ -39,12 +38,12 @@ public sealed class DocumentTypeController(
         return result.Ok ? Ok(result) : BadRequest(result);
     }
 
-    [HttpGet("{id:int}")]
+    [HttpGet("{guidId:guid}")]
     [ProducesResponseType(typeof(Result<DocumentTypeResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetById(Guid guidId, CancellationToken cancellationToken)
     {
-        var result = await documentTypeService.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
+        var result = await documentTypeService.GetByIdAsync(guidId, cancellationToken).ConfigureAwait(false);
         if (!result.Ok && result.Error?.Code == "NOT_FOUND")
             return NotFound(result);
         return result.Ok ? Ok(result) : BadRequest(result);
@@ -61,12 +60,12 @@ public sealed class DocumentTypeController(
         return result.Ok ? Ok(result) : BadRequest(result);
     }
 
-    [HttpPut("{id:int}")]
+    [HttpPut("{guidId:guid}")]
     [ProducesResponseType(typeof(Result<DocumentTypeResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateDocumentTypeRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(Guid guidId, [FromBody] UpdateDocumentTypeRequest request, CancellationToken cancellationToken)
     {
-        var result = await documentTypeService.UpdateAsync(id, request, cancellationToken).ConfigureAwait(false);
+        var result = await documentTypeService.UpdateAsync(guidId, request, cancellationToken).ConfigureAwait(false);
         if (!result.Ok && result.Error?.Code == "NOT_FOUND")
             return NotFound(result);
         if (result.Ok)

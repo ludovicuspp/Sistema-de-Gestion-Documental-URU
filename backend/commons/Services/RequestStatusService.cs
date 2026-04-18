@@ -22,9 +22,6 @@ public sealed class RequestStatusService : IRequestStatusService
 
         if (request is not null)
         {
-            if (request.Id.HasValue)
-                query = query.Where(e => e.Id == request.Id.Value);
-
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
@@ -49,11 +46,11 @@ public sealed class RequestStatusService : IRequestStatusService
         return Result<List<RequestStatusResponse>>.Success(list);
     }
 
-    public async Task<Result<RequestStatusResponse>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<RequestStatusResponse>> GetByIdAsync(Guid guidId, CancellationToken cancellationToken = default)
     {
         var entity = await _db.RequestStatuses
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)
@@ -79,13 +76,13 @@ public sealed class RequestStatusService : IRequestStatusService
         return Result<RequestStatusResponse>.Success(Map(entity));
     }
 
-    public async Task<Result<RequestStatusResponse>> UpdateAsync(int id, UpdateRequestStatusRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<RequestStatusResponse>> UpdateAsync(Guid guidId, UpdateRequestStatusRequest request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
             return Result<RequestStatusResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = await _db.RequestStatuses
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)

@@ -22,9 +22,6 @@ public sealed class DocumentTypeService : IDocumentTypeService
 
         if (request is not null)
         {
-            if (request.Id.HasValue)
-                query = query.Where(e => e.Id == request.Id.Value);
-
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
@@ -60,11 +57,11 @@ public sealed class DocumentTypeService : IDocumentTypeService
         return Result<List<DocumentTypeResponse>>.Success(list);
     }
 
-    public async Task<Result<DocumentTypeResponse>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<DocumentTypeResponse>> GetByIdAsync(Guid guidId, CancellationToken cancellationToken = default)
     {
         var entity = await _db.DocumentTypes
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)
@@ -92,13 +89,13 @@ public sealed class DocumentTypeService : IDocumentTypeService
         return Result<DocumentTypeResponse>.Success(Map(entity));
     }
 
-    public async Task<Result<DocumentTypeResponse>> UpdateAsync(int id, UpdateDocumentTypeRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<DocumentTypeResponse>> UpdateAsync(Guid guidId, UpdateDocumentTypeRequest request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
             return Result<DocumentTypeResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = await _db.DocumentTypes
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)

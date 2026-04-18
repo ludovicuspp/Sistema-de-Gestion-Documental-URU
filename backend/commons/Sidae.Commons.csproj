@@ -27,5 +27,7 @@
     <Copy SourceFiles="$(OutputPath)Sidae.Commons.dll" DestinationFolder="..\authentication\Sidae.Authentication\Binaries" />
     <Copy SourceFiles="$(OutputPath)Sidae.Commons.dll" DestinationFolder="..\support\Sidae.Support\Binaries" />
     <Copy SourceFiles="$(OutputPath)Sidae.Commons.dll" DestinationFolder="..\documents\Sidae.Documents\Binaries" />
+    <Copy SourceFiles="$(OutputPath)Sidae.Commons.dll" DestinationFolder="..\security\Sidae.Security\Binaries" />
+    <Copy SourceFiles="$(OutputPath)Sidae.Commons.dll" DestinationFolder="..\sidae\Sidae.Sidae\Binaries" />
   </Target>
 </Project>

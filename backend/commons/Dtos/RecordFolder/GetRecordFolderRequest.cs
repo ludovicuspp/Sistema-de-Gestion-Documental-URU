@@ -2,8 +2,6 @@ namespace Sidae.Commons.Dtos.RecordFolder;
 
 public sealed class GetRecordFolderRequest
 {
-    public int? Id { get; set; }
-
     public Guid? GuidId { get; set; }
 
     public string? Description { get; set; }

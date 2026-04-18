@@ -22,9 +22,6 @@ public sealed class RecordPhysicalLocationService : IRecordPhysicalLocationServi
 
         if (request is not null)
         {
-            if (request.Id.HasValue)
-                query = query.Where(e => e.Id == request.Id.Value);
-
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
@@ -67,11 +64,11 @@ public sealed class RecordPhysicalLocationService : IRecordPhysicalLocationServi
         return Result<List<RecordPhysicalLocationResponse>>.Success(list);
     }
 
-    public async Task<Result<RecordPhysicalLocationResponse>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<RecordPhysicalLocationResponse>> GetByIdAsync(Guid guidId, CancellationToken cancellationToken = default)
     {
         var entity = await _db.RecordPhysicalLocations
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)
@@ -104,7 +101,7 @@ public sealed class RecordPhysicalLocationService : IRecordPhysicalLocationServi
         return Result<RecordPhysicalLocationResponse>.Success(Map(entity));
     }
 
-    public async Task<Result<RecordPhysicalLocationResponse>> UpdateAsync(int id, UpdateRecordPhysicalLocationRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<RecordPhysicalLocationResponse>> UpdateAsync(Guid guidId, UpdateRecordPhysicalLocationRequest request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Shelf))
             return Result<RecordPhysicalLocationResponse>.Failure(new Error("VALIDATION", "Shelf es obligatorio."));
@@ -114,7 +111,7 @@ public sealed class RecordPhysicalLocationService : IRecordPhysicalLocationServi
             return Result<RecordPhysicalLocationResponse>.Failure(new Error("VALIDATION", "Row es obligatorio."));
 
         var entity = await _db.RecordPhysicalLocations
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)

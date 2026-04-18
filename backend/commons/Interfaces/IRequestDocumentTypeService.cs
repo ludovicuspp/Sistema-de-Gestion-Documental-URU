@@ -7,9 +7,9 @@ public interface IRequestDocumentTypeService
 {
     Task<Result<List<RequestDocumentTypeResponse>>> GetAllAsync(GetRequestDocumentTypeRequest? request = null, CancellationToken cancellationToken = default);
 
-    Task<Result<RequestDocumentTypeResponse>> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Result<RequestDocumentTypeResponse>> GetByIdAsync(Guid guidId, CancellationToken cancellationToken = default);
 
     Task<Result<RequestDocumentTypeResponse>> CreateAsync(CreateRequestDocumentTypeRequest request, CancellationToken cancellationToken = default);
 
-    Task<Result<RequestDocumentTypeResponse>> UpdateAsync(int id, UpdateRequestDocumentTypeRequest request, CancellationToken cancellationToken = default);
+    Task<Result<RequestDocumentTypeResponse>> UpdateAsync(Guid guidId, UpdateRequestDocumentTypeRequest request, CancellationToken cancellationToken = default);
 }

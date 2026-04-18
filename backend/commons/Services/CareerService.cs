@@ -22,9 +22,6 @@ public sealed class CareerService : ICareerService
 
         if (request is not null)
         {
-            if (request.Id.HasValue)
-                query = query.Where(e => e.Id == request.Id.Value);
-
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
@@ -49,11 +46,11 @@ public sealed class CareerService : ICareerService
         return Result<List<CareerResponse>>.Success(list);
     }
 
-    public async Task<Result<CareerResponse>> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<Result<CareerResponse>> GetByIdAsync(Guid guidId, CancellationToken cancellationToken = default)
     {
         var entity = await _db.Careers
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)
@@ -79,13 +76,13 @@ public sealed class CareerService : ICareerService
         return Result<CareerResponse>.Success(Map(entity));
     }
 
-    public async Task<Result<CareerResponse>> UpdateAsync(int id, UpdateCareerRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<CareerResponse>> UpdateAsync(Guid guidId, UpdateCareerRequest request, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
             return Result<CareerResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = await _db.Careers
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(e => e.GuidId == guidId, cancellationToken)
             .ConfigureAwait(false);
 
         if (entity is null)

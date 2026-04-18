@@ -19,8 +19,7 @@ public sealed class RequestDocumentTypeController(
     public async Task<IActionResult> GetAll([FromQuery] GetRequestDocumentTypeRequest? request, CancellationToken cancellationToken)
     {
         var hasFilters = request is not null &&
-                         (request.Id.HasValue
-                          || request.GuidId.HasValue
+                         (request.GuidId.HasValue
                           || request.RequestId.HasValue
                           || request.DocumentTypeId.HasValue);
 
@@ -38,12 +37,12 @@ public sealed class RequestDocumentTypeController(
         return result.Ok ? Ok(result) : BadRequest(result);
     }
 
-    [HttpGet("{id:int}")]
+    [HttpGet("{guidId:guid}")]
     [ProducesResponseType(typeof(Result<RequestDocumentTypeResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetById(Guid guidId, CancellationToken cancellationToken)
     {
-        var result = await service.GetByIdAsync(id, cancellationToken).ConfigureAwait(false);
+        var result = await service.GetByIdAsync(guidId, cancellationToken).ConfigureAwait(false);
         if (!result.Ok && result.Error?.Code == "NOT_FOUND")
             return NotFound(result);
         return result.Ok ? Ok(result) : BadRequest(result);
@@ -60,12 +59,12 @@ public sealed class RequestDocumentTypeController(
         return result.Ok ? Ok(result) : BadRequest(result);
     }
 
-    [HttpPut("{id:int}")]
+    [HttpPut("{guidId:guid}")]
     [ProducesResponseType(typeof(Result<RequestDocumentTypeResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateRequestDocumentTypeRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Update(Guid guidId, [FromBody] UpdateRequestDocumentTypeRequest request, CancellationToken cancellationToken)
     {
-        var result = await service.UpdateAsync(id, request, cancellationToken).ConfigureAwait(false);
+        var result = await service.UpdateAsync(guidId, request, cancellationToken).ConfigureAwait(false);
         if (!result.Ok && result.Error?.Code == "NOT_FOUND")
             return NotFound(result);
         if (result.Ok)
