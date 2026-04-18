@@ -25,7 +25,7 @@ DROP INDEX IF EXISTS "Security"."IX_Security_RoleUser_RoleId";
 DROP INDEX IF EXISTS "Security"."IX_Security_RoleUser_UserId";
 
 -- Task
-DROP INDEX IF EXISTS "Task"."IX_Task_Status_Description";
+DROP INDEX IF EXISTS "Task"."IX_Task_Status_Name";
 DROP INDEX IF EXISTS "Task"."IX_Task_Task_Title";
 DROP INDEX IF EXISTS "Task"."IX_Task_Task_Description";
 DROP INDEX IF EXISTS "Task"."IX_Task_Task_Capacity";

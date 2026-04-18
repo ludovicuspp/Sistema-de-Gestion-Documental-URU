@@ -35,6 +35,11 @@ DELETE FROM "Security"."Action" a
 WHERE a."Name" IN ('GET', 'POST', 'PUT', 'PATCH', 'DELETE')
   AND NOT EXISTS (SELECT 1 FROM "Security"."Permission" p WHERE p."ActionId" = a."Id");
 
+-- Task.Status (solo si ninguna Task.Task lo usa)
+DELETE FROM "Task"."Status" s
+WHERE s."Name" IN ('Pendiente', 'En progreso', 'Completado')
+  AND NOT EXISTS (SELECT 1 FROM "Task"."Task" t WHERE t."StatusId" = s."Id");
+
 -- Document.Type — tipos de documentos del expediente estudiantil
 DELETE FROM "Document"."Type"
 WHERE "Name" IN (

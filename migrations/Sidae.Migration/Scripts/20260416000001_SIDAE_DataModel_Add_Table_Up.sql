@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS "Security"."RoleUser" (
 CREATE TABLE IF NOT EXISTS "Task"."Status" (
     "Id"          SERIAL       PRIMARY KEY,
     "GuidId"      UUID         NOT NULL DEFAULT gen_random_uuid(),
-    "Description" VARCHAR(100) NOT NULL,
+    "Name"        VARCHAR(100) NOT NULL,
     CONSTRAINT "UQ_Task_Status_GuidId" UNIQUE ("GuidId")
 );
 

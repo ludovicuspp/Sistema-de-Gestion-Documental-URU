@@ -57,6 +57,14 @@ WHERE NOT EXISTS (
     SELECT 1 FROM "Security"."Role" r WHERE r."Name" = v."Name"
 );
 
+-- ── Task.Status — estados de tarea ────────────────────────────────────────────
+INSERT INTO "Task"."Status" ("GuidId", "Name")
+SELECT gen_random_uuid(), v."Name"
+FROM (VALUES ('Pendiente'), ('En progreso'), ('Completado')) AS v("Name")
+WHERE NOT EXISTS (
+    SELECT 1 FROM "Task"."Status" s WHERE s."Name" = v."Name"
+);
+
 -- ── Document.Type — Tipos de documentos del expediente estudiantil ───────────
 -- RequiredLevel: 'Todos' | 'Pregrado' | 'Postgrado' | 'Egresado'
 -- IsMandatory  : true = obligatorio para ese nivel, false = opcional

@@ -27,7 +27,7 @@ CREATE INDEX IF NOT EXISTS "IX_Security_RoleUser_RoleId" ON "Security"."RoleUser
 CREATE INDEX IF NOT EXISTS "IX_Security_RoleUser_UserId" ON "Security"."RoleUser" ("UserId");
 
 -- Task
-CREATE INDEX IF NOT EXISTS "IX_Task_Status_Description" ON "Task"."Status" ("Description");
+CREATE INDEX IF NOT EXISTS "IX_Task_Status_Name" ON "Task"."Status" ("Name");
 CREATE INDEX IF NOT EXISTS "IX_Task_Task_Title" ON "Task"."Task" ("Title");
 CREATE INDEX IF NOT EXISTS "IX_Task_Task_Description" ON "Task"."Task" ("Description");
 CREATE INDEX IF NOT EXISTS "IX_Task_Task_Capacity" ON "Task"."Task" ("Capacity");
