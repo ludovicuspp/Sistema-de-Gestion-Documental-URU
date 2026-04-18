@@ -13,10 +13,14 @@ public class AppDbContext : DbContext
 
     public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
     public DbSet<DocumentTypeAcademicLevel> DocumentTypeAcademicLevels => Set<DocumentTypeAcademicLevel>();
+    public DbSet<MimeType> MimeTypes => Set<MimeType>();
     public DbSet<AcademicLevel> AcademicLevels => Set<AcademicLevel>();
     public DbSet<Career> Careers => Set<Career>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
+    public DbSet<SecurityAction> SecurityActions => Set<SecurityAction>();
+    public DbSet<TaskStatus> TaskStatuses => Set<TaskStatus>();
+    public DbSet<StudentStatus> StudentStatuses => Set<StudentStatus>();
     public DbSet<Person> Persons => Set<Person>();
 
     public DbSet<RecordFolderStatus> RecordFolderStatuses => Set<RecordFolderStatus>();
@@ -32,9 +36,13 @@ public class AppDbContext : DbContext
     {
         modelBuilder.ApplyConfiguration(new DocumentTypeConfiguration());
         modelBuilder.ApplyConfiguration(new DocumentTypeAcademicLevelConfiguration());
+        modelBuilder.ApplyConfiguration(new MimeTypeConfiguration());
         modelBuilder.ApplyConfiguration(new AcademicLevelConfiguration());
         modelBuilder.ApplyConfiguration(new CareerConfiguration());
         modelBuilder.ApplyConfiguration(new RoleConfiguration());
+        modelBuilder.ApplyConfiguration(new SecurityActionConfiguration());
+        modelBuilder.ApplyConfiguration(new TaskStatusConfiguration());
+        modelBuilder.ApplyConfiguration(new StudentStatusConfiguration());
         modelBuilder.ApplyConfiguration(new PersonConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new RecordFolderStatusConfiguration());

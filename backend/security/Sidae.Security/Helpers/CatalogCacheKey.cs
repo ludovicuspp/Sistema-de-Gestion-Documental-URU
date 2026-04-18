@@ -10,5 +10,8 @@ public static class CatalogCacheKey
     public const string AcademicLevelsAll = "catalog:general:academic-levels:all";
     public const string CareersAll = "catalog:general:careers:all";
 
+    public const string SecurityActionsAll = "catalog:security:actions:all";
+    public const string SecurityRolesAll = "catalog:security:roles:all";
+
     public static TimeSpan DefaultTtl => TimeSpan.FromMinutes(5);
 }
