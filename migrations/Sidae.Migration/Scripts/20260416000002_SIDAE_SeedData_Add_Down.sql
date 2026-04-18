@@ -65,6 +65,20 @@ WHERE fs."Name" IN (
 )
   AND NOT EXISTS (SELECT 1 FROM "Record"."Folder" f WHERE f."FolderStatusId" = fs."Id");
 
+-- Record.FolderType (solo si ningún Record.Folder lo usa)
+DELETE FROM "Record"."FolderType" ft
+WHERE ft."Name" IN (
+    'Académico',
+    'Ingreso y admisión',
+    'Pasantías',
+    'Servicio comunitario',
+    'Graduación y titulación',
+    'Disciplinario',
+    'Becas y ayudas',
+    'Prórrogas y convalidaciones'
+)
+  AND NOT EXISTS (SELECT 1 FROM "Record"."Folder" f WHERE f."FolderTypeId" = ft."Id");
+
 -- Document.Type — tipos de documentos del expediente estudiantil
 DELETE FROM "Document"."Type"
 WHERE "Name" IN (

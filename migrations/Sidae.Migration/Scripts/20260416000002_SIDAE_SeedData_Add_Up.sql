@@ -96,6 +96,23 @@ WHERE NOT EXISTS (
     SELECT 1 FROM "Record"."FolderStatus" fs WHERE fs."Name" = v."Name"
 );
 
+-- ── Record.FolderType — tipos de expediente / legajo documental ───────────────
+INSERT INTO "Record"."FolderType" ("GuidId", "Name")
+SELECT gen_random_uuid(), v."Name"
+FROM (VALUES
+    ('Académico'),
+    ('Ingreso y admisión'),
+    ('Pasantías'),
+    ('Servicio comunitario'),
+    ('Graduación y titulación'),
+    ('Disciplinario'),
+    ('Becas y ayudas'),
+    ('Prórrogas y convalidaciones')
+) AS v("Name")
+WHERE NOT EXISTS (
+    SELECT 1 FROM "Record"."FolderType" ft WHERE ft."Name" = v."Name"
+);
+
 -- ── Document.Type — Tipos de documentos del expediente estudiantil ───────────
 -- RequiredLevel: 'Todos' | 'Pregrado' | 'Postgrado' | 'Egresado'
 -- IsMandatory  : true = obligatorio para ese nivel, false = opcional
