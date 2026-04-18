@@ -84,13 +84,10 @@ WHERE NOT EXISTS (
 INSERT INTO "Record"."FolderStatus" ("GuidId", "Name")
 SELECT gen_random_uuid(), v."Name"
 FROM (VALUES
-    ('Borrador'),
-    ('Pendiente de revisión'),
-    ('En revisión'),
-    ('Con observaciones'),
-    ('Aprobado'),
+    ('Pendiente'),
+    ('Sin documentos'),
     ('Rechazado'),
-    ('Archivado')
+    ('Aprobado')
 ) AS v("Name")
 WHERE NOT EXISTS (
     SELECT 1 FROM "Record"."FolderStatus" fs WHERE fs."Name" = v."Name"

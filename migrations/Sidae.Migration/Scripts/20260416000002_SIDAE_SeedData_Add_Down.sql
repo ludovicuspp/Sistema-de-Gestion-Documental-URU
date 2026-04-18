@@ -55,13 +55,10 @@ WHERE st."Name" IN (
 -- Record.FolderStatus (solo si ningún Record.Folder lo usa)
 DELETE FROM "Record"."FolderStatus" fs
 WHERE fs."Name" IN (
-    'Borrador',
-    'Pendiente de revisión',
-    'En revisión',
-    'Con observaciones',
-    'Aprobado',
+    'Pendiente',
+    'Sin documentos',
     'Rechazado',
-    'Archivado'
+    'Aprobado'
 )
   AND NOT EXISTS (SELECT 1 FROM "Record"."Folder" f WHERE f."FolderStatusId" = fs."Id");
 
