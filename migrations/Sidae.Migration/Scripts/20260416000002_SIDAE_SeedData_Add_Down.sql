@@ -5,6 +5,11 @@
 -- según lo insertado en SeedData_Add_Up.sql.
 -- =============================================
 
+-- General.AcademicLevel (solo si ningún estudiante lo referencia)
+DELETE FROM "General"."AcademicLevel" al
+WHERE al."Name" IN ('Pregrado', 'Postgrado', 'Cursos Avanzados')
+  AND NOT EXISTS (SELECT 1 FROM "Student"."Student" s WHERE s."AcademicLevelId" = al."Id");
+
 -- Document.Type — tipos de documentos del expediente estudiantil
 DELETE FROM "Document"."Type"
 WHERE "Name" IN (

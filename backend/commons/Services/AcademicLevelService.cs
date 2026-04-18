@@ -28,20 +28,20 @@ public sealed class AcademicLevelService : IAcademicLevelService
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
-            if (!string.IsNullOrWhiteSpace(request.Description))
+            if (!string.IsNullOrWhiteSpace(request.Name))
             {
-                var d = request.Description.Trim();
-                query = query.Where(e => e.Description.Contains(d));
+                var d = request.Name.Trim();
+                query = query.Where(e => e.Name.Contains(d));
             }
         }
 
         var list = await query
-            .OrderBy(e => e.Description)
+            .OrderBy(e => e.Name)
             .Select(e => new AcademicLevelResponse
             {
                 Id = e.Id,
                 GuidId = e.GuidId,
-                Description = e.Description,
+                Name = e.Name,
             })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -64,13 +64,13 @@ public sealed class AcademicLevelService : IAcademicLevelService
 
     public async Task<Result<AcademicLevelResponse>> CreateAsync(CreateAcademicLevelRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Description))
-            return Result<AcademicLevelResponse>.Failure(new Error("VALIDATION", "Description es obligatorio."));
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Result<AcademicLevelResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = new AcademicLevel
         {
             GuidId = Guid.NewGuid(),
-            Description = request.Description.Trim(),
+            Name = request.Name.Trim(),
         };
 
         _db.AcademicLevels.Add(entity);
@@ -81,8 +81,8 @@ public sealed class AcademicLevelService : IAcademicLevelService
 
     public async Task<Result<AcademicLevelResponse>> UpdateAsync(int id, UpdateAcademicLevelRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Description))
-            return Result<AcademicLevelResponse>.Failure(new Error("VALIDATION", "Description es obligatorio."));
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Result<AcademicLevelResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = await _db.AcademicLevels
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
@@ -91,7 +91,7 @@ public sealed class AcademicLevelService : IAcademicLevelService
         if (entity is null)
             return Result<AcademicLevelResponse>.Failure(new Error("NOT_FOUND", "AcademicLevel no encontrado."));
 
-        entity.Description = request.Description.Trim();
+        entity.Name = request.Name.Trim();
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return Result<AcademicLevelResponse>.Success(Map(entity));
@@ -101,6 +101,6 @@ public sealed class AcademicLevelService : IAcademicLevelService
     {
         Id = e.Id,
         GuidId = e.GuidId,
-        Description = e.Description,
+        Name = e.Name,
     };
 }

@@ -5,7 +5,7 @@
 -- Se omiten PK/GuidId porque ya tienen indice por PK/UNIQUE.
 
 -- General
-CREATE INDEX IF NOT EXISTS "IX_General_AcademicLevel_Description" ON "General"."AcademicLevel" ("Description");
+CREATE INDEX IF NOT EXISTS "IX_General_AcademicLevel_Name" ON "General"."AcademicLevel" ("Name");
 CREATE INDEX IF NOT EXISTS "IX_General_Career_Description" ON "General"."Career" ("Description");
 
 -- Security

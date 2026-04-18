@@ -26,7 +26,7 @@ CREATE SCHEMA IF NOT EXISTS "System";
 CREATE TABLE IF NOT EXISTS "General"."AcademicLevel" (
     "Id"          SERIAL       PRIMARY KEY,
     "GuidId"      UUID         NOT NULL DEFAULT gen_random_uuid(),
-    "Description" VARCHAR(100) NOT NULL,
+    "Name"        VARCHAR(100) NOT NULL,
     CONSTRAINT "UQ_General_AcademicLevel_GuidId" UNIQUE ("GuidId")
 );
 

@@ -15,7 +15,7 @@ builder.Services.AddSidaeJwtAuthentication(builder.Configuration);
 builder.Services.AddSidaeCommonsApplicationServices();
 builder.Services.AddBusinessRateLimiting(builder.Configuration);
 builder.Services.AddSidaeRateLimiting(builder.Configuration);
-builder.Services.AddCloudflareR2Storage(builder.Configuration);
+//builder.Services.AddCloudflareR2Storage(builder.Configuration);
 builder.Services.AddAppDbContext(builder.Configuration.GetAppDatabaseSection(), builder.Environment);
 builder.Services.AddScoped<TokenService>();
 

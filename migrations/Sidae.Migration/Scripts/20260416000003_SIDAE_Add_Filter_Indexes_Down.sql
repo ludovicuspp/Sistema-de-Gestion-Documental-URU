@@ -3,7 +3,7 @@
 -- =============================================
 
 -- General
-DROP INDEX IF EXISTS "General"."IX_General_AcademicLevel_Description";
+DROP INDEX IF EXISTS "General"."IX_General_AcademicLevel_Name";
 DROP INDEX IF EXISTS "General"."IX_General_Career_Description";
 
 -- Security

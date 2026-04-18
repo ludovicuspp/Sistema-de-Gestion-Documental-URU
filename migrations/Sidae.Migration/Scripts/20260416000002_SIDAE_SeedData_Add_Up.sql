@@ -5,6 +5,14 @@
 -- Secciones por dominio para mantener orden al crecer el proyecto.
 -- =============================================
 
+-- ── General.AcademicLevel — niveles académicos ────────────────────────────────
+INSERT INTO "General"."AcademicLevel" ("GuidId", "Name")
+SELECT gen_random_uuid(), v."Name"
+FROM (VALUES ('Pregrado'), ('Postgrado'), ('Cursos Avanzados')) AS v("Name")
+WHERE NOT EXISTS (
+    SELECT 1 FROM "General"."AcademicLevel" a WHERE a."Name" = v."Name"
+);
+
 -- ── Security.Role — rol por defecto para registro público (Auth:DefaultRegisterRoleName)
 INSERT INTO "Security"."Role" ("GuidId", "Name")
 SELECT gen_random_uuid(), v."Name"
