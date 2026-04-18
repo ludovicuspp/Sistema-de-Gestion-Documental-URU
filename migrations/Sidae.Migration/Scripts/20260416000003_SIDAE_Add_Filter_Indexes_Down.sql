@@ -15,7 +15,6 @@ DROP INDEX IF EXISTS "Security"."IX_Security_User_PasswordHash";
 DROP INDEX IF EXISTS "Security"."IX_Security_User_Email";
 DROP INDEX IF EXISTS "Security"."IX_Security_User_IsActive";
 DROP INDEX IF EXISTS "Security"."IX_Security_User_RoleId";
-DROP INDEX IF EXISTS "Security"."IX_Security_Permission_Action";
 DROP INDEX IF EXISTS "Security"."IX_Security_Permission_RoleId";
 DROP INDEX IF EXISTS "Security"."IX_Security_Permission_ActionId";
 DROP INDEX IF EXISTS "Security"."IX_Security_Permission_EndpointId";

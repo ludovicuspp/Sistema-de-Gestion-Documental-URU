@@ -17,7 +17,6 @@ CREATE INDEX IF NOT EXISTS "IX_Security_User_PasswordHash" ON "Security"."User" 
 CREATE INDEX IF NOT EXISTS "IX_Security_User_Email" ON "Security"."User" ("Email");
 CREATE INDEX IF NOT EXISTS "IX_Security_User_IsActive" ON "Security"."User" ("IsActive");
 CREATE INDEX IF NOT EXISTS "IX_Security_User_RoleId" ON "Security"."User" ("RoleId");
-CREATE INDEX IF NOT EXISTS "IX_Security_Permission_Action" ON "Security"."Permission" ("Action");
 CREATE INDEX IF NOT EXISTS "IX_Security_Permission_RoleId" ON "Security"."Permission" ("RoleId");
 CREATE INDEX IF NOT EXISTS "IX_Security_Permission_ActionId" ON "Security"."Permission" ("ActionId");
 CREATE INDEX IF NOT EXISTS "IX_Security_Permission_EndpointId" ON "Security"."Permission" ("EndpointId");

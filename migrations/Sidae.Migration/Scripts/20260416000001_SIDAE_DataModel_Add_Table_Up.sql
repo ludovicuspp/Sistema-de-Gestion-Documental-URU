@@ -79,7 +79,6 @@ CREATE TABLE IF NOT EXISTS "Security"."User" (
 CREATE TABLE IF NOT EXISTS "Security"."Permission" (
     "Id"         SERIAL       PRIMARY KEY,
     "GuidId"     UUID         NOT NULL DEFAULT gen_random_uuid(),
-    "Action"     VARCHAR(155) NOT NULL,
     "RoleId"     INT          NOT NULL,
     "ActionId"   INT          NOT NULL,
     "EndpointId" INT          NOT NULL,
