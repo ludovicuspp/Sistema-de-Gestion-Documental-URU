@@ -21,7 +21,7 @@ public sealed class DocumentTypeController(
         var hasFilters = request is not null &&
                          (request.GuidId.HasValue
                           || !string.IsNullOrWhiteSpace(request.Name)
-                          || request.IsMandatory.HasValue
+                          || request.IsRequired.HasValue
                           || request.AcademicLevelId.HasValue);
 
         if (!hasFilters)

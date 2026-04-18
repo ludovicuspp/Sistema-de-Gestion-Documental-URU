@@ -83,7 +83,7 @@ DROP INDEX IF EXISTS "Record"."IX_Record_Observation_AuthorId";
 -- Document
 DROP INDEX IF EXISTS "Document"."IX_Document_MimeType_Name";
 DROP INDEX IF EXISTS "Document"."IX_Document_Type_Name";
-DROP INDEX IF EXISTS "Document"."IX_Document_Type_IsMandatory";
+DROP INDEX IF EXISTS "Document"."IX_Document_Type_IsRequired";
 DROP INDEX IF EXISTS "Document"."IX_Document_TypeAcademicLevel_DocumentTypeId";
 DROP INDEX IF EXISTS "Document"."IX_Document_TypeAcademicLevel_AcademicLevelId";
 DROP INDEX IF EXISTS "Document"."IX_Document_Document_Url";

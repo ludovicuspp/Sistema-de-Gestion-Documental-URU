@@ -124,8 +124,8 @@ WHERE NOT EXISTS (
 -- ── Document.Type — Tipos de documentos del expediente estudiantil ───────────
 -- Niveles asociados: Document.TypeAcademicLevel → General.AcademicLevel
 
-INSERT INTO "Document"."Type" ("Name", "IsMandatory")
-SELECT v."Name", v."IsMandatory"
+INSERT INTO "Document"."Type" ("Name", "IsRequired")
+SELECT v."Name", v."IsRequired"
 FROM (VALUES
     ('Cédula de identidad', TRUE),
     ('Fondo negro del título de bachiller', TRUE),
@@ -138,7 +138,7 @@ FROM (VALUES
     ('Inscripción militar', FALSE),
     ('Manejo de idioma', FALSE),
     ('Solvencia', TRUE)
-) AS v("Name", "IsMandatory")
+) AS v("Name", "IsRequired")
 WHERE NOT EXISTS (SELECT 1 FROM "Document"."Type" t WHERE t."Name" = v."Name");
 
 -- Asociación tipo de documento ↔ nivel académico (muchos a muchos)

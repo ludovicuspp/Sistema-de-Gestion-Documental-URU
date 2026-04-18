@@ -17,6 +17,6 @@ public sealed class DocumentTypeConfiguration : IEntityTypeConfiguration<Documen
         builder.HasIndex(e => e.GuidId).IsUnique();
 
         builder.Property(e => e.Name).HasColumnName("Name").HasMaxLength(100).IsRequired();
-        builder.Property(e => e.IsMandatory).HasColumnName("IsMandatory").IsRequired();
+        builder.Property(e => e.IsRequired).HasColumnName("IsRequired").IsRequired();
     }
 }

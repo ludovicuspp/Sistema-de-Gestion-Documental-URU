@@ -11,7 +11,7 @@ public sealed class DocumentType
 
     public string Name { get; set; } = string.Empty;
 
-    public bool IsMandatory { get; set; }
+    public bool IsRequired { get; set; }
 
     public ICollection<DocumentTypeAcademicLevel> TypeAcademicLevels { get; set; } = new List<DocumentTypeAcademicLevel>();
 }

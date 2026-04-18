@@ -85,7 +85,7 @@ CREATE INDEX IF NOT EXISTS "IX_Record_Observation_AuthorId" ON "Record"."Observa
 -- Document
 CREATE INDEX IF NOT EXISTS "IX_Document_MimeType_Name" ON "Document"."MimeType" ("Name");
 CREATE INDEX IF NOT EXISTS "IX_Document_Type_Name" ON "Document"."Type" ("Name");
-CREATE INDEX IF NOT EXISTS "IX_Document_Type_IsMandatory" ON "Document"."Type" ("IsMandatory");
+CREATE INDEX IF NOT EXISTS "IX_Document_Type_IsRequired" ON "Document"."Type" ("IsRequired");
 CREATE INDEX IF NOT EXISTS "IX_Document_TypeAcademicLevel_DocumentTypeId" ON "Document"."TypeAcademicLevel" ("DocumentTypeId");
 CREATE INDEX IF NOT EXISTS "IX_Document_TypeAcademicLevel_AcademicLevelId" ON "Document"."TypeAcademicLevel" ("AcademicLevelId");
 CREATE INDEX IF NOT EXISTS "IX_Document_Document_Url" ON "Document"."Document" ("Url");

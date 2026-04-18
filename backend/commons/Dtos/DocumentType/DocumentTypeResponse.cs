@@ -8,7 +8,7 @@ public sealed class DocumentTypeResponse
 
     public string Name { get; set; } = string.Empty;
 
-    public bool IsMandatory { get; set; }
+    public bool IsRequired { get; set; }
 
     public List<string> AcademicLevels { get; set; } = new();
 }

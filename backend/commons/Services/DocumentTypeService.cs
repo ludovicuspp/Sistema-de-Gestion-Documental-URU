@@ -31,8 +31,8 @@ public sealed class DocumentTypeService : IDocumentTypeService
                 query = query.Where(e => e.Name.Contains(name));
             }
 
-            if (request.IsMandatory.HasValue)
-                query = query.Where(e => e.IsMandatory == request.IsMandatory.Value);
+            if (request.IsRequired.HasValue)
+                query = query.Where(e => e.IsRequired == request.IsRequired.Value);
 
             if (request.AcademicLevelId.HasValue)
             {
@@ -77,7 +77,7 @@ public sealed class DocumentTypeService : IDocumentTypeService
         {
             GuidId = Guid.NewGuid(),
             Name = request.Name.Trim(),
-            IsMandatory = request.IsMandatory,
+            IsRequired = request.IsRequired,
         };
 
         _db.DocumentTypes.Add(entity);
@@ -99,7 +99,7 @@ public sealed class DocumentTypeService : IDocumentTypeService
             return Result<DocumentTypeResponse>.Failure(new Error("NOT_FOUND", "DocumentType no encontrado."));
 
         entity.Name = request.Name.Trim();
-        entity.IsMandatory = request.IsMandatory;
+        entity.IsRequired = request.IsRequired;
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         var reloaded = await _db.DocumentTypes
@@ -117,7 +117,7 @@ public sealed class DocumentTypeService : IDocumentTypeService
         Id = e.Id,
         GuidId = e.GuidId,
         Name = e.Name,
-        IsMandatory = e.IsMandatory,
+        IsRequired = e.IsRequired,
         AcademicLevels = e.TypeAcademicLevels
             .OrderBy(x => x.AcademicLevel.Name)
             .Select(x => x.AcademicLevel.Name)

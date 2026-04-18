@@ -283,7 +283,7 @@ CREATE TABLE IF NOT EXISTS "Document"."Type" (
     "Id"            SERIAL       PRIMARY KEY,
     "GuidId"        UUID         NOT NULL DEFAULT gen_random_uuid(),
     "Name"          VARCHAR(100) NOT NULL,
-    "IsMandatory"   BOOLEAN      NOT NULL DEFAULT FALSE,
+    "IsRequired"    BOOLEAN      NOT NULL DEFAULT FALSE,
     CONSTRAINT "UQ_Document_Type_GuidId" UNIQUE ("GuidId")
 );
 
