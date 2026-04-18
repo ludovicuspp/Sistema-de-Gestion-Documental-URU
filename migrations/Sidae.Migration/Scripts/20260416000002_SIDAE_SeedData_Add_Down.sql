@@ -52,6 +52,19 @@ WHERE st."Name" IN (
 )
   AND NOT EXISTS (SELECT 1 FROM "Student"."Student" s WHERE s."StudentStatusId" = st."Id");
 
+-- Record.FolderStatus (solo si ningún Record.Folder lo usa)
+DELETE FROM "Record"."FolderStatus" fs
+WHERE fs."Name" IN (
+    'Borrador',
+    'Pendiente de revisión',
+    'En revisión',
+    'Con observaciones',
+    'Aprobado',
+    'Rechazado',
+    'Archivado'
+)
+  AND NOT EXISTS (SELECT 1 FROM "Record"."Folder" f WHERE f."FolderStatusId" = fs."Id");
+
 -- Document.Type — tipos de documentos del expediente estudiantil
 DELETE FROM "Document"."Type"
 WHERE "Name" IN (

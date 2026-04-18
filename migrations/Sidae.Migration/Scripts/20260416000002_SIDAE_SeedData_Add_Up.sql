@@ -80,6 +80,22 @@ WHERE NOT EXISTS (
     SELECT 1 FROM "Student"."Status" st WHERE st."Name" = v."Name"
 );
 
+-- ── Record.FolderStatus — estados del expediente / carpeta documental ─────────
+INSERT INTO "Record"."FolderStatus" ("GuidId", "Name")
+SELECT gen_random_uuid(), v."Name"
+FROM (VALUES
+    ('Borrador'),
+    ('Pendiente de revisión'),
+    ('En revisión'),
+    ('Con observaciones'),
+    ('Aprobado'),
+    ('Rechazado'),
+    ('Archivado')
+) AS v("Name")
+WHERE NOT EXISTS (
+    SELECT 1 FROM "Record"."FolderStatus" fs WHERE fs."Name" = v."Name"
+);
+
 -- ── Document.Type — Tipos de documentos del expediente estudiantil ───────────
 -- RequiredLevel: 'Todos' | 'Pregrado' | 'Postgrado' | 'Egresado'
 -- IsMandatory  : true = obligatorio para ese nivel, false = opcional
