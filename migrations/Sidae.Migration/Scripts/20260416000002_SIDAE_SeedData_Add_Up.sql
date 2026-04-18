@@ -36,6 +36,14 @@ WHERE NOT EXISTS (
     SELECT 1 FROM "General"."Career" c WHERE c."Name" = v."Name"
 );
 
+-- ── Security.Action — métodos HTTP ──────────────────────────────────────────
+INSERT INTO "Security"."Action" ("GuidId", "Name")
+SELECT gen_random_uuid(), v."Name"
+FROM (VALUES ('GET'), ('POST'), ('PUT'), ('PATCH'), ('DELETE')) AS v("Name")
+WHERE NOT EXISTS (
+    SELECT 1 FROM "Security"."Action" a WHERE a."Name" = v."Name"
+);
+
 -- ── Security.Role — rol por defecto para registro público (Auth:DefaultRegisterRoleName)
 INSERT INTO "Security"."Role" ("GuidId", "Name")
 SELECT gen_random_uuid(), v."Name"

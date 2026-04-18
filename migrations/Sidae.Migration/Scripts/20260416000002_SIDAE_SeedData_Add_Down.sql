@@ -30,6 +30,11 @@ WHERE c."Name" IN (
 )
   AND NOT EXISTS (SELECT 1 FROM "Student"."Career" sc WHERE sc."CareerId" = c."Id");
 
+-- Security.Action (solo si ningún Permission la referencia)
+DELETE FROM "Security"."Action" a
+WHERE a."Name" IN ('GET', 'POST', 'PUT', 'PATCH', 'DELETE')
+  AND NOT EXISTS (SELECT 1 FROM "Security"."Permission" p WHERE p."ActionId" = a."Id");
+
 -- Document.Type — tipos de documentos del expediente estudiantil
 DELETE FROM "Document"."Type"
 WHERE "Name" IN (
