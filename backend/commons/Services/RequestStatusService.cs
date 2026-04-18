@@ -28,20 +28,20 @@ public sealed class RequestStatusService : IRequestStatusService
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
-            if (!string.IsNullOrWhiteSpace(request.Description))
+            if (!string.IsNullOrWhiteSpace(request.Name))
             {
-                var d = request.Description.Trim();
-                query = query.Where(e => e.Description.Contains(d));
+                var d = request.Name.Trim();
+                query = query.Where(e => e.Name.Contains(d));
             }
         }
 
         var list = await query
-            .OrderBy(e => e.Description)
+            .OrderBy(e => e.Name)
             .Select(e => new RequestStatusResponse
             {
                 Id = e.Id,
                 GuidId = e.GuidId,
-                Description = e.Description,
+                Name = e.Name,
             })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -64,13 +64,13 @@ public sealed class RequestStatusService : IRequestStatusService
 
     public async Task<Result<RequestStatusResponse>> CreateAsync(CreateRequestStatusRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Description))
-            return Result<RequestStatusResponse>.Failure(new Error("VALIDATION", "Description es obligatorio."));
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Result<RequestStatusResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = new RequestStatus
         {
             GuidId = Guid.NewGuid(),
-            Description = request.Description.Trim(),
+            Name = request.Name.Trim(),
         };
 
         _db.RequestStatuses.Add(entity);
@@ -81,8 +81,8 @@ public sealed class RequestStatusService : IRequestStatusService
 
     public async Task<Result<RequestStatusResponse>> UpdateAsync(int id, UpdateRequestStatusRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Description))
-            return Result<RequestStatusResponse>.Failure(new Error("VALIDATION", "Description es obligatorio."));
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Result<RequestStatusResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = await _db.RequestStatuses
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
@@ -91,7 +91,7 @@ public sealed class RequestStatusService : IRequestStatusService
         if (entity is null)
             return Result<RequestStatusResponse>.Failure(new Error("NOT_FOUND", "Request.Status no encontrado."));
 
-        entity.Description = request.Description.Trim();
+        entity.Name = request.Name.Trim();
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return Result<RequestStatusResponse>.Success(Map(entity));
@@ -101,6 +101,6 @@ public sealed class RequestStatusService : IRequestStatusService
     {
         Id = e.Id,
         GuidId = e.GuidId,
-        Description = e.Description,
+        Name = e.Name,
     };
 }

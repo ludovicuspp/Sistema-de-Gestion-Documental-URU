@@ -21,7 +21,7 @@ public sealed class RequestStatusController(
         var hasFilters = request is not null &&
                          (request.Id.HasValue
                           || request.GuidId.HasValue
-                          || !string.IsNullOrWhiteSpace(request.Description));
+                          || !string.IsNullOrWhiteSpace(request.Name));
 
         if (!hasFilters)
         {

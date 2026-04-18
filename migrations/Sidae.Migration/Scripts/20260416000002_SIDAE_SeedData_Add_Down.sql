@@ -97,6 +97,11 @@ WHERE "Name" IN (
     'Repetición de Expediente'
 );
 
+-- Request.Status (solo si ningún Request.Request lo usa)
+DELETE FROM "Request"."Status" rs
+WHERE rs."Name" IN ('Pendiente', 'Validado', 'Rechazado')
+  AND NOT EXISTS (SELECT 1 FROM "Request"."Request" r WHERE r."StatusRequestId" = rs."Id");
+
 -- Roles semilla (solo si no hay User, Permission ni RoleUser que los usen)
 DELETE FROM "Security"."Role" r
 WHERE r."Name" IN ('Usuario', 'Administrador', 'Verificador', 'Asistente')

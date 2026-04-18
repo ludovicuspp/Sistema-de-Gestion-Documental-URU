@@ -98,7 +98,7 @@ DROP INDEX IF EXISTS "Document"."IX_Document_Document_CreatedById";
 DROP INDEX IF EXISTS "Document"."IX_Document_Document_UpdatedById";
 
 -- Request
-DROP INDEX IF EXISTS "Request"."IX_Request_Status_Description";
+DROP INDEX IF EXISTS "Request"."IX_Request_Status_Name";
 DROP INDEX IF EXISTS "Request"."IX_Request_Request_EmailContact";
 DROP INDEX IF EXISTS "Request"."IX_Request_Request_TrackingCode";
 DROP INDEX IF EXISTS "Request"."IX_Request_Request_RequestAt";

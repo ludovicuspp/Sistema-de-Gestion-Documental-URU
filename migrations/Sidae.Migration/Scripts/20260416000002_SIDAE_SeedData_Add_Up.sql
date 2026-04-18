@@ -143,3 +143,11 @@ INSERT INTO "Document"."Type" ("Name", "IsMandatory", "RequiredLevel") VALUES
 -- Egresado
 ('Veredicto',                              TRUE,  'Egresado'),
 ('Repetición de Expediente',               FALSE, 'Egresado');
+
+-- ── Request.Status — estados de solicitud ────────────────────────────────────
+INSERT INTO "Request"."Status" ("GuidId", "Name")
+SELECT gen_random_uuid(), v."Name"
+FROM (VALUES ('Pendiente'), ('Validado'), ('Rechazado')) AS v("Name")
+WHERE NOT EXISTS (
+    SELECT 1 FROM "Request"."Status" rs WHERE rs."Name" = v."Name"
+);

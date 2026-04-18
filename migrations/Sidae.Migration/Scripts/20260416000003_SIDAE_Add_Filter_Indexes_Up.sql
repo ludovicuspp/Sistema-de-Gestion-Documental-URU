@@ -100,7 +100,7 @@ CREATE INDEX IF NOT EXISTS "IX_Document_Document_CreatedById" ON "Document"."Doc
 CREATE INDEX IF NOT EXISTS "IX_Document_Document_UpdatedById" ON "Document"."Document" ("UpdatedById");
 
 -- Request
-CREATE INDEX IF NOT EXISTS "IX_Request_Status_Description" ON "Request"."Status" ("Description");
+CREATE INDEX IF NOT EXISTS "IX_Request_Status_Name" ON "Request"."Status" ("Name");
 CREATE INDEX IF NOT EXISTS "IX_Request_Request_EmailContact" ON "Request"."Request" ("EmailContact");
 CREATE INDEX IF NOT EXISTS "IX_Request_Request_TrackingCode" ON "Request"."Request" ("TrackingCode");
 CREATE INDEX IF NOT EXISTS "IX_Request_Request_RequestAt" ON "Request"."Request" ("RequestAt");

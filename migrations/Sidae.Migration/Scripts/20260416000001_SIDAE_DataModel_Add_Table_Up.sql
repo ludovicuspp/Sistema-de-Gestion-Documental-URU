@@ -347,7 +347,7 @@ CREATE TABLE IF NOT EXISTS "Record"."Observation" (
 CREATE TABLE IF NOT EXISTS "Request"."Status" (
     "Id"          SERIAL      PRIMARY KEY,
     "GuidId"      UUID        NOT NULL DEFAULT gen_random_uuid(),
-    "Description" VARCHAR(50) NOT NULL,
+    "Name"        VARCHAR(50) NOT NULL,
     CONSTRAINT "UQ_Request_Status_GuidId" UNIQUE ("GuidId")
 );
 

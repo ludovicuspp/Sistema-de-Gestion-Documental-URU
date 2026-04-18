@@ -13,6 +13,6 @@ public sealed class RequestStatusConfiguration : IEntityTypeConfiguration<Reques
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
         builder.Property(e => e.GuidId).IsRequired();
         builder.HasIndex(e => e.GuidId).IsUnique();
-        builder.Property(e => e.Description).HasMaxLength(50).IsRequired();
+        builder.Property(e => e.Name).HasMaxLength(50).IsRequired();
     }
 }
