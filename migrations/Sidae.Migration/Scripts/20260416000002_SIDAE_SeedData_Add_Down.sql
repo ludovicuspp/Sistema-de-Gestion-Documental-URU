@@ -76,6 +76,11 @@ WHERE ft."Name" IN (
 )
   AND NOT EXISTS (SELECT 1 FROM "Record"."Folder" f WHERE f."FolderTypeId" = ft."Id");
 
+-- Document.MimeType (solo si ningún Document.Document lo usa)
+DELETE FROM "Document"."MimeType" m
+WHERE m."Name" IN ('application/pdf', 'application/x-pdf')
+  AND NOT EXISTS (SELECT 1 FROM "Document"."Document" d WHERE d."MimeTypeId" = m."Id");
+
 -- Document.Type — tipos de documentos del expediente estudiantil
 DELETE FROM "Document"."Type"
 WHERE "Name" IN (

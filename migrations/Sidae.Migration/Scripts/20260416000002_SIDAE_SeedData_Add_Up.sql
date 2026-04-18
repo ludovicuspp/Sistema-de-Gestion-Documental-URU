@@ -110,6 +110,17 @@ WHERE NOT EXISTS (
     SELECT 1 FROM "Record"."FolderType" ft WHERE ft."Name" = v."Name"
 );
 
+-- ── Document.MimeType — PDF (IANA y alias histórico) ──────────────────────────
+INSERT INTO "Document"."MimeType" ("GuidId", "Name")
+SELECT gen_random_uuid(), v."Name"
+FROM (VALUES
+    ('application/pdf'),
+    ('application/x-pdf')
+) AS v("Name")
+WHERE NOT EXISTS (
+    SELECT 1 FROM "Document"."MimeType" m WHERE m."Name" = v."Name"
+);
+
 -- ── Document.Type — Tipos de documentos del expediente estudiantil ───────────
 -- RequiredLevel: 'Todos' | 'Pregrado' | 'Postgrado' | 'Egresado'
 -- IsMandatory  : true = obligatorio para ese nivel, false = opcional
