@@ -13,6 +13,29 @@ WHERE NOT EXISTS (
     SELECT 1 FROM "General"."AcademicLevel" a WHERE a."Name" = v."Name"
 );
 
+-- ── General.Career — carreras de pregrado (referencia: Universidad Rafael Urdaneta, Maracaibo) ──
+INSERT INTO "General"."Career" ("GuidId", "Name")
+SELECT gen_random_uuid(), v."Name"
+FROM (VALUES
+    ('Ingeniería Civil'),
+    ('Ingeniería Eléctrica'),
+    ('Ingeniería Mecánica'),
+    ('Ingeniería Química'),
+    ('Ingeniería Industrial'),
+    ('Ingeniería en Computación'),
+    ('Ingeniería de Telecomunicaciones'),
+    ('Arquitectura'),
+    ('Administración de Empresas'),
+    ('Contaduría Pública'),
+    ('Derecho'),
+    ('Psicología'),
+    ('Ciencias Políticas'),
+    ('Ingeniería en Producción Animal')
+) AS v("Name")
+WHERE NOT EXISTS (
+    SELECT 1 FROM "General"."Career" c WHERE c."Name" = v."Name"
+);
+
 -- ── Security.Role — rol por defecto para registro público (Auth:DefaultRegisterRoleName)
 INSERT INTO "Security"."Role" ("GuidId", "Name")
 SELECT gen_random_uuid(), v."Name"

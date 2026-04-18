@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS "General"."AcademicLevel" (
 CREATE TABLE IF NOT EXISTS "General"."Career" (
     "Id"          SERIAL       PRIMARY KEY,
     "GuidId"      UUID         NOT NULL DEFAULT gen_random_uuid(),
-    "Description" VARCHAR(100) NOT NULL,
+    "Name"        VARCHAR(100) NOT NULL,
     CONSTRAINT "UQ_General_Career_GuidId" UNIQUE ("GuidId")
 );
 

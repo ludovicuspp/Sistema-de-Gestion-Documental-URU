@@ -6,7 +6,7 @@
 
 -- General
 CREATE INDEX IF NOT EXISTS "IX_General_AcademicLevel_Name" ON "General"."AcademicLevel" ("Name");
-CREATE INDEX IF NOT EXISTS "IX_General_Career_Description" ON "General"."Career" ("Description");
+CREATE INDEX IF NOT EXISTS "IX_General_Career_Name" ON "General"."Career" ("Name");
 
 -- Security
 CREATE INDEX IF NOT EXISTS "IX_Security_Action_Name" ON "Security"."Action" ("Name");

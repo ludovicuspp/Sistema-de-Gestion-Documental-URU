@@ -10,6 +10,26 @@ DELETE FROM "General"."AcademicLevel" al
 WHERE al."Name" IN ('Pregrado', 'Postgrado', 'Cursos Avanzados')
   AND NOT EXISTS (SELECT 1 FROM "Student"."Student" s WHERE s."AcademicLevelId" = al."Id");
 
+-- General.Career (solo si ningún estudiante la tiene en Student.Career)
+DELETE FROM "General"."Career" c
+WHERE c."Name" IN (
+    'Ingeniería Civil',
+    'Ingeniería Eléctrica',
+    'Ingeniería Mecánica',
+    'Ingeniería Química',
+    'Ingeniería Industrial',
+    'Ingeniería en Computación',
+    'Ingeniería de Telecomunicaciones',
+    'Arquitectura',
+    'Administración de Empresas',
+    'Contaduría Pública',
+    'Derecho',
+    'Psicología',
+    'Ciencias Políticas',
+    'Ingeniería en Producción Animal'
+)
+  AND NOT EXISTS (SELECT 1 FROM "Student"."Career" sc WHERE sc."CareerId" = c."Id");
+
 -- Document.Type — tipos de documentos del expediente estudiantil
 DELETE FROM "Document"."Type"
 WHERE "Name" IN (

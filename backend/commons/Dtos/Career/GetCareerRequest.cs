@@ -6,5 +6,5 @@ public sealed class GetCareerRequest
 
     public Guid? GuidId { get; set; }
 
-    public string? Description { get; set; }
+    public string? Name { get; set; }
 }

@@ -28,20 +28,20 @@ public sealed class CareerService : ICareerService
             if (request.GuidId.HasValue)
                 query = query.Where(e => e.GuidId == request.GuidId.Value);
 
-            if (!string.IsNullOrWhiteSpace(request.Description))
+            if (!string.IsNullOrWhiteSpace(request.Name))
             {
-                var d = request.Description.Trim();
-                query = query.Where(e => e.Description.Contains(d));
+                var d = request.Name.Trim();
+                query = query.Where(e => e.Name.Contains(d));
             }
         }
 
         var list = await query
-            .OrderBy(e => e.Description)
+            .OrderBy(e => e.Name)
             .Select(e => new CareerResponse
             {
                 Id = e.Id,
                 GuidId = e.GuidId,
-                Description = e.Description,
+                Name = e.Name,
             })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -64,13 +64,13 @@ public sealed class CareerService : ICareerService
 
     public async Task<Result<CareerResponse>> CreateAsync(CreateCareerRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Description))
-            return Result<CareerResponse>.Failure(new Error("VALIDATION", "Description es obligatorio."));
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Result<CareerResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = new CareerEntity
         {
             GuidId = Guid.NewGuid(),
-            Description = request.Description.Trim(),
+            Name = request.Name.Trim(),
         };
 
         _db.Careers.Add(entity);
@@ -81,8 +81,8 @@ public sealed class CareerService : ICareerService
 
     public async Task<Result<CareerResponse>> UpdateAsync(int id, UpdateCareerRequest request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Description))
-            return Result<CareerResponse>.Failure(new Error("VALIDATION", "Description es obligatorio."));
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Result<CareerResponse>.Failure(new Error("VALIDATION", "Name es obligatorio."));
 
         var entity = await _db.Careers
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken)
@@ -91,7 +91,7 @@ public sealed class CareerService : ICareerService
         if (entity is null)
             return Result<CareerResponse>.Failure(new Error("NOT_FOUND", "Career no encontrado."));
 
-        entity.Description = request.Description.Trim();
+        entity.Name = request.Name.Trim();
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return Result<CareerResponse>.Success(Map(entity));
@@ -101,6 +101,6 @@ public sealed class CareerService : ICareerService
     {
         Id = e.Id,
         GuidId = e.GuidId,
-        Description = e.Description,
+        Name = e.Name,
     };
 }

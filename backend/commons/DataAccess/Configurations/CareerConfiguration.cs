@@ -13,6 +13,6 @@ public sealed class CareerConfiguration : IEntityTypeConfiguration<Career>
         builder.Property(e => e.Id).ValueGeneratedOnAdd();
         builder.Property(e => e.GuidId).IsRequired();
         builder.HasIndex(e => e.GuidId).IsUnique();
-        builder.Property(e => e.Description).HasMaxLength(100).IsRequired();
+        builder.Property(e => e.Name).HasMaxLength(100).IsRequired();
     }
 }
