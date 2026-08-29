@@ -1,0 +1,43 @@
+.recent-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.recent-tasks__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.recent-tasks__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.recent-tasks__subtitle {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+.recent-tasks__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.recent-tasks__link {
+  font-size: 0.875rem;
+  color: #284483;
+}
+
+.recent-tasks__list {
+  display: flex;
+  flex-direction: column;
+}

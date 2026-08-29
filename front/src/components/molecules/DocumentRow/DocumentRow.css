@@ -1,0 +1,32 @@
+.document-row__cell {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.document-row__type {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.document-row__file {
+  color: #374151;
+}
+
+.document-row__uploaded,
+.document-row__date {
+  color: #6b7280;
+}
+
+.document-row__actions {
+  white-space: nowrap;
+}
+
+.document-row__actions .button {
+  margin-right: 0.25rem;
+}
+
+.document-row__actions .button:last-child {
+  margin-right: 0;
+}

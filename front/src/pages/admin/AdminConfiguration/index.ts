@@ -1,0 +1,1 @@
+export { AdminConfigurationPage } from "./AdminConfigurationPage";

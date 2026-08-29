@@ -1,0 +1,106 @@
+.admin-header {
+  width: 100%;
+  background-color: #284483;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
+}
+
+.admin-header__main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 2rem;
+  gap: 1rem;
+}
+
+.admin-header__branding {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-header__logo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.admin-header__logo:hover {
+  text-decoration: underline;
+}
+
+.admin-header__system {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-header__separator {
+  color: #9ca3af;
+  font-weight: 300;
+}
+
+.admin-header__view {
+  font-size: 0.875rem;
+  color: #e5e7eb;
+}
+
+.admin-header__user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.admin-header__user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+}
+
+.admin-header__role {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.admin-header__email {
+  font-size: 0.8125rem;
+  color: #e5e7eb;
+}
+
+.admin-header__logout {
+  flex-shrink: 0;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  color: #ffffff !important;
+}
+
+.admin-header__logout:hover {
+  background-color: rgba(255, 255, 255, 0.3) !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+}
+
+@media (max-width: 768px) {
+  .admin-header__main {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .admin-header__system,
+  .admin-header__separator,
+  .admin-header__view {
+    display: none;
+  }
+
+  .admin-header__user-info {
+    display: none;
+  }
+}

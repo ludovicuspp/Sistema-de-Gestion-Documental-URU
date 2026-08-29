@@ -1,0 +1,9 @@
+export { AdminDashboardPage } from "./AdminDashboard";
+export { AdminConfigurationPage } from "./AdminConfiguration";
+export { TaskManagementPage } from "./TaskManagement";
+export { UserManagementPage } from "./UserManagement";
+export { StudentManagementPage } from "./StudentManagement";
+export { ReportsPage } from "./Reports";
+export { DocumentManagementPage } from "./DocumentManagement";
+export { RecordManagementPage } from "./RecordManagement";
+export { RequestManagementPage } from "./RequestManagement";

@@ -1,0 +1,1 @@
+export { AssistantShortcutsPage } from "./AssistantShortcutsPage";

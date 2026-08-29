@@ -1,0 +1,191 @@
+import { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
+import { RequestList, type RequestListItem } from "@/components/organisms/RequestList";
+import { RequestDetailCard, type RequestDetailData } from "@/components/organisms/RequestDetailCard";
+import { RequestActionsCard } from "@/components/organisms/RequestActionsCard";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
+import "./RequestManagementPage.css";
+
+const MOCK_REQUESTS: RequestListItem[] = [
+  {
+    id: "1",
+    studentName: "José Luis Pérez Gómez",
+    studentCI: "V-12345678",
+    level: "Pregrado",
+    date: "2025-11-10 14:32",
+    status: "pending",
+  },
+  {
+    id: "2",
+    studentName: "María González",
+    studentCI: "V-87654321",
+    level: "Postgrado",
+    date: "2025-11-12 09:12",
+    status: "validated",
+  },
+  {
+    id: "3",
+    studentName: "Carlos Andrés Rojas M.",
+    studentCI: "V-11223344",
+    level: "Pregrado",
+    date: "2025-11-13 08:20",
+    status: "rejected",
+  },
+];
+
+const MOCK_REQUEST_DETAILS: Record<string, RequestDetailData> = {
+  "1": {
+    id: "1",
+    studentName: "José Luis",
+    studentSurname: "Pérez Gómez",
+    studentCI: "V-12345678",
+    level: "Pregrado",
+    email: "jose.perez@example.com",
+    comment: "Solicito los documentos necesarios para mi expediente académico.",
+    requestedDocuments: ["Fondo negro titular bachiller", "Veredicto"],
+    status: "not-validated",
+  },
+  "2": {
+    id: "2",
+    studentName: "María",
+    studentSurname: "González",
+    studentCI: "V-87654321",
+    level: "Postgrado",
+    email: "maria.gonzalez@example.com",
+    comment: "Necesito los documentos para completar mi expediente.",
+    requestedDocuments: ["Título universitario", "Certificado de notas"],
+    status: "validated",
+  },
+  "3": {
+    id: "3",
+    studentName: "Carlos Andrés",
+    studentSurname: "Rojas M.",
+    studentCI: "V-11223344",
+    level: "Pregrado",
+    email: "carlos.rojas@example.com",
+    comment: "Documentos requeridos para mi expediente.",
+    requestedDocuments: ["Cédula", "Partida de nacimiento"],
+    status: "rejected",
+  },
+};
+
+/**
+ * RequestManagementPage - Page
+ *
+ * Request management view: search requests, view request details, and administrative actions.
+ */
+export const RequestManagementPage = () => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>("1");
+  const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
+  const [confirmRejectOpen, setConfirmRejectOpen] = useState(false);
+
+  const filteredRequests = useMemo(() => {
+    if (!searchQuery.trim()) return MOCK_REQUESTS;
+    const query = searchQuery.toLowerCase();
+    return MOCK_REQUESTS.filter(
+      (r) =>
+        r.studentName.toLowerCase().includes(query) ||
+        r.studentCI.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
+
+  const selectedRequest = selectedRequestId ? MOCK_REQUEST_DETAILS[selectedRequestId] ?? null : null;
+
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  const handleOpenRequest = useCallback((id: string) => {
+    setSelectedRequestId(id);
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    setSearchQuery("");
+    setSelectedRequestId(null);
+    console.log("Refrescar");
+  }, []);
+
+  const handleExport = useCallback(() => {
+    console.log("Exportar solicitud", selectedRequestId);
+  }, [selectedRequestId]);
+
+  const handleSaveNote = useCallback((note: string) => {
+    console.log("Guardar nota", note);
+  }, []);
+
+  const handleClearNote = useCallback(() => {
+    console.log("Limpiar nota");
+  }, []);
+
+  const handleApprove = useCallback(() => {
+    console.log("Aprobar solicitud", selectedRequestId);
+    setConfirmApproveOpen(false);
+    // TODO: actualizar estado en API
+  }, [selectedRequestId]);
+
+  const handleReject = useCallback(() => {
+    console.log("Rechazar solicitud", selectedRequestId);
+    setConfirmRejectOpen(false);
+    // TODO: actualizar estado en API
+  }, [selectedRequestId]);
+
+  const canApproveReject = selectedRequest?.status === "not-validated";
+
+  return (
+    <DashboardTemplate
+      currentView="Gestión de solicitudes"
+      userRole="Administrador"
+      userEmail="username@mail.co"
+      headerHomePath="/admin"
+      onLogout={() => navigate("/")}
+      onCreateUser={() => {}}
+      onRefresh={handleRefresh}
+    >
+      <div className="request-management-page">
+        <div className="request-management-page__content">
+          <div className="request-management-page__left">
+            <div className="request-management-page__list">
+              <RequestList
+                requests={filteredRequests}
+                onOpen={handleOpenRequest}
+                onSearch={handleSearch}
+              />
+            </div>
+            <div className="request-management-page__detail">
+              <RequestDetailCard
+                request={selectedRequest}
+                onExport={handleExport}
+              />
+            </div>
+          </div>
+          <div className="request-management-page__right">
+            <RequestActionsCard
+              onSaveNote={handleSaveNote}
+              onClear={handleClearNote}
+              onApprove={() => setConfirmApproveOpen(true)}
+              onReject={() => setConfirmRejectOpen(true)}
+              canApproveReject={canApproveReject}
+            />
+          </div>
+        </div>
+      </div>
+      <ConfirmModal
+        open={confirmApproveOpen}
+        onCancel={() => setConfirmApproveOpen(false)}
+        label="aprobar"
+        message="¿Seguro que desea aprobar?"
+        onConfirm={handleApprove}
+      />
+      <ConfirmModal
+        open={confirmRejectOpen}
+        onCancel={() => setConfirmRejectOpen(false)}
+        label="Rechazar"
+        message="¿Seguro que desea rechazar?"
+        onConfirm={handleReject}
+      />
+    </DashboardTemplate>
+  );
+};

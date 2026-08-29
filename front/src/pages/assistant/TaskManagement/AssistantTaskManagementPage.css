@@ -1,0 +1,22 @@
+.assistant-task-management {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.assistant-task-management__content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 1024px) {
+  .assistant-task-management__content {
+    grid-template-columns: 1fr;
+  }
+}

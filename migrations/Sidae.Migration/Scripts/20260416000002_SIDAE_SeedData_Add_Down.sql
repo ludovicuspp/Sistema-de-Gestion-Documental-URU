@@ -1,0 +1,129 @@
+-- =============================================
+-- SIDAE — SeedData_Add (revertir datos estáticos)
+-- =============================================
+-- Debe deshacer en orden inverso o con DELETE acotado por claves naturales,
+-- según lo insertado en SeedData_Add_Up.sql.
+-- =============================================
+
+-- Document.TypeAcademicLevel (antes de Document.Type y General.AcademicLevel)
+DELETE FROM "Document"."TypeAcademicLevel"
+WHERE "DocumentTypeId" IN (
+    SELECT "Id" FROM "Document"."Type" WHERE "Name" IN (
+        'Cédula de identidad',
+        'Fondo negro del título de bachiller',
+        'Fondo negro del título de Pregrado',
+        'Fondo negro de notas certificadas',
+        'Partida de nacimiento',
+        'Certificado de participación de OPSU',
+        'Repetición de expediente',
+        'Veredicto',
+        'Inscripción militar',
+        'Manejo de idioma',
+        'Solvencia'
+    )
+);
+
+-- General.AcademicLevel (semilla; no borrar si Student o TypeAcademicLevel referencian)
+DELETE FROM "General"."AcademicLevel" al
+WHERE al."Name" IN ('Pregrado', 'Postgrado', 'Cursos Avanzados', 'Egresado')
+  AND NOT EXISTS (SELECT 1 FROM "Student"."Student" s WHERE s."AcademicLevelId" = al."Id")
+  AND NOT EXISTS (SELECT 1 FROM "Document"."TypeAcademicLevel" tal WHERE tal."AcademicLevelId" = al."Id");
+
+-- General.Career (solo si ningún estudiante la tiene en Student.Career)
+DELETE FROM "General"."Career" c
+WHERE c."Name" IN (
+    'Ingeniería Civil',
+    'Ingeniería Eléctrica',
+    'Ingeniería Mecánica',
+    'Ingeniería Química',
+    'Ingeniería Industrial',
+    'Ingeniería en Computación',
+    'Ingeniería de Telecomunicaciones',
+    'Arquitectura',
+    'Administración de Empresas',
+    'Contaduría Pública',
+    'Derecho',
+    'Psicología',
+    'Ciencias Políticas',
+    'Ingeniería en Producción Animal'
+)
+  AND NOT EXISTS (SELECT 1 FROM "Student"."Career" sc WHERE sc."CareerId" = c."Id");
+
+-- Security.Action (solo si ningún Permission la referencia)
+DELETE FROM "Security"."Action" a
+WHERE a."Name" IN ('GET', 'POST', 'PUT', 'PATCH', 'DELETE')
+  AND NOT EXISTS (SELECT 1 FROM "Security"."Permission" p WHERE p."ActionId" = a."Id");
+
+-- Task.Status (solo si ninguna Task.Task lo usa)
+DELETE FROM "Task"."Status" s
+WHERE s."Name" IN ('Pendiente', 'En progreso', 'Finalizada')
+  AND NOT EXISTS (SELECT 1 FROM "Task"."Task" t WHERE t."StatusId" = s."Id");
+
+-- Student.Status (solo si ningún Student.Student lo usa)
+DELETE FROM "Student"."Status" st
+WHERE st."Name" IN (
+    'Activo',
+    'Inactivo',
+    'Suspendido',
+    'En prórroga',
+    'Egresado',
+    'Retirado'
+)
+  AND NOT EXISTS (SELECT 1 FROM "Student"."Student" s WHERE s."StudentStatusId" = st."Id");
+
+-- Record.FolderStatus (solo si ningún Record.Folder lo usa)
+DELETE FROM "Record"."FolderStatus" fs
+WHERE fs."Name" IN (
+    'Pendiente',
+    'Sin documentos',
+    'Rechazado',
+    'Aprobado'
+)
+  AND NOT EXISTS (SELECT 1 FROM "Record"."Folder" f WHERE f."FolderStatusId" = fs."Id");
+
+-- Record.FolderType (solo si ningún Record.Folder lo usa)
+DELETE FROM "Record"."FolderType" ft
+WHERE ft."Name" IN (
+    'Académico',
+    'Ingreso y admisión',
+    'Pasantías',
+    'Servicio comunitario',
+    'Graduación y titulación',
+    'Disciplinario',
+    'Becas y ayudas',
+    'Prórrogas y convalidaciones'
+)
+  AND NOT EXISTS (SELECT 1 FROM "Record"."Folder" f WHERE f."FolderTypeId" = ft."Id");
+
+-- Document.MimeType (solo si ningún Document.Document lo usa)
+DELETE FROM "Document"."MimeType" m
+WHERE m."Name" IN ('application/pdf', 'application/x-pdf')
+  AND NOT EXISTS (SELECT 1 FROM "Document"."Document" d WHERE d."MimeTypeId" = m."Id");
+
+-- Document.Type — tipos de documentos del expediente estudiantil
+DELETE FROM "Document"."Type"
+WHERE "Name" IN (
+    'Cédula de identidad',
+    'Fondo negro del título de bachiller',
+    'Fondo negro del título de Pregrado',
+    'Fondo negro de notas certificadas',
+    'Partida de nacimiento',
+    'Certificado de participación de OPSU',
+    'Repetición de expediente',
+    'Veredicto',
+    'Inscripción militar',
+    'Manejo de idioma',
+    'Solvencia'
+);
+
+-- Request.Status (solo si ningún Request.Request lo usa)
+DELETE FROM "Request"."Status" rs
+WHERE rs."Name" IN ('Pendiente', 'Validado', 'Rechazado')
+  AND NOT EXISTS (SELECT 1 FROM "Request"."Request" r WHERE r."StatusRequestId" = rs."Id");
+
+-- Roles semilla (solo si no hay User, Permission ni RoleUser que los usen)
+DELETE FROM "Security"."Role" r
+WHERE r."Name" IN ('Usuario', 'Administrador', 'Verificador', 'Asistente')
+  AND NOT EXISTS (SELECT 1 FROM "Security"."User" u WHERE u."RoleId" = r."Id")
+  AND NOT EXISTS (SELECT 1 FROM "Security"."Permission" p WHERE p."RoleId" = r."Id")
+  AND NOT EXISTS (SELECT 1 FROM "Security"."RoleUser" ru WHERE ru."RoleId" = r."Id");

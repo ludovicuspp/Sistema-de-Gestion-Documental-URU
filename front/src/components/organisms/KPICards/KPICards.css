@@ -1,0 +1,10 @@
+.kpi-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.kpi-cards .summary-card {
+  background-color: #f3f4f6;
+  border-color: #e5e7eb;
+}

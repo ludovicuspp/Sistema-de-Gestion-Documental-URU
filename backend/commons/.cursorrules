@@ -1,0 +1,47 @@
+# Cursor Rules for Project
+
+This project uses organized coding standards and conventions. The rules have been broken down into specific, focused files for better maintainability and navigation.
+
+## 📁 Organized Rules Structure
+
+The coding standards are now organized in the `.cursor/rules/` directory with the following structure:
+
+- **[05-rest-endpoint-conventions.md](.cursor/rules/05-rest-endpoint-conventions.md)** - REST API endpoints, controllers, routing, and HTTP methods
+- **[01-project-overview.md](.cursor/rules/01-project-overview.md)** - Project architecture, Clean Architecture
+- **[02-code-style-conventions.md](.cursor/rules/02-code-style-conventions.md)** - Naming conventions, class structure, error handling, logging
+- **[03-performance-guidelines.md](.cursor/rules/03-performance-guidelines.md)** - Async/await, caching, optimization, monitoring
+- **[04-best-practices.md](.cursor/rules/04-best-practices.md)** - SOLID principles, exception handling, configuration, DI
+
+## 📋 Project Overview
+
+This is a C# .NET solution using Clean Architecture with Domain Service pattern, Entity Framework Core, and comprehensive testing. The project follows domain-driven design principles with clear separation of concerns across multiple layers. **Note: Database migrations are managed in a separate project.**
+
+### Key Technologies
+- **.NET 8** - Latest .NET framework
+- **Clean Architecture** - Separation of concerns
+- **Entity Framework Core** - Data access
+- **REST Enpoints** - API layer
+- **xUnit** - Testing framework
+- **WebApi** - Controllers, API endpoints
+
+### Architecture Layers
+- **Services**: Business logic, domain services, external services, and implementations
+- **DataAccess**: Data access (connection to database, DbContext)
+- **Entities**: Entity related to database objects
+- **Interfaces**: Files related to Service to expose features
+
+## 🔧 Development Guidelines
+
+1. **Follow Established Patterns** - Always refer to existing implementations
+2. **Use Consistent Naming** - PascalCase for classes, camelCase for variables
+3. **Implement Proper Error Handling** - Use Result<T> pattern
+4. **Write Comprehensive Tests** - Unit tests for all business logic
+5. **Follow Security Guidelines** - Validate inputs, use authorization
+6. **Optimize Performance** - Use async/await, implement caching
+7. **Maintain Code Quality** - Follow SOLID principles, document code
+
+## 📚 For More Details
+
+See the [README.md](.cursor/rules/README.md) in the rules directory for a complete overview and quick reference guide.
+
+Remember to always follow the established patterns in the codebase and maintain consistency across the project. When in doubt, refer to existing implementations for guidance.

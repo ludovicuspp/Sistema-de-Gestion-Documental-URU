@@ -1,0 +1,75 @@
+.upload-document-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.upload-document-card__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.upload-document-card__context,
+.upload-document-card__expedient-info,
+.upload-document-card__rules {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.upload-document-card__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.upload-document-card__file-input {
+  font-size: 0.875rem;
+  padding: 0.375rem;
+}
+
+.upload-document-card__type-select {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background-color: #ffffff;
+  min-width: 200px;
+}
+
+.upload-document-card__type-select--error {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.upload-document-card__quick-rules {
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 0.25rem;
+}
+
+.upload-document-card__quick-rules-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.upload-document-card__quick-rules-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.upload-document-card__quick-rules-item {
+  margin-bottom: 0.25rem;
+}
+
+.upload-document-card__quick-rules-item:last-child {
+  margin-bottom: 0;
+}

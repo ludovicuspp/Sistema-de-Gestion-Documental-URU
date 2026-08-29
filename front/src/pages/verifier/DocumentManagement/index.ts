@@ -1,0 +1,1 @@
+export { VerifierDocumentManagementPage } from "./VerifierDocumentManagementPage";

@@ -1,0 +1,30 @@
+.task-recent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.task-recent-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.task-recent-card__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.task-recent-card__link {
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.task-recent-card__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}

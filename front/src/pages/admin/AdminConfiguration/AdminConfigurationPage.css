@@ -1,0 +1,128 @@
+/* Override template min-height so page can grow and main area scrolls */
+.dashboard-template__main .admin-configuration-page {
+  min-height: min-content;
+}
+
+.admin-configuration-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.admin-configuration-page__section {
+  flex-shrink: 0;
+}
+
+.admin-configuration-page__card {
+  padding: 1.5rem;
+}
+
+.admin-configuration-page__section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: 0.025em;
+  margin: 0 0 1.25rem 0;
+  text-transform: uppercase;
+}
+
+.admin-configuration-page__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.admin-configuration-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-configuration-page__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.admin-configuration-page__select {
+  padding: 0.5rem 0.75rem;
+  padding-right: 2rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background-color: #ffffff;
+  color: #111827;
+  min-width: 200px;
+  max-width: 100%;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+}
+
+.admin-configuration-page__select:hover {
+  border-color: #9ca3af;
+}
+
+.admin-configuration-page__select:focus {
+  outline: none;
+  border-color: #284483;
+  box-shadow: 0 0 0 3px rgba(40, 68, 131, 0.1);
+}
+
+.admin-configuration-page__input {
+  max-width: 100%;
+}
+
+.admin-configuration-page__checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  align-items: center;
+}
+
+.admin-configuration-page__checkbox-label,
+.admin-configuration-page__radio-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+}
+
+.admin-configuration-page__checkbox,
+.admin-configuration-page__radio {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: #284483;
+  cursor: pointer;
+}
+
+.admin-configuration-page__checkbox-text {
+  line-height: 1.25;
+}
+
+.admin-configuration-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .admin-configuration-page__card {
+    padding: 1rem;
+  }
+
+  .admin-configuration-page__checkboxes {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-configuration-page__actions .button {
+    width: 100%;
+  }
+}

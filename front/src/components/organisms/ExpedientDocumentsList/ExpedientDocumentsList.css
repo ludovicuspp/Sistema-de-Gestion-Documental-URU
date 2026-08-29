@@ -1,0 +1,28 @@
+.expedient-documents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.expedient-documents-list__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.expedient-documents-list__list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.expedient-documents-list__empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
