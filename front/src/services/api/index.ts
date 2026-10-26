@@ -31,7 +31,7 @@ export { usersService } from "./usersService";
 export type { UserDto, CreateUserRequest } from "./usersService";
 export { catalogService } from "./catalogService";
 export type { CareerDto, OptionDto, DocumentTypeDto } from "./catalogService";
-export { reportsService } from "./reportsService";
+export { reportsService, reportFiles } from "./reportsService";
 export type { ReportsSummary } from "./reportsService";
 export { ApiError, apiFetch, apiFetchBlob, clearSession, getSessionUser, getToken, pageParams, saveSession } from "./http";
 export type { ApiResponse, PageResponse, SessionUser } from "./http";

@@ -61,7 +61,25 @@ export const studentsService = {
   async remove(id: number): Promise<void> {
     await apiFetch<void>(`${BASE}/${id}`, { method: "DELETE" });
   },
+
+  async importCsv(file: File): Promise<ImportResult> {
+    const form = new FormData();
+    form.append("file", file);
+    return apiFetch<ImportResult>(`${BASE}/import`, { method: "POST", body: form });
+  },
 };
+
+export interface ImportRowError {
+  row: number;
+  ci: string;
+  message: string;
+}
+
+export interface ImportResult {
+  created: number;
+  updated: number;
+  errors: ImportRowError[];
+}
 
 export function studentFullName(student: Pick<StudentDto, "firstName" | "lastName">): string {
   return `${student.firstName} ${student.lastName}`;

@@ -5,8 +5,8 @@ import { Card } from "@/components/molecules/Card";
 import { SummaryCard } from "@/components/molecules/SummaryCard";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
-import { reportsService, ApiError, clearSession } from "@/services/api";
-import type { ReportsSummary } from "@/services/api";
+import { reportsService, reportFiles, type ReportsSummary } from "@/services/api";
+import { ApiError, clearSession } from "@/services/api/http";
 import "./ReportsPage.css";
 
 const IconCalendar = () => (
@@ -178,33 +178,59 @@ export const ReportsPage = () => {
       ]
     : [];
 
+  const downloadReport = useCallback(
+    async (file: { path: string; filename: string }) => {
+      try {
+        await reportsService.download(file.path, file.filename);
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 401) {
+          clearSession();
+          navigate("/");
+          return;
+        }
+        setError(e instanceof Error ? e.message : "No se pudo descargar el reporte");
+      }
+    },
+    [navigate]
+  );
+
+  const domainOf = (metric: string): "records" | "requests" =>
+    metric === "solicitudes" ? "requests" : "records";
+
   const handleExport = useCallback(() => {
-    console.log("Exportar reporte");
-  }, []);
+    const file = reportFiles.summaryPdf();
+    void downloadReport(file);
+  }, [downloadReport]);
 
   const handleUpdate = useCallback(() => {
-    console.log("Actualizar datos");
+    globalThis.location.reload();
   }, []);
 
   const handleApply = useCallback(() => {
-    console.log("Aplicar filtros", { selectedMetric, dateFrom, dateTo });
-  }, [selectedMetric, dateFrom, dateTo]);
+    setError("Los filtros por fecha aún no están disponibles en el backend.");
+  }, []);
 
   const handleViewDetail = useCallback(() => {
     console.log("Ver detalle del gráfico");
   }, []);
 
   const handleExportCSV = useCallback(() => {
-    console.log("Exportar CSV");
-  }, []);
+    const domain = domainOf(selectedMetric);
+    const file = domain === "requests" ? reportFiles.requestsCsv() : reportFiles.recordsCsv();
+    void downloadReport(file);
+  }, [selectedMetric, downloadReport]);
 
   const handleDownloadPDF = useCallback(() => {
-    console.log("Descargar PDF");
-  }, []);
+    const domain = domainOf(selectedMetric);
+    const file = domain === "requests" ? reportFiles.requestsPdf() : reportFiles.recordsPdf();
+    void downloadReport(file);
+  }, [selectedMetric, downloadReport]);
 
   const handleDownloadExcel = useCallback(() => {
-    console.log("Descargar Excel");
-  }, []);
+    const domain = domainOf(selectedMetric);
+    const file = domain === "requests" ? reportFiles.requestsXlsx() : reportFiles.recordsXlsx();
+    void downloadReport(file);
+  }, [selectedMetric, downloadReport]);
 
   return (
     <DashboardTemplate currentView="Reportes" onCreateUser={() => {}} onRefresh={() => globalThis.location.reload()}>

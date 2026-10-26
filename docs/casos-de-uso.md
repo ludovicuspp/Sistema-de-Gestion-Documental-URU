@@ -44,7 +44,7 @@ Total definidos: **30 CU** (21 con flujo detallado). Actores: Administrador, Ver
 | CU-27 | Crear expediente (Asistente) | Alta | Parcial (CU-03) | Igual que CU-03 |
 | CU-28 | Consultar expedientes por estudiante (Asistente) | Alta | Parcial (CU-02) | Igual que CU-02 |
 | CU-29 | Subir documento (Asistente) | Alta | Parcial (CU-08) | Igual que CU-08 |
-| CU-30 | Estadísticas | Alta | No implementado | `reports-service` `GET /reports/summary` |
+| CU-30 | Estadísticas | Alta | No implementado | `reports-service` `GET /reports/summary` + exports xlsx/pdf/csv (Fase C) |
 
 ## Brechas funcionales que bloquean el cierre
 
@@ -53,5 +53,5 @@ Total definidos: **30 CU** (21 con flujo detallado). Actores: Administrador, Ver
 3. Historial de auditoría inmutable (CU-22) — el .NET solo tiene observaciones.
 4. ~~Regla RST-05 (egresado no editable/eliminable) aplicada en expedientes, no solo estudiantes.~~ CERRADA Fase A: `PUT/DELETE /records` devuelven 403 para egresados.
 5. Notificación por correo real (CU-19) y plantillas.
-6. Importación masiva de estudiantes y reportes exportables (PDF/Excel).
+6. ~~Importación masiva de estudiantes y reportes exportables (PDF/Excel).~~ CERRADA Fase C: `POST /students/import` (upsert CSV por CI, RST-05) + 10 exports en reports-service (xlsx/pdf/csv por dominio + resumen pdf) + botones cableados.
 7. Migración de datos existentes (.NET/FluentMigrator → Flyway).

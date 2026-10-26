@@ -278,10 +278,72 @@ export const StudentManagementPage = () => {
   const [observationSavedAlert, setObservationSavedAlert] = useState(false);
   const [previewNotAvailableAlert, setPreviewNotAvailableAlert] = useState(false);
   const [importCompletedAlert, setImportCompletedAlert] = useState(false);
+  const [importSummaryMessage, setImportSummaryMessage] = useState("");
   const [downloadCompletedAlert, setDownloadCompletedAlert] = useState(false);
   const [corruptedFileAlert, setCorruptedFileAlert] = useState(false);
   const [importErrorAlert, setImportErrorAlert] = useState(false);
+  const [importErrorMessage, setImportErrorMessage] = useState("");
+  const [importErrorLog, setImportErrorLog] = useState("");
   const [pendingSendAlert, setPendingSendAlert] = useState(false);
+
+  const handleImportFile = useCallback(
+    async (file: File) => {
+      try {
+        const result = await studentsService.importCsv(file);
+        const summary =
+          `Creados: ${result.created} · Actualizados: ${result.updated} · Errores: ${result.errors.length}.`;
+        if (result.errors.length === 0) {
+          setImportSummaryMessage(summary);
+          setImportCompletedAlert(true);
+        } else {
+          const lines = result.errors.map((e) => `Fila ${e.row} (CI ${e.ci || "—"}): ${e.message}`);
+          setImportErrorLog([summary, ...lines].join("\n"));
+          setImportErrorMessage(`${summary} Primeros errores:\n${lines.slice(0, 5).join("\n")}`);
+          setImportErrorAlert(true);
+        }
+        paged.reload();
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          clearSession();
+          navigate("/");
+          return;
+        }
+        if (err instanceof ApiError && (err.code === "INVALID_HEADER" || err.code === "EMPTY_FILE")) {
+          setCorruptedFileAlert(true);
+          return;
+        }
+        setImportErrorMessage(err instanceof ApiError ? err.message : "No se pudo procesar el archivo de importación.");
+        setImportErrorLog("");
+        setImportErrorAlert(true);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [navigate, paged]
+  );
+
+  const handleImportList = useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".csv,text/csv";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (file) void handleImportFile(file);
+    };
+    input.click();
+  }, [handleImportFile]);
+
+  const handleDownloadErrorLog = useCallback(() => {
+    const blob = new Blob([importErrorLog || "Sin detalles."], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `errores-importacion-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    setImportErrorAlert(false);
+  }, [importErrorLog]);
 
   const handleStudentSubmit = useCallback(
     async (data: { name: string; cedula: string; nivel: string; carrera: string; estado: string }) => {
@@ -353,7 +415,7 @@ export const StudentManagementPage = () => {
             onFilterCareer={() => {}}
             onFilterSelect={() => {}}
             onNewStudent={handleNewStudent}
-            onImportList={() => {}}
+            onImportList={handleImportList}
           />
         </div>
         <div className="student-management-page__count">
@@ -1109,26 +1171,10 @@ export const StudentManagementPage = () => {
         open={importCompletedAlert}
         type="success"
         title="Importación completada"
-        message="Se importaron registros correctamente."
+        message={importSummaryMessage || "Se importaron registros correctamente."}
         buttonLabel="Cerrar"
         onClose={() => setImportCompletedAlert(false)}
-        actions={
-          <Button
-            variant="secondary"
-            size="medium"
-            onClick={() => {
-              setImportCompletedAlert(false);
-              console.log("Ver reporte de importación");
-            }}
-          >
-            Ver reporte
-          </Button>
-        }
-      >
-        <p style={{ marginTop: "0.5rem", fontSize: "0.8125rem", color: "var(--color-text-secondary)" }}>
-          Ejemplo: 120 registros importados, 3 omitidos por errores.
-        </p>
-      </AlertModal>
+      />
 
       <AlertModal
         open={downloadCompletedAlert}
@@ -1152,26 +1198,19 @@ export const StudentManagementPage = () => {
         open={importErrorAlert}
         type="error"
         title="Importación con errores"
-        message="No se pudo procesar el archivo de importación."
+        message={importErrorMessage || "No se pudo procesar el archivo de importación."}
         buttonLabel="Cerrar"
         onClose={() => setImportErrorAlert(false)}
         actions={
           <Button
             variant="secondary"
             size="medium"
-            onClick={() => {
-              setImportErrorAlert(false);
-              console.log("Descargar log de errores");
-            }}
+            onClick={handleDownloadErrorLog}
           >
             Descargar log
           </Button>
         }
-      >
-        <p style={{ marginTop: "0.5rem", fontSize: "0.8125rem", color: "var(--color-text-secondary)" }}>
-          Errores: fila con cédula duplicada, campos obligatorios vacíos.
-        </p>
-      </AlertModal>
+      />
 
       <AlertModal
         open={pendingSendAlert}

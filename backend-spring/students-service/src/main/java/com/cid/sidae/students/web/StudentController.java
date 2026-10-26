@@ -5,6 +5,7 @@ import com.cid.sidae.commons.api.ApiResponse;
 import com.cid.sidae.commons.api.PagedResponse;
 import com.cid.sidae.students.domain.Student;
 import com.cid.sidae.students.repo.StudentRepository;
+import com.cid.sidae.students.service.StudentImportService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -15,6 +16,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,16 +26,20 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/students")
 public class StudentController {
 
     private final StudentRepository students;
+    private final StudentImportService importService;
 
-    public StudentController(StudentRepository students) {
+    public StudentController(StudentRepository students, StudentImportService importService) {
         this.students = students;
+        this.importService = importService;
     }
 
     @GetMapping
@@ -111,6 +117,14 @@ public class StudentController {
         student.setUpdatedAt(Instant.now());
         students.save(student);
         return ApiResponse.ok(null);
+    }
+
+    /** Importacion masiva CSV (upsert por CI). */
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('Administrador')")
+    public ApiResponse<StudentImportService.ImportResult> importCsv(
+            @RequestPart("file") MultipartFile file) {
+        return ApiResponse.ok(importService.importCsv(file));
     }
 
     private void apply(Student student, StudentRequest request) {
