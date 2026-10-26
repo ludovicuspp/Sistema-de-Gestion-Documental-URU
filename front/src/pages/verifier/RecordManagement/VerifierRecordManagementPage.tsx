@@ -6,6 +6,8 @@ import { RecordFormModal } from "@/components/molecules/RecordFormModal";
 import type { RecordFormData } from "@/components/molecules/RecordFormModal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { AlertModal } from "@/components/molecules/AlertModal";
+import { Pagination } from "@/components/molecules/Pagination";
+import { usePagedList } from "@/hooks/usePagedList";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { CargarExpedientForm } from "@/components/molecules/CargarExpedientForm";
@@ -105,6 +107,7 @@ const toDetail = (folder: FolderDto): RecordDetailData => ({
 export const VerifierRecordManagementPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [queryKey, setQueryKey] = useState("");
   const [activeFilter, setActiveFilter] = useState<RecordStatusFilter>("pending");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [folder, setFolder] = useState<FolderDto | null>(null);
@@ -118,36 +121,58 @@ export const VerifierRecordManagementPage = () => {
   const [showCargarExpedientModal, setShowCargarExpedientModal] = useState(false);
   const [verifyObservations, setVerifyObservations] = useState("");
 
-  const fetchList = useCallback(async () => {
-    try {
+  const handleListError = useCallback(
+    (err: unknown) => {
+      setError(errorMessage(err, navigate));
+    },
+    [navigate]
+  );
+
+  const loadFoldersPage = useCallback(
+    async (page: number, size: number) => {
       const params: { ci?: string; status?: string } = {};
-      const ci = searchQuery.trim();
+      const ci = queryKey.trim();
       if (ci) params.ci = ci;
       const status = FRONT_TO_BACK[activeFilter];
       if (status) params.status = status;
-      let list = await recordsService.list(params);
       if (activeFilter === "without-documents") {
+        const first = await recordsService.list(params, 0, 100);
         const counts = await Promise.all(
-          list.map(async (f) => ({
+          first.content.map(async (f) => ({
             id: f.id,
             count: (await recordsService.listDocuments(f.id)).length,
           }))
         );
         const empty = new Set(counts.filter((c) => c.count === 0).map((c) => c.id));
-        list = list.filter((f) => empty.has(f.id));
+        const content = first.content.filter((f) => empty.has(f.id));
+        return { content, page: 0, size: 100, totalElements: content.length, totalPages: content.length ? 1 : 0 };
       }
-      setSelectedId((prev) => (list.some((f) => f.id === prev) ? prev : (list[0]?.id ?? null)));
-    } catch (err) {
-      setError(errorMessage(err, navigate));
-    }
-  }, [searchQuery, activeFilter, navigate]);
+      return recordsService.list(params, page, size);
+    },
+    [queryKey, activeFilter]
+  );
+
+  const paged = usePagedList(loadFoldersPage, 20, handleListError);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void fetchList();
+      paged.setPage(0);
+      setQueryKey(searchQuery);
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [fetchList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  useEffect(() => {
+    paged.setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter]);
+
+  useEffect(() => {
+    setSelectedId((prev) =>
+      paged.items.some((f) => f.id === prev) ? prev : (paged.items[0]?.id ?? null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paged.items]);
 
   const loadDetail = useCallback(
     async (folderId: number) => {
@@ -211,21 +236,29 @@ export const VerifierRecordManagementPage = () => {
             folderType: data.recordType,
             ...parseLocation(data.recordLocation),
           });
-          await fetchList();
+          setQueryKey("");
+          setSearchQuery("");
+          paged.setPage(0);
           setSelectedId(created.id);
+          paged.reload();
         }
       } catch (err) {
         setEditingId(null);
         setError(errorMessage(err, navigate));
       }
     },
-    [editingId, fetchList, loadDetail, navigate]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [editingId, loadDetail, navigate]
   );
 
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
     setActiveFilter("pending");
     setSelectedId(null);
+    setQueryKey("");
+    paged.setPage(0);
+    paged.reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUpdateDocuments = useCallback(() => {
@@ -283,11 +316,12 @@ export const VerifierRecordManagementPage = () => {
       await recordsService.remove(selectedId);
       setConfirmDeleteOpen(false);
       setSelectedId(null);
+      paged.reload();
     } catch (err) {
       setConfirmDeleteOpen(false);
       setError(errorMessage(err, navigate));
     }
-  }, [selectedId, navigate]);
+  }, [selectedId, navigate, paged]);
 
   const handleVerify = useCallback(
     async (approved: boolean) => {
@@ -305,12 +339,13 @@ export const VerifierRecordManagementPage = () => {
         await recordsService.verify(selectedId, approved, observations || undefined);
         setVerifyObservations("");
         await loadDetail(selectedId);
-        await fetchList();
+        paged.reload();
       } catch (err) {
         setError(errorMessage(err, navigate));
       }
     },
-    [selectedId, verifyObservations, documents.length, loadDetail, fetchList, navigate]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedId, verifyObservations, documents.length, loadDetail, navigate]
   );
 
   const handleAddObservation = useCallback(async () => {
@@ -384,6 +419,12 @@ export const VerifierRecordManagementPage = () => {
                 activeFilter={activeFilter}
                 onFilterChange={handleFilterChange}
                 onNewRecord={handleNewRecord}
+              />
+              <Pagination
+                page={paged.page}
+                totalPages={paged.totalPages}
+                totalElements={paged.totalElements}
+                onPageChange={paged.setPage}
               />
             </div>
             <div className="verifier-record-management-page__detail">

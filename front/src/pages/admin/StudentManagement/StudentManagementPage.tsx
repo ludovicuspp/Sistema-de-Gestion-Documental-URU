@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { StudentList } from "@/components/organisms/StudentList";
@@ -12,6 +12,8 @@ import type { StudentListItem } from "@/components/organisms/StudentList";
 import type { StudentDetail } from "@/components/organisms/StudentDetails";
 import { studentsService, type StudentDto } from "@/services/api/studentsService";
 import { ApiError, clearSession } from "@/services/api/http";
+import { usePagedList } from "@/hooks/usePagedList";
+import { Pagination } from "@/components/molecules/Pagination";
 import "./StudentManagementPage.css";
 
 const capitalizeLabel = (value: string | null | undefined): string => {
@@ -71,10 +73,10 @@ const resolveStatus = (estado: string): string =>
  */
 export const StudentManagementPage = () => {
   const navigate = useNavigate();
-  const [dtos, setDtos] = useState<StudentDto[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [detailDto, setDetailDto] = useState<StudentDto | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [loadingList, setLoadingList] = useState(false);
+  const [queryKey, setQueryKey] = useState("");
   const [apiErrorMessage, setApiErrorMessage] = useState("");
   const [studentModalOpen, setStudentModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<StudentDetail | null>(null);
@@ -82,17 +84,9 @@ export const StudentManagementPage = () => {
   const [deletingStudentId, setDeletingStudentId] = useState<string | null>(null);
   const [studentNotFoundAlert, setStudentNotFoundAlert] = useState(false);
   const [noRecordAlert, setNoRecordAlert] = useState(false);
-  const searchSeq = useRef(0);
 
-  const loadStudents = useCallback(async (query: string) => {
-    const seq = ++searchSeq.current;
-    setLoadingList(true);
-    try {
-      const data = await studentsService.search(query);
-      if (searchSeq.current !== seq) return;
-      setDtos(data);
-    } catch (err) {
-      if (searchSeq.current !== seq) return;
+  const handleListError = useCallback(
+    (err: unknown) => {
       if (err instanceof ApiError && err.status === 401) {
         clearSession();
         navigate("/");
@@ -102,20 +96,29 @@ export const StudentManagementPage = () => {
         err instanceof ApiError ? err.message : "No se pudo cargar la lista de estudiantes."
       );
       setNetworkErrorAlert(true);
-    } finally {
-      if (searchSeq.current === seq) setLoadingList(false);
-    }
-  }, [navigate]);
+    },
+    [navigate]
+  );
+
+  const loadStudentsPage = useCallback(
+    (page: number, size: number) => studentsService.search(queryKey, undefined, page, size),
+    [queryKey]
+  );
+
+  const paged = usePagedList(loadStudentsPage, 20, handleListError);
+  const dtos = paged.items;
+  const loadingList = paged.loading;
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void loadStudents(searchQuery);
+      paged.setPage(0);
+      setQueryKey(searchQuery);
     }, 400);
     return () => window.clearTimeout(timer);
-  }, [loadStudents, searchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
 
-  const selectedDto =
-    selectedStudentId ? (dtos.find((d) => String(d.id) === selectedStudentId) ?? null) : null;
+  const selectedDto = detailDto;
   const selectedStudent = selectedDto ? toDetail(selectedDto) : null;
   const items = dtos.map(toListItem);
 
@@ -124,11 +127,7 @@ export const StudentManagementPage = () => {
     void (async () => {
       try {
         const fresh = await studentsService.byId(Number(id));
-        setDtos((prev) =>
-          prev.some((d) => d.id === fresh.id)
-            ? prev.map((d) => (d.id === fresh.id ? fresh : d))
-            : [...prev, fresh]
-        );
+        setDetailDto(fresh);
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
           clearSession();
@@ -139,6 +138,7 @@ export const StudentManagementPage = () => {
           err instanceof ApiError ? err.message : "No se pudo cargar el estudiante."
         );
         setSelectedStudentId(null);
+        setDetailDto(null);
         setStudentNotFoundAlert(true);
       }
     })();
@@ -152,23 +152,23 @@ export const StudentManagementPage = () => {
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
     setSelectedStudentId(null);
-    void loadStudents("");
-  }, [loadStudents]);
+    setDetailDto(null);
+    setQueryKey("");
+    paged.setPage(0);
+    paged.reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleEdit = useCallback(async (id: string) => {
-    const cached = dtos.find((d) => String(d.id) === id) ?? null;
-    if (cached) {
+    const cached = dtos.find((d) => String(d.id) === id) ?? detailDto;
+    if (cached && String(cached.id) === id) {
       setEditingStudent(toDetail(cached));
       setStudentModalOpen(true);
       return;
     }
     try {
       const fresh = await studentsService.byId(Number(id));
-      setDtos((prev) =>
-        prev.some((d) => d.id === fresh.id)
-          ? prev.map((d) => (d.id === fresh.id ? fresh : d))
-          : [...prev, fresh]
-      );
+      setDetailDto(fresh);
       setEditingStudent(toDetail(fresh));
       setStudentModalOpen(true);
     } catch (err) {
@@ -182,7 +182,7 @@ export const StudentManagementPage = () => {
       );
       setStudentNotFoundAlert(true);
     }
-  }, [dtos, navigate]);
+  }, [dtos, detailDto, navigate]);
 
   const handleDelete = useCallback((id: string) => {
     setDeletingStudentId(id);
@@ -194,10 +194,13 @@ export const StudentManagementPage = () => {
     const id = Number(deletingStudentId);
     try {
       await studentsService.remove(id);
-      setDtos((prev) => prev.filter((d) => d.id !== id));
-      if (selectedStudentId === deletingStudentId) setSelectedStudentId(null);
+      if (selectedStudentId === deletingStudentId) {
+        setSelectedStudentId(null);
+        setDetailDto(null);
+      }
       setConfirmDeleteOpen(false);
       setDeletingStudentId(null);
+      paged.reload();
       setOperationCompletedAlert(true);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -215,7 +218,7 @@ export const StudentManagementPage = () => {
         setOperationFailedAlert(true);
       }
     }
-  }, [deletingStudentId, selectedStudentId, navigate]);
+  }, [deletingStudentId, selectedStudentId, navigate, paged]);
 
   const handleViewExpedientes = useCallback(() => {
     navigate("/admin/records");
@@ -288,7 +291,7 @@ export const StudentManagementPage = () => {
       try {
         if (editingStudent) {
           const id = Number(editingStudent.id);
-          const previous = dtos.find((d) => String(d.id) === editingStudent.id) ?? null;
+          const previous = dtos.find((d) => String(d.id) === editingStudent.id) ?? detailDto;
           const updated = await studentsService.update(id, {
             ci: data.cedula.trim(),
             firstName,
@@ -298,7 +301,8 @@ export const StudentManagementPage = () => {
             status,
             type,
           });
-          setDtos((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
+          setDetailDto(updated);
+          paged.reload();
         } else {
           const created = await studentsService.create({
             ci: data.cedula.trim(),
@@ -307,8 +311,9 @@ export const StudentManagementPage = () => {
             status,
             type,
           });
-          setDtos((prev) => [...prev, created]);
+          setDetailDto(created);
           setSelectedStudentId(String(created.id));
+          paged.reload();
         }
         setEditingStudent(null);
         setOperationCompletedAlert(true);
@@ -330,7 +335,7 @@ export const StudentManagementPage = () => {
         }
       }
     },
-    [editingStudent, dtos, navigate]
+    [editingStudent, dtos, detailDto, navigate, paged]
   );
 
   return (
@@ -352,8 +357,14 @@ export const StudentManagementPage = () => {
           />
         </div>
         <div className="student-management-page__count">
-          {loadingList ? "Cargando estudiantes…" : `${items.length} estudiantes`}
+          {loadingList ? "Cargando estudiantes…" : `${paged.totalElements} estudiantes`}
         </div>
+        <Pagination
+          page={paged.page}
+          totalPages={paged.totalPages}
+          totalElements={paged.totalElements}
+          onPageChange={paged.setPage}
+        />
         <div className="student-management-page__bottom">
           <div className="student-management-page__detail">
             <StudentDetails
@@ -580,7 +591,7 @@ export const StudentManagementPage = () => {
             size="medium"
             onClick={() => {
               setNetworkErrorAlert(false);
-              void loadStudents(searchQuery);
+              paged.reload();
             }}
           >
             Reintentar

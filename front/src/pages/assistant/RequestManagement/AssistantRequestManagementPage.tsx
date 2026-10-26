@@ -5,6 +5,8 @@ import { RequestList, type RequestListItem } from "@/components/organisms/Reques
 import { RequestDetailCard, type RequestDetailData } from "@/components/organisms/RequestDetailCard";
 import { RequestActionsCard } from "@/components/organisms/RequestActionsCard";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
+import { Pagination } from "@/components/molecules/Pagination";
+import { usePagedList } from "@/hooks/usePagedList";
 import { ASSISTANT_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
 import { ApiError, clearSession } from "@/services/api/http";
 import { requestsService, type RequestDto } from "@/services/api/requestsService";
@@ -63,7 +65,6 @@ const toDetail = (r: RequestDto): RequestDetailData => {
 
 export const AssistantRequestManagementPage = () => {
   const navigate = useNavigate();
-  const [requests, setRequests] = useState<RequestDto[]>([]);
   const [listError, setListError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
@@ -99,33 +100,38 @@ export const AssistantRequestManagementPage = () => {
     }
   }, [navigate]);
 
-  const fetchAll = useCallback(async (keepSelection?: string | null) => {
-    setListError(null);
-    try {
-      const data = await requestsService.list();
-      setRequests(data);
-      const wanted = keepSelection === undefined
-        ? (data.length > 0 ? String(data[0].id) : null)
-        : keepSelection;
-      const exists = wanted != null && data.some((r) => String(r.id) === wanted);
-      const finalId = exists ? wanted : (data.length > 0 ? String(data[0].id) : null);
-      setSelectedRequestId(finalId);
-      if (finalId != null) {
-        await loadDetail(Number(finalId));
-      } else {
-        setDetail(null);
-      }
-    } catch (err) {
+  const loadRequestsPage = useCallback(
+    (page: number, size: number) => requestsService.list(undefined, page, size),
+    []
+  );
+
+  const handleListError = useCallback(
+    (err: unknown) => {
       const msg = err instanceof ApiError && err.status === 401
         ? (clearSession(), navigate("/"), null)
         : err instanceof ApiError ? err.message : "No se pudieron cargar las solicitudes.";
       if (msg) setListError(msg);
-    }
-  }, [loadDetail, navigate]);
+    },
+    [navigate]
+  );
+
+  const paged = usePagedList(loadRequestsPage, 20, handleListError);
+  const requests = paged.items;
 
   useEffect(() => {
-    void fetchAll();
-  }, [fetchAll]);
+    const target = selectedRequestId != null && requests.some((r) => String(r.id) === selectedRequestId)
+      ? selectedRequestId
+      : (requests.length > 0 ? String(requests[0].id) : null);
+    if (target !== selectedRequestId) {
+      setSelectedRequestId(target);
+    }
+    if (target != null) {
+      void loadDetail(Number(target));
+    } else {
+      setDetail(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paged.items, selectedRequestId]);
 
   const filteredRequests = useMemo(() => {
     const items = requests.map(toListItem);
@@ -145,17 +151,22 @@ export const AssistantRequestManagementPage = () => {
     requests.find((r) => String(r.id) === selectedRequestId)?.status ?? null
   ), [requests, selectedRequestId]);
 
-  const handleSearch = useCallback((query: string) => setSearchQuery(query), []);
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    paged.setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const handleOpenRequest = useCallback((id: string) => {
     setSelectedRequestId(id);
     setFeedback(null);
-    void loadDetail(Number(id));
-  }, [loadDetail]);
+  }, []);
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
     setFeedback(null);
-    void fetchAll(undefined);
-  }, [fetchAll]);
+    paged.setPage(0);
+    paged.reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSaveNote = useCallback(() => {
     setFeedback({
@@ -175,12 +186,13 @@ export const AssistantRequestManagementPage = () => {
         kind: "success",
         text: "Solicitud completada. Se envió un correo de notificación al solicitante.",
       });
-      await fetchAll(selectedRequestId);
+      paged.reload();
+      await loadDetail(Number(selectedRequestId));
     } catch (err) {
       const msg = resolveError(err, "No se pudo completar la solicitud.");
       if (msg) setFeedback({ kind: "error", text: msg });
     }
-  }, [selectedRequestId, fetchAll, resolveError]);
+  }, [selectedRequestId, paged, loadDetail, resolveError]);
 
   const handleReject = useCallback(async () => {
     if (selectedRequestId == null) return;
@@ -189,12 +201,13 @@ export const AssistantRequestManagementPage = () => {
     try {
       await requestsService.updateStatus(Number(selectedRequestId), "RECHAZADA");
       setFeedback({ kind: "success", text: "Solicitud rechazada." });
-      await fetchAll(selectedRequestId);
+      paged.reload();
+      await loadDetail(Number(selectedRequestId));
     } catch (err) {
       const msg = resolveError(err, "No se pudo rechazar la solicitud.");
       if (msg) setFeedback({ kind: "error", text: msg });
     }
-  }, [selectedRequestId, fetchAll, resolveError]);
+  }, [selectedRequestId, paged, loadDetail, resolveError]);
 
   const canApproveReject = selectedRawStatus === "RECIBIDA" || selectedRawStatus === "EN_PROCESO";
   const bannerError = listError ?? detailError;
@@ -240,6 +253,12 @@ export const AssistantRequestManagementPage = () => {
           <div className="request-management-page__left">
             <div className="request-management-page__list">
               <RequestList requests={filteredRequests} onOpen={handleOpenRequest} onSearch={handleSearch} />
+              <Pagination
+                page={paged.page}
+                totalPages={paged.totalPages}
+                totalElements={paged.totalElements}
+                onPageChange={paged.setPage}
+              />
             </div>
             <div className="request-management-page__detail">
               <RequestDetailCard request={detail} />

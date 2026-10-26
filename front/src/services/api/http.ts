@@ -77,6 +77,20 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   return payload.data;
 }
 
+/** Respuesta paginada del backend (ApiResponse.data). */
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+/** Query string para endpoints paginados (?page=&size=). */
+export function pageParams(page: number, size: number): string {
+  return `page=${page}&size=${size}`;
+}
+
 /** Descarga binaria (el backend exige Authorization, asi que no sirve un <a href> directo). */
 export async function apiFetchBlob(path: string): Promise<Blob> {
   const headers = new Headers();

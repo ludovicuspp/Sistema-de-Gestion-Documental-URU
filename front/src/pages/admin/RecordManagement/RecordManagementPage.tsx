@@ -5,8 +5,10 @@ import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { Modal } from "@/components/molecules/Modal";
+import { Pagination } from "@/components/molecules/Pagination";
 import { CargarExpedientForm } from "@/components/molecules/CargarExpedientForm";
 import type { CargarExpedientFormData } from "@/components/molecules/CargarExpedientForm";
+import { usePagedList } from "@/hooks/usePagedList";
 import { RecordFormModal } from "@/components/molecules/RecordFormModal";
 import type { RecordFormData } from "@/components/molecules/RecordFormModal";
 import { AlertModal } from "@/components/molecules/AlertModal";
@@ -103,6 +105,7 @@ const toDetail = (folder: FolderDto): RecordDetailData => ({
 export const RecordManagementPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [queryKey, setQueryKey] = useState("");
   const [activeFilter, setActiveFilter] = useState<RecordStatusFilter>("pending");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [folder, setFolder] = useState<FolderDto | null>(null);
@@ -119,40 +122,62 @@ export const RecordManagementPage = () => {
   const [observationText, setObservationText] = useState("");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
-  const fetchList = useCallback(async () => {
-    try {
+  const handleListError = useCallback(
+    (err: unknown) => {
+      setError(errorMessage(err, navigate));
+    },
+    [navigate]
+  );
+
+  const loadFoldersPage = useCallback(
+    async (page: number, size: number) => {
       const params: { ci?: string; status?: string } = {};
-      const ci = searchQuery.trim();
+      const ci = queryKey.trim();
       if (ci) params.ci = ci;
       const status = FRONT_TO_BACK[activeFilter];
       if (status) params.status = status;
-      let list = await recordsService.list(params);
       if (activeFilter === "without-documents") {
+        // Sin endpoint server-side: se filtra la primera ventana y se pagina en cliente.
+        const first = await recordsService.list(params, 0, 100);
         const counts = await Promise.all(
-          list.map(async (f) => ({
+          first.content.map(async (f) => ({
             id: f.id,
             count: (await recordsService.listDocuments(f.id)).length,
           }))
         );
         const empty = new Set(counts.filter((c) => c.count === 0).map((c) => c.id));
-        list = list.filter((f) => empty.has(f.id));
+        const content = first.content.filter((f) => empty.has(f.id));
+        return { content, page: 0, size: 100, totalElements: content.length, totalPages: content.length ? 1 : 0 };
       }
-      setSelectedId((prev) => {
-        const next = list.some((f) => f.id === prev) ? prev : (list[0]?.id ?? null);
-        if (list.length === 0 && ci) setNoRecordAlert(true);
-        return next;
-      });
-    } catch (err) {
-      setError(errorMessage(err, navigate));
-    }
-  }, [searchQuery, activeFilter, navigate]);
+      return recordsService.list(params, page, size);
+    },
+    [queryKey, activeFilter]
+  );
+
+  const paged = usePagedList(loadFoldersPage, 20, handleListError);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void fetchList();
+      paged.setPage(0);
+      setQueryKey(searchQuery);
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [fetchList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  useEffect(() => {
+    paged.setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter]);
+
+  useEffect(() => {
+    setSelectedId((prev) => {
+      const next = paged.items.some((f) => f.id === prev) ? prev : (paged.items[0]?.id ?? null);
+      if (paged.items.length === 0 && queryKey.trim()) setNoRecordAlert(true);
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paged.items]);
 
   const loadDetail = useCallback(
     async (folderId: number) => {
@@ -207,6 +232,10 @@ export const RecordManagementPage = () => {
     setSearchQuery("");
     setActiveFilter("pending");
     setSelectedId(null);
+    setQueryKey("");
+    paged.setPage(0);
+    paged.reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUpdateDocuments = useCallback(() => {
@@ -253,11 +282,12 @@ export const RecordManagementPage = () => {
       await recordsService.remove(selectedId);
       setConfirmDeleteOpen(false);
       setSelectedId(null);
+      paged.reload();
     } catch (err) {
       setConfirmDeleteOpen(false);
       setError(errorMessage(err, navigate));
     }
-  }, [selectedId, navigate]);
+  }, [selectedId, navigate, paged]);
 
   const handleViewDocument = useCallback(
     async (id: string) => {
@@ -311,15 +341,19 @@ export const RecordManagementPage = () => {
             folderType: data.recordType,
             ...parseLocation(data.recordLocation),
           });
-          await fetchList();
+          setQueryKey("");
+          setSearchQuery("");
+          paged.setPage(0);
           setSelectedId(created.id);
+          paged.reload();
         }
       } catch (err) {
         setEditingId(null);
         setError(errorMessage(err, navigate));
       }
     },
-    [editingId, fetchList, loadDetail, navigate]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [editingId, loadDetail, navigate]
   );
 
   return (
@@ -343,6 +377,12 @@ export const RecordManagementPage = () => {
                 activeFilter={activeFilter}
                 onFilterChange={handleFilterChange}
                 onNewRecord={handleNewRecord}
+              />
+              <Pagination
+                page={paged.page}
+                totalPages={paged.totalPages}
+                totalElements={paged.totalElements}
+                onPageChange={paged.setPage}
               />
             </div>
             <div className="record-management-page__detail">

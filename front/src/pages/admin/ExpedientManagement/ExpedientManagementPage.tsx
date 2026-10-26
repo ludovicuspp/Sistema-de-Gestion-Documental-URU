@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { AlertModal } from "@/components/molecules/AlertModal";
+import { Pagination } from "@/components/molecules/Pagination";
+import { usePagedList } from "@/hooks/usePagedList";
 import { Modal } from "@/components/molecules/Modal";
 import { NewExpedientForm } from "@/components/molecules/NewExpedientForm";
 import type { NewExpedientFormData } from "@/components/molecules/NewExpedientForm";
@@ -103,6 +105,7 @@ const toDetail = (folder: FolderDto): ExpedientDetailData => ({
 export const ExpedientManagementPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [queryKey, setQueryKey] = useState("");
   const [activeFilter, setActiveFilter] = useState<ExpedientStatusFilter>("pending");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [folder, setFolder] = useState<FolderDto | null>(null);
@@ -117,36 +120,58 @@ export const ExpedientManagementPage = () => {
   const [observationText, setObservationText] = useState("");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
-  const fetchList = useCallback(async () => {
-    try {
+  const handleListError = useCallback(
+    (err: unknown) => {
+      setError(errorMessage(err, navigate));
+    },
+    [navigate]
+  );
+
+  const loadFoldersPage = useCallback(
+    async (page: number, size: number) => {
       const params: { ci?: string; status?: string } = {};
-      const ci = searchQuery.trim();
+      const ci = queryKey.trim();
       if (ci) params.ci = ci;
       const status = FRONT_TO_BACK[activeFilter];
       if (status) params.status = status;
-      let list = await recordsService.list(params);
       if (activeFilter === "without-documents") {
+        const first = await recordsService.list(params, 0, 100);
         const counts = await Promise.all(
-          list.map(async (f) => ({
+          first.content.map(async (f) => ({
             id: f.id,
             count: (await recordsService.listDocuments(f.id)).length,
           }))
         );
         const empty = new Set(counts.filter((c) => c.count === 0).map((c) => c.id));
-        list = list.filter((f) => empty.has(f.id));
+        const content = first.content.filter((f) => empty.has(f.id));
+        return { content, page: 0, size: 100, totalElements: content.length, totalPages: content.length ? 1 : 0 };
       }
-      setSelectedId((prev) => (list.some((f) => f.id === prev) ? prev : (list[0]?.id ?? null)));
-    } catch (err) {
-      setError(errorMessage(err, navigate));
-    }
-  }, [searchQuery, activeFilter, navigate]);
+      return recordsService.list(params, page, size);
+    },
+    [queryKey, activeFilter]
+  );
+
+  const paged = usePagedList(loadFoldersPage, 20, handleListError);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void fetchList();
+      paged.setPage(0);
+      setQueryKey(searchQuery);
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [fetchList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  useEffect(() => {
+    paged.setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter]);
+
+  useEffect(() => {
+    setSelectedId((prev) =>
+      paged.items.some((f) => f.id === prev) ? prev : (paged.items[0]?.id ?? null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paged.items]);
 
   const loadDetail = useCallback(
     async (folderId: number) => {
@@ -200,19 +225,27 @@ export const ExpedientManagementPage = () => {
           ...parseLocation(data.recordLocation),
         });
         setCreateModalOpen(false);
-        await fetchList();
+        setQueryKey("");
+        setSearchQuery("");
+        paged.setPage(0);
         setSelectedId(created.id);
+        paged.reload();
       } catch (err) {
         setError(errorMessage(err, navigate));
       }
     },
-    [fetchList, navigate]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [navigate]
   );
 
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
     setActiveFilter("pending");
     setSelectedId(null);
+    setQueryKey("");
+    paged.setPage(0);
+    paged.reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUpdateDocuments = useCallback(() => {
@@ -274,11 +307,12 @@ export const ExpedientManagementPage = () => {
       await recordsService.remove(selectedId);
       setConfirmDeleteOpen(false);
       setSelectedId(null);
+      paged.reload();
     } catch (err) {
       setConfirmDeleteOpen(false);
       setError(errorMessage(err, navigate));
     }
-  }, [selectedId, navigate]);
+  }, [selectedId, navigate, paged]);
 
   const handleViewDocument = useCallback(
     async (id: string) => {
@@ -333,6 +367,12 @@ export const ExpedientManagementPage = () => {
             activeFilter={activeFilter}
             onFilterChange={handleFilterChange}
             onNewExpedient={handleNewExpedient}
+          />
+          <Pagination
+            page={paged.page}
+            totalPages={paged.totalPages}
+            totalElements={paged.totalElements}
+            onPageChange={paged.setPage}
           />
         </div>
         <div className="expedient-management-page__content">

@@ -10,11 +10,15 @@ import com.cid.sidae.catalog.repo.DocumentTypeRepository;
 import com.cid.sidae.catalog.repo.MimeTypeRepository;
 import com.cid.sidae.commons.api.ApiException;
 import com.cid.sidae.commons.api.ApiResponse;
+import com.cid.sidae.commons.api.PagedResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -46,8 +51,15 @@ public class CatalogController {
     }
 
     @GetMapping("/careers")
-    public ApiResponse<List<CareerResponse>> listCareers() {
-        return ApiResponse.ok(careers.findByActiveTrueOrderByName().stream().map(CareerResponse::from).toList());
+    public ApiResponse<PagedResponse<CareerResponse>> listCareers(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        Page<Career> result = careers.findByActiveTrueOrderByName(pageable(page, size));
+        return ApiResponse.ok(PagedResponse.of(
+                result.getContent().stream().map(CareerResponse::from).toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements()));
     }
 
     @PostMapping("/careers")
@@ -85,10 +97,21 @@ public class CatalogController {
     }
 
     @GetMapping("/document-types")
-    public ApiResponse<List<DocumentTypeResponse>> listDocumentTypes() {
-        return ApiResponse.ok(documentTypes.findByActiveTrueOrderByName().stream()
-                .map(DocumentTypeResponse::from)
-                .toList());
+    public ApiResponse<PagedResponse<DocumentTypeResponse>> listDocumentTypes(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        Page<DocumentType> result = documentTypes.findByActiveTrueOrderByName(pageable(page, size));
+        return ApiResponse.ok(PagedResponse.of(
+                result.getContent().stream().map(DocumentTypeResponse::from).toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements()));
+    }
+
+    private static Pageable pageable(Integer page, Integer size) {
+        int pageNumber = page == null || page < 0 ? 0 : page;
+        int pageSize = size == null || size <= 0 ? 20 : Math.min(size, 100);
+        return PageRequest.of(pageNumber, pageSize);
     }
 
     @PostMapping("/document-types")

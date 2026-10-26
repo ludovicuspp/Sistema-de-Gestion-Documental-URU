@@ -5,6 +5,8 @@ import { TaskFiltersCard } from "@/components/organisms/TaskFiltersCard";
 import { TaskListCard } from "@/components/organisms/TaskListCard";
 import { TaskDetailCard } from "@/components/organisms/TaskDetailCard";
 import { AlertModal } from "@/components/molecules/AlertModal";
+import { Pagination } from "@/components/molecules/Pagination";
+import { usePagedList } from "@/hooks/usePagedList";
 import type { TaskFilterTab } from "@/components/organisms/TaskFiltersCard";
 import type { TaskListItem } from "@/components/organisms/TaskListCard";
 import type { TaskDetail } from "@/components/organisms/TaskDetailCard";
@@ -46,8 +48,6 @@ export const VerifierTaskManagementPage = () => {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<TaskFilterTab>("assigned-to-me");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<TaskDto[]>([]);
-  const [loading, setLoading] = useState(true);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   const showError = (err: unknown) => {
@@ -61,29 +61,35 @@ export const VerifierTaskManagementPage = () => {
     );
   };
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await tasksService.list();
-      setTasks(data);
-      setSelectedId((prev) =>
-        prev != null && data.some((t) => String(t.id) === prev)
-          ? prev
-          : data.length > 0
-            ? String(data[0].id)
-            : null
-      );
-    } catch (err) {
-      showError(err);
-    } finally {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const loadTasksPage = useCallback(
+    (page: number, size: number) => {
+      if (activeTab === "completed") {
+        return tasksService.list({ status: "COMPLETADA" }, page, size);
+      }
+      return tasksService.list({ status: "PENDIENTE,EN_PROCESO" }, page, size);
+    },
+    [activeTab]
+  );
+
+  const paged = usePagedList(loadTasksPage, 20, showError);
+  const tasks = paged.items;
+  const loading = paged.loading;
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    paged.setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, search]);
+
+  useEffect(() => {
+    setSelectedId((prev) =>
+      prev != null && tasks.some((t) => String(t.id) === prev)
+        ? prev
+        : tasks.length > 0
+          ? String(tasks[0].id)
+          : null
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paged.items]);
 
   const items = useMemo(() => tasks.map(toListItem), [tasks]);
 
@@ -116,23 +122,23 @@ export const VerifierTaskManagementPage = () => {
     if (selectedId == null) return;
     try {
       await tasksService.updateStatus(Number(selectedId), "COMPLETADA");
-      await load();
+      paged.reload();
     } catch (err) {
       showError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, load]);
+  }, [selectedId, paged]);
 
   const handleMarkPending = useCallback(async () => {
     if (selectedId == null) return;
     try {
       await tasksService.updateStatus(Number(selectedId), "PENDIENTE");
-      await load();
+      paged.reload();
     } catch (err) {
       showError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, load]);
+  }, [selectedId, paged]);
 
   const visibleList = loading ? [] : filteredList;
 
@@ -162,6 +168,12 @@ export const VerifierTaskManagementPage = () => {
             items={visibleList}
             selectedId={selectedId}
             onSelect={setSelectedId}
+          />
+          <Pagination
+            page={paged.page}
+            totalPages={paged.totalPages}
+            totalElements={paged.totalElements}
+            onPageChange={paged.setPage}
           />
           <TaskDetailCard
             task={selectedDetail}

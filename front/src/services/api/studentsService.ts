@@ -1,4 +1,4 @@
-import { apiFetch } from "./http";
+import { apiFetch, type PageResponse } from "./http";
 
 export interface StudentDto {
   id: number;
@@ -31,10 +31,10 @@ export interface StudentRequest {
 const BASE = "/api/v1/students";
 
 export const studentsService = {
-  async search(query = "", status?: string): Promise<StudentDto[]> {
-    const params = new URLSearchParams({ query });
+  async search(query = "", status?: string, page = 0, size = 20): Promise<PageResponse<StudentDto>> {
+    const params = new URLSearchParams({ query, page: String(page), size: String(size) });
     if (status) params.set("status", status);
-    return apiFetch<StudentDto[]>(`${BASE}?${params.toString()}`);
+    return apiFetch<PageResponse<StudentDto>>(`${BASE}?${params.toString()}`);
   },
 
   async byCi(ci: string): Promise<StudentDto> {

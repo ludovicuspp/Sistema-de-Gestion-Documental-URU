@@ -40,9 +40,9 @@ export const CargarExpedientForm = ({
   useEffect(() => {
     let cancelled = false;
     catalogService
-      .documentTypes()
-      .then((types) => {
-        if (!cancelled) setDocumentTypes(types);
+      .documentTypes(0, 100)
+      .then((page) => {
+        if (!cancelled) setDocumentTypes(page.content);
       })
       .catch(() => {
         if (!cancelled) setDocumentTypes([]);

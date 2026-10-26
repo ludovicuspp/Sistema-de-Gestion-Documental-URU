@@ -60,14 +60,15 @@ export const AdminDashboardPage = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const [recordsStats, requestsStats, tasksStats, pendingTasks, history] =
+        const [recordsStats, requestsStats, tasksStats, pendingTasksPage, history] =
           await Promise.all([
             recordsService.stats(),
             requestsService.stats(),
             tasksService.stats(),
-            tasksService.list({ status: "PENDIENTE" }),
+            tasksService.list({ status: "PENDIENTE" }, 0, 100),
             recordsService.recentHistory(10),
           ]);
+        const pendingTasks = pendingTasksPage.content;
 
         setKpis([
           {

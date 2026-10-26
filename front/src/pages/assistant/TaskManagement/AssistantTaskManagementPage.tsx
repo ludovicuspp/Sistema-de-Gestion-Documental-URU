@@ -4,6 +4,8 @@ import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { TaskListCard } from "@/components/organisms/TaskListCard";
 import { TaskDetailCard } from "@/components/organisms/TaskDetailCard";
 import { AlertModal } from "@/components/molecules/AlertModal";
+import { Pagination } from "@/components/molecules/Pagination";
+import { usePagedList } from "@/hooks/usePagedList";
 import type { TaskListItem } from "@/components/organisms/TaskListCard";
 import type { TaskDetail } from "@/components/organisms/TaskDetailCard";
 import { ASSISTANT_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
@@ -42,8 +44,6 @@ const toDetail = (t: TaskDto): TaskDetail => ({
 export const AssistantTaskManagementPage = () => {
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<TaskDto[]>([]);
-  const [loading, setLoading] = useState(true);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   const showError = (err: unknown) => {
@@ -57,29 +57,25 @@ export const AssistantTaskManagementPage = () => {
     );
   };
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await tasksService.list();
-      setTasks(data);
-      setSelectedId((prev) =>
-        prev != null && data.some((t) => String(t.id) === prev)
-          ? prev
-          : data.length > 0
-            ? String(data[0].id)
-            : null
-      );
-    } catch (err) {
-      showError(err);
-    } finally {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const loadTasksPage = useCallback(
+    (page: number, size: number) => tasksService.list({}, page, size),
+    []
+  );
+
+  const paged = usePagedList(loadTasksPage, 20, showError);
+  const tasks = paged.items;
+  const loading = paged.loading;
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    setSelectedId((prev) =>
+      prev != null && tasks.some((t) => String(t.id) === prev)
+        ? prev
+        : tasks.length > 0
+          ? String(tasks[0].id)
+          : null
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paged.items]);
 
   const items = useMemo(() => tasks.map(toListItem), [tasks]);
 
@@ -93,23 +89,23 @@ export const AssistantTaskManagementPage = () => {
     if (selectedId == null) return;
     try {
       await tasksService.updateStatus(Number(selectedId), "COMPLETADA");
-      await load();
+      paged.reload();
     } catch (err) {
       showError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, load]);
+  }, [selectedId, paged]);
 
   const handleMarkPending = useCallback(async () => {
     if (selectedId == null) return;
     try {
       await tasksService.updateStatus(Number(selectedId), "PENDIENTE");
-      await load();
+      paged.reload();
     } catch (err) {
       showError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, load]);
+  }, [selectedId, paged]);
 
   const handleStartTask = (id: string) => {
     setSelectedId(id);
@@ -144,6 +140,12 @@ export const AssistantTaskManagementPage = () => {
             onSelect={setSelectedId}
             onStartTask={handleStartTask}
             variant="assistant"
+          />
+          <Pagination
+            page={paged.page}
+            totalPages={paged.totalPages}
+            totalElements={paged.totalElements}
+            onPageChange={paged.setPage}
           />
           <TaskDetailCard
             task={selectedDetail}

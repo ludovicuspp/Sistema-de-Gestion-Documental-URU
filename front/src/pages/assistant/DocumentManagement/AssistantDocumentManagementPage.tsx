@@ -9,6 +9,8 @@ import { Button } from "@/components/atoms/Button";
 import { Modal } from "@/components/molecules/Modal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { AlertModal } from "@/components/molecules/AlertModal";
+import { Pagination } from "@/components/molecules/Pagination";
+import { usePagedList } from "@/hooks/usePagedList";
 import type { ExpedientSelectCardData } from "@/components/organisms/ExpedientSelectCard";
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
 import { ASSISTANT_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
@@ -83,21 +85,27 @@ export const AssistantDocumentManagementPage = () => {
     [unauthorized, showError],
   );
 
+  const handleFoldersError = useCallback(
+    (err: unknown) => {
+      showApiError(err, "No se pudieron cargar los datos.");
+    },
+    [showApiError]
+  );
+
+  const loadFoldersPage = useCallback(
+    (page: number, size: number) => recordsService.list({}, page, size),
+    []
+  );
+
+  const pagedFolders = usePagedList(loadFoldersPage, 20, handleFoldersError);
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
-        const [folders, types] = await Promise.all([
-          recordsService.list(),
-          catalogService.documentTypes(),
-        ]);
+        const typesPage = await catalogService.documentTypes(0, 100);
         if (cancelled) return;
-        setDocTypes(types);
-        if (folders.length > 0) {
-          setSelectedFolder(folders[0]);
-          const docs = await recordsService.listDocuments(folders[0].id);
-          if (!cancelled) setRawDocs(docs);
-        }
+        setDocTypes(typesPage.content);
       } catch (err) {
         if (!cancelled) showApiError(err, "No se pudieron cargar los datos.");
       }
@@ -106,6 +114,25 @@ export const AssistantDocumentManagementPage = () => {
       cancelled = true;
     };
   }, [showApiError]);
+
+  useEffect(() => {
+    if (pagedFolders.items.length === 0) return;
+    const first = pagedFolders.items[0];
+    setSelectedFolder(first);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const docs = await recordsService.listDocuments(first.id);
+        if (!cancelled) setRawDocs(docs);
+      } catch (err) {
+        if (!cancelled) showApiError(err, "No se pudieron cargar los documentos.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagedFolders.items]);
 
   const docTypeById = useMemo(() => new Map(docTypes.map((t) => [t.id, t])), [docTypes]);
 
@@ -259,6 +286,12 @@ export const AssistantDocumentManagementPage = () => {
               title="Seleccione un expediente"
               expedient={expedientData}
               onMarkUrgent={() => {}}
+            />
+            <Pagination
+              page={pagedFolders.page}
+              totalPages={pagedFolders.totalPages}
+              totalElements={pagedFolders.totalElements}
+              onPageChange={pagedFolders.setPage}
             />
           </div>
 

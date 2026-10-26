@@ -10,6 +10,8 @@ import type { ExpedientSelectCardData } from "@/components/organisms/ExpedientSe
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { AlertModal } from "@/components/molecules/AlertModal";
+import { Pagination } from "@/components/molecules/Pagination";
+import { usePagedList } from "@/hooks/usePagedList";
 import { VERIFIER_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
 import { ApiError, clearSession } from "@/services/api/http";
 import { recordsService, type DocumentDto, type FolderDto } from "@/services/api/recordsService";
@@ -49,7 +51,6 @@ const toExpedientData = (folder: FolderDto): ExpedientSelectCardData => ({
  */
 export const VerifierDocumentManagementPage = () => {
   const navigate = useNavigate();
-  const [inboxFolders, setInboxFolders] = useState<FolderDto[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<FolderDto | null>(null);
   const [rawDocs, setRawDocs] = useState<DocumentDto[]>([]);
   const [docTypes, setDocTypes] = useState<DocumentTypeDto[]>([]);
@@ -114,18 +115,28 @@ export const VerifierDocumentManagementPage = () => {
     [refreshFolderDetail],
   );
 
+  const handleInboxError = useCallback(
+    (err: unknown) => {
+      showApiError(err, "No se pudo cargar la bandeja.");
+    },
+    [showApiError]
+  );
+
+  const loadInboxPage = useCallback(
+    (page: number, size: number) => recordsService.list({ status: "PENDIENTE" }, page, size),
+    []
+  );
+
+  const pagedInbox = usePagedList(loadInboxPage, 20, handleInboxError);
+  const inboxFolders = pagedInbox.items;
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
-        const [folders, types] = await Promise.all([
-          recordsService.list({ status: "PENDIENTE" }),
-          catalogService.documentTypes(),
-        ]);
+        const typesPage = await catalogService.documentTypes(0, 100);
         if (cancelled) return;
-        setInboxFolders(folders);
-        setDocTypes(types);
-        if (folders.length > 0) selectFolder(folders[0]);
+        setDocTypes(typesPage.content);
       } catch (err) {
         if (!cancelled) showApiError(err, "No se pudieron cargar los datos.");
       }
@@ -133,7 +144,12 @@ export const VerifierDocumentManagementPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [selectFolder, showApiError]);
+  }, [showApiError]);
+
+  useEffect(() => {
+    if (inboxFolders.length > 0) selectFolder(inboxFolders[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagedInbox.items]);
 
   useEffect(() => {
     const q = verificationSearch.trim();
@@ -144,9 +160,9 @@ export const VerifierDocumentManagementPage = () => {
     let cancelled = false;
     const timer = globalThis.setTimeout(() => {
       void recordsService
-        .list({ ci: q })
+        .list({ ci: q }, 0, 20)
         .then((found) => {
-          if (!cancelled) setCiResults(found);
+          if (!cancelled) setCiResults(found.content);
         })
         .catch((err: unknown) => {
           if (!cancelled && err instanceof ApiError && err.status === 401) unauthorized();
@@ -310,7 +326,7 @@ export const VerifierDocumentManagementPage = () => {
         <aside className="verifier-document-management-page__bandeja">
           <VerificationInbox
             title="Bandeja de verificación"
-            pendingCount={verificationItems.length}
+            pendingCount={pagedInbox.totalElements}
             approvedToday="—"
             avgValidationTime="—"
             items={filteredVerificationItems}
@@ -320,6 +336,12 @@ export const VerifierDocumentManagementPage = () => {
             onFilterUploader={() => {}}
             onExport={() => {}}
             onOpen={handleOpenVerification}
+          />
+          <Pagination
+            page={pagedInbox.page}
+            totalPages={pagedInbox.totalPages}
+            totalElements={pagedInbox.totalElements}
+            onPageChange={pagedInbox.setPage}
           />
         </aside>
         <div className="verifier-document-management-page__content">

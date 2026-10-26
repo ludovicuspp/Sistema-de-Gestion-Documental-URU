@@ -59,10 +59,11 @@ export const VerifierDashboardPage = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const [allTasks, history] = await Promise.all([
-          tasksService.list(),
+        const [allTasksPage, history] = await Promise.all([
+          tasksService.list({}, 0, 100),
           recordsService.recentHistory(10),
         ]);
+        const allTasks = allTasksPage.content;
         const byStatus = (status: string) =>
           allTasks
             .filter((t) => t.status.toUpperCase() === status)

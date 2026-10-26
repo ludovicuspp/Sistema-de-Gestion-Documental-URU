@@ -1,4 +1,4 @@
-import { apiFetch, apiFetchBlob } from "./http";
+import { apiFetch, apiFetchBlob, type PageResponse } from "./http";
 
 export interface FolderDto {
   id: number;
@@ -72,12 +72,15 @@ export interface FolderStats {
 const BASE = "/api/v1/records";
 
 export const recordsService = {
-  async list(params: { ci?: string; status?: string } = {}): Promise<FolderDto[]> {
-    const query = new URLSearchParams();
+  async list(
+    params: { ci?: string; status?: string } = {},
+    page = 0,
+    size = 20,
+  ): Promise<PageResponse<FolderDto>> {
+    const query = new URLSearchParams({ page: String(page), size: String(size) });
     if (params.ci) query.set("ci", params.ci);
     if (params.status) query.set("status", params.status);
-    const suffix = query.toString();
-    return apiFetch<FolderDto[]>(suffix ? `${BASE}?${suffix}` : BASE);
+    return apiFetch<PageResponse<FolderDto>>(`${BASE}?${query.toString()}`);
   },
 
   async stats(): Promise<FolderStats> {

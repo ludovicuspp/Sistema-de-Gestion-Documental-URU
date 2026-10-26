@@ -1,4 +1,4 @@
-import { apiFetch } from "./http";
+import { apiFetch, type PageResponse } from "./http";
 
 export interface RequestDocumentDto {
   documentTypeId?: number | null;
@@ -44,8 +44,10 @@ const BASE = "/api/v1/requests";
 const PUBLIC_BASE = "/api/v1/public/requests";
 
 export const requestsService = {
-  async list(status?: string): Promise<RequestDto[]> {
-    return apiFetch<RequestDto[]>(status ? `${BASE}?status=${encodeURIComponent(status)}` : BASE);
+  async list(status?: string, page = 0, size = 20): Promise<PageResponse<RequestDto>> {
+    const query = new URLSearchParams({ page: String(page), size: String(size) });
+    if (status) query.set("status", status);
+    return apiFetch<PageResponse<RequestDto>>(`${BASE}?${query.toString()}`);
   },
 
   async stats(): Promise<RequestStats> {

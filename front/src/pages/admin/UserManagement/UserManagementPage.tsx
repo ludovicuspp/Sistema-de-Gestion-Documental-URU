@@ -7,6 +7,8 @@ import { ActionHistory } from "@/components/organisms/ActionHistory";
 import { UserFormModal } from "@/components/molecules/UserFormModal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { AlertModal } from "@/components/molecules/AlertModal";
+import { Pagination } from "@/components/molecules/Pagination";
+import { usePagedList } from "@/hooks/usePagedList";
 import type { UserListItem } from "@/components/organisms/UserList";
 import type { UserDetail } from "@/components/organisms/UserDetails";
 import type { RoleBadgeVariant } from "@/components/atoms/RoleBadge";
@@ -54,10 +56,9 @@ const toDetail = (u: UserDto): UserDetail => ({
  */
 export const UserManagementPage = () => {
   const navigate = useNavigate();
-  const [users, setUsers] = useState<UserDto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [queryKey, setQueryKey] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
@@ -92,19 +93,13 @@ export const UserManagementPage = () => {
     fallback("Error inesperado. Intente nuevamente.");
   };
 
-  const load = useCallback(async (query: string) => {
-    setLoading(true);
-    try {
-      const data = await usersService.list(query);
-      setUsers(data);
-      setSelectedUserId((prev) =>
-        prev != null && data.some((u) => String(u.id) === prev) ? prev : null
-      );
-      if (query.trim() !== "" && data.length === 0) {
-        setNoUsersFoundMessage(`No hay usuarios que coincidan con "${query.trim()}".`);
-        setNoUsersFoundAlert(true);
-      }
-    } catch (err) {
+  const loadUsersPage = useCallback(
+    (page: number, size: number) => usersService.list(queryKey, page, size),
+    [queryKey]
+  );
+
+  const handleListError = useCallback(
+    (err: unknown) => {
       if (err instanceof ApiError && err.status === 401) {
         clearSession();
         navigate("/");
@@ -114,21 +109,40 @@ export const UserManagementPage = () => {
         err instanceof ApiError ? err.message : "No se pudo cargar la lista de usuarios."
       );
       setSaveUserErrorAlert(true);
-    } finally {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    },
+    [navigate]
+  );
+
+  const paged = usePagedList(loadUsersPage, 20, handleListError);
+  const users = paged.items;
+  const loading = paged.loading;
 
   useEffect(() => {
     const timer = setTimeout(
       () => {
-        void load(searchQuery);
+        paged.setPage(0);
+        setQueryKey(searchQuery);
       },
       searchQuery ? 350 : 0
     );
     return () => clearTimeout(timer);
-  }, [load, searchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setSelectedUserId((prev) =>
+      prev != null && users.some((u) => String(u.id) === prev) ? prev : null
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paged.items]);
+
+  useEffect(() => {
+    if (queryKey.trim() !== "" && users.length === 0 && !loading) {
+      setNoUsersFoundMessage(`No hay usuarios que coincidan con "${queryKey.trim()}".`);
+      setNoUsersFoundAlert(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paged.items, loading]);
 
   const listItems = users.map(toListItem);
   const selectedUser = selectedUserId
@@ -147,9 +161,11 @@ export const UserManagementPage = () => {
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
     setSelectedUserId(null);
-    void load("");
+    setQueryKey("");
+    paged.setPage(0);
+    paged.reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [load]);
+  }, []);
 
   const handleDelete = useCallback((id: string) => {
     setDeletingUserId(id);
@@ -170,7 +186,7 @@ export const UserManagementPage = () => {
       if (selectedUserId === deletingUserId) setSelectedUserId(null);
       setConfirmDeleteOpen(false);
       setDeletingUserId(null);
-      await load(searchQuery);
+      paged.reload();
     } catch (err) {
       setConfirmDeleteOpen(false);
       if (err instanceof ApiError && err.status === 401) {
@@ -188,7 +204,7 @@ export const UserManagementPage = () => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deletingUserId, users, selectedUserId, load, searchQuery]);
+  }, [deletingUserId, users, selectedUserId, paged]);
 
   const handleUserSubmit = useCallback(
     async (data: { name: string; cedula: string; rol: string; correo: string; estado: string }) => {
@@ -221,7 +237,7 @@ export const UserManagementPage = () => {
           `Usuario ${correo} creado con rol ${role}. Contraseña temporal: ${tempPassword} — compártala con el usuario.`
         );
         setUserCreatedAlert(true);
-        await load(searchQuery);
+        paged.reload();
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
           clearSession();
@@ -243,7 +259,7 @@ export const UserManagementPage = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [load, searchQuery]
+    [paged]
   );
 
   const visibleUsers = loading ? [] : listItems;
@@ -265,7 +281,13 @@ export const UserManagementPage = () => {
             onExport={() => {}}
           />
         </div>
-        <div className="user-management-page__count">{visibleUsers.length} usuarios</div>
+        <div className="user-management-page__count">{paged.totalElements} usuarios</div>
+        <Pagination
+          page={paged.page}
+          totalPages={paged.totalPages}
+          totalElements={paged.totalElements}
+          onPageChange={paged.setPage}
+        />
         <div className="user-management-page__bottom">
           <div className="user-management-page__detail">
             <UserDetails

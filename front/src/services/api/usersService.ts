@@ -1,4 +1,4 @@
-import { apiFetch } from "./http";
+import { apiFetch, type PageResponse } from "./http";
 
 export interface UserDto {
   id: number;
@@ -20,8 +20,10 @@ export interface CreateUserRequest {
 const BASE = "/api/v1/users";
 
 export const usersService = {
-  async list(query = ""): Promise<UserDto[]> {
-    return apiFetch<UserDto[]>(query ? `${BASE}?query=${encodeURIComponent(query)}` : BASE);
+  async list(query = "", page = 0, size = 20): Promise<PageResponse<UserDto>> {
+    const params = new URLSearchParams({ page: String(page), size: String(size) });
+    if (query) params.set("query", query);
+    return apiFetch<PageResponse<UserDto>>(`${BASE}?${params.toString()}`);
   },
 
   async create(request: CreateUserRequest): Promise<UserDto> {

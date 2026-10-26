@@ -6,6 +6,7 @@ import { RecordFormModal } from "@/components/molecules/RecordFormModal";
 import type { RecordFormData } from "@/components/molecules/RecordFormModal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { AlertModal } from "@/components/molecules/AlertModal";
+import { Pagination } from "@/components/molecules/Pagination";
 import { CargarExpedientForm } from "@/components/molecules/CargarExpedientForm";
 import type { CargarExpedientFormData } from "@/components/molecules/CargarExpedientForm";
 import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
@@ -27,6 +28,7 @@ import type { RecordDetailData } from "@/components/organisms/RecordDetailCard";
 import type { RecordDocumentListItem } from "@/components/organisms/RecordDocumentsList";
 import type { ActivityEntry } from "@/components/organisms/RecentActivity";
 import { ASSISTANT_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
+import { usePagedList } from "@/hooks/usePagedList";
 import "./AssistantRecordManagementPage.css";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -105,8 +107,8 @@ const toDetail = (folder: FolderDto): RecordDetailData => ({
 export const AssistantRecordManagementPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [queryKey, setQueryKey] = useState("");
   const [activeFilter, setActiveFilter] = useState<RecordStatusFilter>("pending");
-  const [folders, setFolders] = useState<FolderDto[]>([]);
   const [docCounts, setDocCounts] = useState<Record<number, number>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [folder, setFolder] = useState<FolderDto | null>(null);
@@ -120,47 +122,65 @@ export const AssistantRecordManagementPage = () => {
   const [studentNotFoundAlert, setStudentNotFoundAlert] = useState(false);
   const [showCargarExpedientModal, setShowCargarExpedientModal] = useState(false);
 
-  const fetchList = useCallback(async () => {
-    try {
+  const handleListError = useCallback(
+    (err: unknown) => {
+      setError(errorMessage(err, navigate));
+    },
+    [navigate]
+  );
+
+  const loadFoldersPage = useCallback(
+    async (page: number, size: number) => {
       const params: { ci?: string; status?: string } = {};
-      const ci = searchQuery.trim();
+      const ci = queryKey.trim();
       if (ci) params.ci = ci;
       const status = FRONT_TO_BACK[activeFilter];
       if (status) params.status = status;
-      const list = await recordsService.list(params);
-      let counts: Record<number, number> = {};
       if (activeFilter === "without-documents") {
+        const first = await recordsService.list(params, 0, 100);
         const pairs = await Promise.all(
-          list.map(async (f) => ({
+          first.content.map(async (f) => ({
             id: f.id,
             count: (await recordsService.listDocuments(f.id)).length,
           }))
         );
-        counts = Object.fromEntries(pairs.map((p) => [p.id, p.count]));
-        setFolders(list.filter((f) => (counts[f.id] ?? 0) === 0));
-      } else {
-        setFolders(list);
+        const counts: Record<number, number> = Object.fromEntries(pairs.map((p) => [p.id, p.count]));
+        setDocCounts(counts);
+        const content = first.content.filter((f) => (counts[f.id] ?? 0) === 0);
+        return { content, page: 0, size: 100, totalElements: content.length, totalPages: content.length ? 1 : 0 };
       }
-      setDocCounts(counts);
-      setSelectedId((prev) => {
-        const visible = activeFilter === "without-documents"
-          ? list.filter((f) => (counts[f.id] ?? 0) === 0)
-          : list;
-        const next = visible.some((f) => String(f.id) === prev) ? prev : (visible[0] ? String(visible[0].id) : null);
-        if (visible.length === 0 && ci) setStudentNotFoundAlert(true);
-        return next;
-      });
-    } catch (err) {
-      setError(errorMessage(err, navigate));
-    }
-  }, [searchQuery, activeFilter, navigate]);
+      const result = await recordsService.list(params, page, size);
+      setDocCounts({});
+      return result;
+    },
+    [queryKey, activeFilter]
+  );
+
+  const paged = usePagedList(loadFoldersPage, 20, handleListError);
+  const folders = paged.items;
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void fetchList();
+      paged.setPage(0);
+      setQueryKey(searchQuery);
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [fetchList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
+  useEffect(() => {
+    paged.setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter]);
+
+  useEffect(() => {
+    setSelectedId((prev) => {
+      const next = folders.some((f) => String(f.id) === prev) ? prev : (folders[0] ? String(folders[0].id) : null);
+      if (folders.length === 0 && queryKey.trim()) setStudentNotFoundAlert(true);
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paged.items]);
 
   const loadDetail = useCallback(
     async (folderId: number) => {
@@ -235,20 +255,28 @@ export const AssistantRecordManagementPage = () => {
             folderType: data.recordType,
             ...parseLocation(data.recordLocation),
           });
-          await fetchList();
+          setQueryKey("");
+          setSearchQuery("");
+          paged.setPage(0);
           setSelectedId(String(created.id));
+          paged.reload();
         }
       } catch (err) {
         setEditingRecord(null);
         setError(errorMessage(err, navigate));
       }
     },
-    [editingRecord, selectedId, fetchList, loadDetail, navigate]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [editingRecord, selectedId, loadDetail, navigate]
   );
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
     setActiveFilter("pending");
     setSelectedId(null);
+    setQueryKey("");
+    paged.setPage(0);
+    paged.reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const handleUpdateDocuments = useCallback(() => {
     if (selectedId != null) void loadDetail(Number(selectedId));
@@ -295,12 +323,12 @@ export const AssistantRecordManagementPage = () => {
       await recordsService.remove(Number(selectedId));
       setConfirmDeleteOpen(false);
       setSelectedId(null);
-      await fetchList();
+      paged.reload();
     } catch (err) {
       setConfirmDeleteOpen(false);
       setError(errorMessage(err, navigate));
     }
-  }, [selectedId, fetchList, navigate]);
+  }, [selectedId, navigate, paged]);
   const handleViewDocument = useCallback(
     async (id: string) => {
       try {
@@ -355,6 +383,12 @@ export const AssistantRecordManagementPage = () => {
                 activeFilter={activeFilter}
                 onFilterChange={handleFilterChange}
                 onNewRecord={handleNewRecord}
+              />
+              <Pagination
+                page={paged.page}
+                totalPages={paged.totalPages}
+                totalElements={paged.totalElements}
+                onPageChange={paged.setPage}
               />
             </div>
             <div className="assistant-record-management-page__list">

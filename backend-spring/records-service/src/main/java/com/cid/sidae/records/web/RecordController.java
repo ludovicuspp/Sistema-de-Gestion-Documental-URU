@@ -2,6 +2,7 @@ package com.cid.sidae.records.web;
 
 import com.cid.sidae.commons.api.ApiException;
 import com.cid.sidae.commons.api.ApiResponse;
+import com.cid.sidae.commons.api.PagedResponse;
 import com.cid.sidae.commons.security.AuthenticatedUser;
 import com.cid.sidae.records.client.CatalogClient;
 import com.cid.sidae.records.client.StudentClient;
@@ -23,7 +24,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -71,19 +74,32 @@ public class RecordController {
     }
 
     @GetMapping
-    public ApiResponse<List<FolderResponse>> list(
+    public ApiResponse<PagedResponse<FolderResponse>> list(
             @RequestParam(required = false) String ci,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
 
-        List<RecordFolder> result;
+        Pageable pageable = pageable(page, size);
+        Page<RecordFolder> result;
         if (ci != null && !ci.isBlank()) {
-            result = folders.findByActiveTrueAndStudentCiContainingIgnoreCase(ci.trim());
+            result = folders.findByActiveTrueAndStudentCiContainingIgnoreCase(ci.trim(), pageable);
         } else if (status != null && !status.isBlank()) {
-            result = folders.findByActiveTrueAndStatus(status.toUpperCase());
+            result = folders.findByActiveTrueAndStatus(status.toUpperCase(), pageable);
         } else {
-            result = folders.findByActiveTrueOrderByCreatedAtDesc();
+            result = folders.findByActiveTrueOrderByCreatedAtDesc(pageable);
         }
-        return ApiResponse.ok(result.stream().map(FolderResponse::from).toList());
+        return ApiResponse.ok(PagedResponse.of(
+                result.getContent().stream().map(FolderResponse::from).toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements()));
+    }
+
+    private static Pageable pageable(Integer page, Integer size) {
+        int pageNumber = page == null || page < 0 ? 0 : page;
+        int pageSize = size == null || size <= 0 ? 20 : Math.min(size, 100);
+        return PageRequest.of(pageNumber, pageSize);
     }
 
     @GetMapping("/stats")

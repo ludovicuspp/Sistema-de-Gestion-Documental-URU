@@ -33,5 +33,5 @@ export { catalogService } from "./catalogService";
 export type { CareerDto, OptionDto, DocumentTypeDto } from "./catalogService";
 export { reportsService } from "./reportsService";
 export type { ReportsSummary } from "./reportsService";
-export { ApiError, apiFetch, apiFetchBlob, clearSession, getSessionUser, getToken, saveSession } from "./http";
-export type { ApiResponse, SessionUser } from "./http";
+export { ApiError, apiFetch, apiFetchBlob, clearSession, getSessionUser, getToken, pageParams, saveSession } from "./http";
+export type { ApiResponse, PageResponse, SessionUser } from "./http";

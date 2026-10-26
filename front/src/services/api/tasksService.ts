@@ -1,4 +1,4 @@
-import { apiFetch } from "./http";
+import { apiFetch, type PageResponse } from "./http";
 
 export interface TaskDto {
   id: number;
@@ -32,12 +32,15 @@ export interface TaskRequest {
 const BASE = "/api/v1/tasks";
 
 export const tasksService = {
-  async list(params: { assignedTo?: number; status?: string } = {}): Promise<TaskDto[]> {
-    const query = new URLSearchParams();
+  async list(
+    params: { assignedTo?: number; status?: string } = {},
+    page = 0,
+    size = 20,
+  ): Promise<PageResponse<TaskDto>> {
+    const query = new URLSearchParams({ page: String(page), size: String(size) });
     if (params.assignedTo != null) query.set("assignedTo", String(params.assignedTo));
     if (params.status) query.set("status", params.status);
-    const suffix = query.toString();
-    return apiFetch<TaskDto[]>(suffix ? `${BASE}?${suffix}` : BASE);
+    return apiFetch<PageResponse<TaskDto>>(`${BASE}?${query.toString()}`);
   },
 
   async stats(): Promise<TaskStats> {

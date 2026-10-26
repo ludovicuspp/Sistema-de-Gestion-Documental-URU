@@ -2,6 +2,7 @@ package com.cid.sidae.students.web;
 
 import com.cid.sidae.commons.api.ApiException;
 import com.cid.sidae.commons.api.ApiResponse;
+import com.cid.sidae.commons.api.PagedResponse;
 import com.cid.sidae.students.domain.Student;
 import com.cid.sidae.students.repo.StudentRepository;
 import jakarta.validation.Valid;
@@ -11,6 +12,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,10 +37,23 @@ public class StudentController {
     }
 
     @GetMapping
-    public ApiResponse<List<StudentResponse>> search(
+    public ApiResponse<PagedResponse<StudentResponse>> search(
             @RequestParam(defaultValue = "") String query,
-            @RequestParam(required = false) String status) {
-        return ApiResponse.ok(students.search(query.trim(), status).stream().map(StudentResponse::from).toList());
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        Page<Student> result = students.search(query.trim(), status, pageable(page, size));
+        return ApiResponse.ok(PagedResponse.of(
+                result.getContent().stream().map(StudentResponse::from).toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements()));
+    }
+
+    private static Pageable pageable(Integer page, Integer size) {
+        int pageNumber = page == null || page < 0 ? 0 : page;
+        int pageSize = size == null || size <= 0 ? 20 : Math.min(size, 100);
+        return PageRequest.of(pageNumber, pageSize);
     }
 
     @GetMapping("/by-ci/{ci}")

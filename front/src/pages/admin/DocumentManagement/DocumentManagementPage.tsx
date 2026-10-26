@@ -11,10 +11,12 @@ import type { ExpedientSelectCardData } from "@/components/organisms/ExpedientSe
 import { DocumentTypeFormModal } from "@/components/molecules/DocumentTypeFormModal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { AlertModal } from "@/components/molecules/AlertModal";
+import { Pagination } from "@/components/molecules/Pagination";
 import { Button } from "@/components/atoms/Button";
 import type { DocumentTypeItem } from "@/components/organisms/DocumentTypesCard";
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
 import { ApiError, clearSession } from "@/services/api/http";
+import { usePagedList } from "@/hooks/usePagedList";
 import { recordsService, type DocumentDto, type FolderDto } from "@/services/api/recordsService";
 import { catalogService, type DocumentTypeDto, type OptionDto } from "@/services/api/catalogService";
 import "./DocumentManagementPage.css";
@@ -50,7 +52,6 @@ const toExpedientData = (folder: FolderDto): ExpedientSelectCardData => ({
  */
 export const DocumentManagementPage = () => {
   const navigate = useNavigate();
-  const [inboxFolders, setInboxFolders] = useState<FolderDto[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<FolderDto | null>(null);
   const [rawDocs, setRawDocs] = useState<DocumentDto[]>([]);
   const [docTypes, setDocTypes] = useState<DocumentTypeDto[]>([]);
@@ -181,20 +182,32 @@ export const DocumentManagementPage = () => {
     [refreshFolderDetail],
   );
 
+  const handleInboxError = useCallback(
+    (err: unknown) => {
+      showApiError(err, showSaveError, "No se pudo cargar la bandeja.");
+    },
+    [showApiError, showSaveError]
+  );
+
+  const loadInboxPage = useCallback(
+    (page: number, size: number) => recordsService.list({ status: "PENDIENTE" }, page, size),
+    []
+  );
+
+  const pagedInbox = usePagedList(loadInboxPage, 20, handleInboxError);
+  const inboxFolders = pagedInbox.items;
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
-        const [folders, types, levels] = await Promise.all([
-          recordsService.list({ status: "PENDIENTE" }),
-          catalogService.documentTypes(),
+        const [typesPage, levels] = await Promise.all([
+          catalogService.documentTypes(0, 100),
           catalogService.academicLevels(),
         ]);
         if (cancelled) return;
-        setInboxFolders(folders);
-        setDocTypes(types);
+        setDocTypes(typesPage.content);
         setAcademicLevels(levels);
-        if (folders.length > 0) selectFolder(folders[0]);
       } catch (err) {
         if (!cancelled) showApiError(err, showSaveError, "No se pudieron cargar los datos.");
       }
@@ -202,7 +215,12 @@ export const DocumentManagementPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [selectFolder, showApiError, showSaveError]);
+  }, [showApiError, showSaveError]);
+
+  useEffect(() => {
+    if (inboxFolders.length > 0) selectFolder(inboxFolders[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagedInbox.items]);
 
   useEffect(() => {
     const q = verificationSearch.trim();
@@ -213,9 +231,9 @@ export const DocumentManagementPage = () => {
     let cancelled = false;
     const timer = globalThis.setTimeout(() => {
       void recordsService
-        .list({ ci: q })
+        .list({ ci: q }, 0, 20)
         .then((found) => {
-          if (!cancelled) setCiResults(found);
+          if (!cancelled) setCiResults(found.content);
         })
         .catch((err: unknown) => {
           if (!cancelled && err instanceof ApiError && err.status === 401) unauthorized();
@@ -346,7 +364,7 @@ export const DocumentManagementPage = () => {
         } else {
           await catalogService.createDocumentType(name, required, academicLevelId);
         }
-        setDocTypes(await catalogService.documentTypes());
+        setDocTypes((await catalogService.documentTypes(0, 100)).content);
       } catch (err) {
         if (err instanceof ApiError) {
           if (err.status === 401) {
@@ -373,7 +391,7 @@ export const DocumentManagementPage = () => {
     if (!deletingTypeId) return;
     try {
       await catalogService.deleteDocumentType(Number(deletingTypeId));
-      setDocTypes(await catalogService.documentTypes());
+      setDocTypes((await catalogService.documentTypes(0, 100)).content);
       setConfirmDeleteTypeOpen(false);
       setDeletingTypeId(null);
     } catch (err) {
@@ -490,7 +508,7 @@ export const DocumentManagementPage = () => {
         <aside className="document-management-page__bandeja">
           <VerificationInbox
             title="Bandeja de verificación"
-            pendingCount={verificationItems.length}
+            pendingCount={pagedInbox.totalElements}
             approvedToday="0"
             avgValidationTime="—"
             items={filteredVerificationItems}
@@ -500,6 +518,12 @@ export const DocumentManagementPage = () => {
             onFilterUploader={() => {}}
             onExport={() => {}}
             onOpen={handleOpenVerification}
+          />
+          <Pagination
+            page={pagedInbox.page}
+            totalPages={pagedInbox.totalPages}
+            totalElements={pagedInbox.totalElements}
+            onPageChange={pagedInbox.setPage}
           />
         </aside>
         <div className="document-management-page__left">

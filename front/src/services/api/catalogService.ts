@@ -1,4 +1,4 @@
-import { apiFetch } from "./http";
+import { apiFetch, type PageResponse } from "./http";
 
 export interface CareerDto {
   id: number;
@@ -21,8 +21,8 @@ export interface DocumentTypeDto {
 const BASE = "/api/v1/catalog";
 
 export const catalogService = {
-  async careers(): Promise<CareerDto[]> {
-    return apiFetch<CareerDto[]>(`${BASE}/careers`);
+  async careers(page = 0, size = 20): Promise<PageResponse<CareerDto>> {
+    return apiFetch<PageResponse<CareerDto>>(`${BASE}/careers?page=${page}&size=${size}`);
   },
 
   async createCareer(name: string, code?: string): Promise<CareerDto> {
@@ -47,8 +47,8 @@ export const catalogService = {
     return apiFetch<OptionDto[]>(`${BASE}/academic-levels`);
   },
 
-  async documentTypes(): Promise<DocumentTypeDto[]> {
-    return apiFetch<DocumentTypeDto[]>(`${BASE}/document-types`);
+  async documentTypes(page = 0, size = 20): Promise<PageResponse<DocumentTypeDto>> {
+    return apiFetch<PageResponse<DocumentTypeDto>>(`${BASE}/document-types?page=${page}&size=${size}`);
   },
 
   async createDocumentType(

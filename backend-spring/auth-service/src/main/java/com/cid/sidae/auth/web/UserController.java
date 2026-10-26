@@ -7,11 +7,15 @@ import com.cid.sidae.auth.web.AuthDtos.CreateUserRequest;
 import com.cid.sidae.auth.web.AuthDtos.UserResponse;
 import com.cid.sidae.commons.api.ApiException;
 import com.cid.sidae.commons.api.ApiResponse;
+import com.cid.sidae.commons.api.PagedResponse;
 import jakarta.validation.Valid;
 import java.time.Instant;
-import java.util.List;
 import java.util.Locale;
+import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,15 +45,26 @@ public class UserController {
     }
 
     @GetMapping
-    public ApiResponse<List<UserResponse>> list(@RequestParam(required = false) String query) {
-        String term = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
-        List<UserResponse> result = users.findAll().stream()
-                .filter(user -> term.isEmpty()
-                        || user.getEmail().toLowerCase(Locale.ROOT).contains(term)
-                        || user.getUsername().toLowerCase(Locale.ROOT).contains(term))
-                .map(this::toResponse)
-                .toList();
-        return ApiResponse.ok(result);
+    public ApiResponse<PagedResponse<UserResponse>> list(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        Pageable pageable = pageable(page, size);
+        String term = query == null ? "" : query.trim();
+        Page<User> result = term.isEmpty()
+                ? users.findAll(pageable)
+                : users.findByEmailContainingIgnoreCaseOrUsernameContainingIgnoreCase(term, term, pageable);
+        return ApiResponse.ok(PagedResponse.of(
+                result.getContent().stream().map(this::toResponse).toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements()));
+    }
+
+    private static Pageable pageable(Integer page, Integer size) {
+        int pageNumber = page == null || page < 0 ? 0 : page;
+        int pageSize = size == null || size <= 0 ? 20 : Math.min(size, 100);
+        return PageRequest.of(pageNumber, pageSize);
     }
 
     @PostMapping

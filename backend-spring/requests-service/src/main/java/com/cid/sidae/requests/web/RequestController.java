@@ -2,6 +2,7 @@ package com.cid.sidae.requests.web;
 
 import com.cid.sidae.commons.api.ApiException;
 import com.cid.sidae.commons.api.ApiResponse;
+import com.cid.sidae.commons.api.PagedResponse;
 import com.cid.sidae.requests.domain.RequestItem;
 import com.cid.sidae.requests.repo.RequestDocumentRepository;
 import com.cid.sidae.requests.repo.RequestItemRepository;
@@ -11,6 +12,9 @@ import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -38,13 +42,28 @@ public class RequestController {
     }
 
     @GetMapping
-    public ApiResponse<List<RequestResponse>> list(@RequestParam(required = false) String status) {
-        List<RequestItem> result = requests.findAllByOrderByCreatedAtDesc();
+    public ApiResponse<PagedResponse<RequestResponse>> list(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        Pageable pageable = pageable(page, size);
+        Page<RequestItem> result;
         if (status != null && !status.isBlank()) {
-            String normalized = status.toUpperCase(Locale.ROOT);
-            result = result.stream().filter(item -> item.getStatus().equals(normalized)).toList();
+            result = requests.findByStatusOrderByCreatedAtDesc(status.toUpperCase(Locale.ROOT), pageable);
+        } else {
+            result = requests.findAllByOrderByCreatedAtDesc(pageable);
         }
-        return ApiResponse.ok(result.stream().map(this::toResponse).toList());
+        return ApiResponse.ok(PagedResponse.of(
+                result.getContent().stream().map(this::toResponse).toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements()));
+    }
+
+    private static Pageable pageable(Integer page, Integer size) {
+        int pageNumber = page == null || page < 0 ? 0 : page;
+        int pageSize = size == null || size <= 0 ? 20 : Math.min(size, 100);
+        return PageRequest.of(pageNumber, pageSize);
     }
 
     @GetMapping("/stats")

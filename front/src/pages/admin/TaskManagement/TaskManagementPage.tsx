@@ -8,6 +8,8 @@ import { TaskRecentCard } from "@/components/organisms/TaskRecentCard";
 import { TaskFormModal } from "@/components/molecules/TaskFormModal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { AlertModal } from "@/components/molecules/AlertModal";
+import { Pagination } from "@/components/molecules/Pagination";
+import { usePagedList } from "@/hooks/usePagedList";
 import type { TaskFilterTab } from "@/components/organisms/TaskFiltersCard";
 import type { TaskListItem } from "@/components/organisms/TaskListCard";
 import type { TaskDetail } from "@/components/organisms/TaskDetailCard";
@@ -46,10 +48,8 @@ export const TaskManagementPage = () => {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<TaskFilterTab>("pending");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<TaskDto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
 
@@ -69,42 +69,38 @@ export const TaskManagementPage = () => {
     );
   };
 
-  const load = useCallback(async (tab: TaskFilterTab) => {
-    setLoading(true);
-    try {
-      let data: TaskDto[];
-      if (tab === "pending") {
-        const [pending, inProgress] = await Promise.all([
-          tasksService.list({ status: "PENDIENTE" }),
-          tasksService.list({ status: "EN_PROCESO" }),
-        ]);
-        data = [...pending, ...inProgress].sort((a, b) =>
-          (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
-        );
-      } else if (tab === "completed") {
-        data = await tasksService.list({ status: "COMPLETADA" });
-      } else {
-        data = await tasksService.list();
+  const loadTasksPage = useCallback(
+    (page: number, size: number) => {
+      if (activeTab === "pending") {
+        return tasksService.list({ status: "PENDIENTE,EN_PROCESO" }, page, size);
       }
-      setTasks(data);
-      setSelectedId((prev) =>
-        prev != null && data.some((t) => String(t.id) === prev)
-          ? prev
-          : data.length > 0
-            ? String(data[0].id)
-            : null
-      );
-    } catch (err) {
-      showError(err);
-    } finally {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      if (activeTab === "completed") {
+        return tasksService.list({ status: "COMPLETADA" }, page, size);
+      }
+      return tasksService.list({}, page, size);
+    },
+    [activeTab]
+  );
+
+  const paged = usePagedList(loadTasksPage, 20, showError);
+  const tasks = paged.items;
+  const loading = paged.loading;
 
   useEffect(() => {
-    void load(activeTab);
-  }, [load, activeTab]);
+    paged.setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, search]);
+
+  useEffect(() => {
+    setSelectedId((prev) =>
+      prev != null && tasks.some((t) => String(t.id) === prev)
+        ? prev
+        : tasks.length > 0
+          ? String(tasks[0].id)
+          : null
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paged.items]);
 
   const items = useMemo(() => tasks.map(toListItem), [tasks]);
 
@@ -148,13 +144,13 @@ export const TaskManagementPage = () => {
           assignedToName: data.assignee.trim() || undefined,
           dueDate: data.dueDate || undefined,
         });
-        await load(activeTab);
+        paged.reload();
       } catch (err) {
         showError(err);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [load, activeTab]
+    [paged]
   );
 
   const handleDelete = useCallback((id: string) => {
@@ -168,35 +164,35 @@ export const TaskManagementPage = () => {
       await tasksService.remove(Number(deletingTaskId));
       setConfirmDeleteOpen(false);
       setDeletingTaskId(null);
-      await load(activeTab);
+      paged.reload();
     } catch (err) {
       setConfirmDeleteOpen(false);
       showError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deletingTaskId, load, activeTab]);
+  }, [deletingTaskId, paged]);
 
   const handleMarkPending = useCallback(async () => {
     if (selectedId == null) return;
     try {
       await tasksService.updateStatus(Number(selectedId), "PENDIENTE");
-      await load(activeTab);
+      paged.reload();
     } catch (err) {
       showError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, load, activeTab]);
+  }, [selectedId, paged]);
 
   const handleNotifyAssigned = useCallback(async () => {
     if (selectedId == null) return;
     try {
       await tasksService.updateStatus(Number(selectedId), "EN_PROCESO");
-      await load(activeTab);
+      paged.reload();
     } catch (err) {
       showError(err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, load, activeTab]);
+  }, [selectedId, paged]);
 
   const handleLogout = () => {
     clearSession();
@@ -229,6 +225,12 @@ export const TaskManagementPage = () => {
           selectedId={selectedId}
           onSelect={setSelectedId}
           onDelete={handleDelete}
+        />
+        <Pagination
+          page={paged.page}
+          totalPages={paged.totalPages}
+          totalElements={paged.totalElements}
+          onPageChange={paged.setPage}
         />
         <TaskDetailCard
           task={selectedDetail}

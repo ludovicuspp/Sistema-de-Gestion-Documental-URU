@@ -2,6 +2,7 @@ package com.cid.sidae.tasks.web;
 
 import com.cid.sidae.commons.api.ApiException;
 import com.cid.sidae.commons.api.ApiResponse;
+import com.cid.sidae.commons.api.PagedResponse;
 import com.cid.sidae.commons.security.AuthenticatedUser;
 import com.cid.sidae.tasks.domain.Task;
 import com.cid.sidae.tasks.repo.TaskRepository;
@@ -12,6 +13,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,19 +38,40 @@ public class TaskController {
     }
 
     @GetMapping
-    public ApiResponse<List<TaskResponse>> list(
+    public ApiResponse<PagedResponse<TaskResponse>> list(
             @RequestParam(required = false) Long assignedTo,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
 
-        List<Task> result;
+        Pageable pageable = pageable(page, size);
+        Page<Task> result;
         if (assignedTo != null) {
-            result = tasks.findByAssignedToIdOrderByCreatedAtDesc(assignedTo);
+            result = tasks.findByAssignedToIdOrderByCreatedAtDesc(assignedTo, pageable);
         } else if (status != null && !status.isBlank()) {
-            result = tasks.findByStatusOrderByCreatedAtDesc(status.toUpperCase());
+            List<String> statuses = java.util.Arrays.stream(status.split(","))
+                    .map(String::trim)
+                    .filter(part -> !part.isEmpty())
+                    .map(part -> part.toUpperCase())
+                    .distinct()
+                    .toList();
+            result = statuses.size() == 1
+                    ? tasks.findByStatusOrderByCreatedAtDesc(statuses.get(0), pageable)
+                    : tasks.findByStatusInOrderByCreatedAtDesc(statuses, pageable);
         } else {
-            result = tasks.findAllByOrderByCreatedAtDesc();
+            result = tasks.findAllByOrderByCreatedAtDesc(pageable);
         }
-        return ApiResponse.ok(result.stream().map(TaskResponse::from).toList());
+        return ApiResponse.ok(PagedResponse.of(
+                result.getContent().stream().map(TaskResponse::from).toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements()));
+    }
+
+    private static Pageable pageable(Integer page, Integer size) {
+        int pageNumber = page == null || page < 0 ? 0 : page;
+        int pageSize = size == null || size <= 0 ? 20 : Math.min(size, 100);
+        return PageRequest.of(pageNumber, pageSize);
     }
 
     @GetMapping("/stats")
