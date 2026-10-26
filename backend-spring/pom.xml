@@ -27,6 +27,7 @@
         <module>requests-service</module>
         <module>tasks-service</module>
         <module>reports-service</module>
+        <module>migration-runner</module>
     </modules>
 
     <properties>
