@@ -41,7 +41,7 @@ class AuthControllerTest {
     @BeforeEach
     void setUp() {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        JwtService jwtService = new JwtService("test-secret-que-supera-los-32-bytes-minimo-xyz", 3600000);
+        JwtService jwtService = new JwtService("test-secret-que-supera-los-32-bytes-minimo-xyz", 3600000, "test");
         controller = new AuthController(users, roles, encoder, jwtService, passwordResetService, "Usuario");
     }
 

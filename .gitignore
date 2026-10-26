@@ -1,5 +1,6 @@
 # Entorno local
 .env
+.env.prod
 .env.local
 *.local
 
@@ -19,3 +20,4 @@ Thumbs.db
 
 # Datos locales
 infra/postgres/data/
+backups/

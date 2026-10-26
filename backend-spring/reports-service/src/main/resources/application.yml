@@ -9,6 +9,12 @@ security:
   jwt:
     secret: ${JWT_SECRET:dev-secret-change-me-please-32-bytes-minimum}
     expiration-ms: ${JWT_EXPIRATION_MS:28800000}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:*}
+    allow-credentials: false
+
+app:
+  env: ${APP_ENV:dev}
 
 clients:
   records-url: ${RECORDS_SERVICE_URL:http://records-service:8084}

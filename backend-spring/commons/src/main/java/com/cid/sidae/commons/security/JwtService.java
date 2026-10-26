@@ -18,9 +18,15 @@ public class JwtService {
 
     public JwtService(
             @Value("${security.jwt.secret}") String secret,
-            @Value("${security.jwt.expiration-ms:28800000}") long expirationMs) {
+            @Value("${security.jwt.expiration-ms:28800000}") long expirationMs,
+            @Value("${app.env:dev}") String env) {
         if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new IllegalStateException("security.jwt.secret debe tener al menos 32 bytes.");
+        }
+        if ("prod".equalsIgnoreCase(env != null ? env.trim() : "")
+                && (secret.contains("dev-secret") || secret.contains("change-me"))) {
+            throw new IllegalStateException(
+                    "APP_ENV=prod exige un security.jwt.secret propio (no el valor de ejemplo).");
         }
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;

@@ -53,6 +53,7 @@ Total definidos: **30 CU** (21 con flujo detallado). Actores: Administrador, Ver
 2. ~~Verificación de documentos obligatorios por tipo de estudiante (CU-23) contra el catálogo.~~ CERRADA Fase A: `verify` exige obligatorios por nivel + tipo obligatorio al subir.
 3. Historial de auditoría inmutable (CU-22) — el .NET solo tiene observaciones.
 4. ~~Regla RST-05 (egresado no editable/eliminable) aplicada en expedientes, no solo estudiantes.~~ CERRADA Fase A: `PUT/DELETE /records` devuelven 403 para egresados.
-5. ~~Notificación por correo real (CU-19) y plantillas.~~ Plantillas HTML listas (Fase D); falta SMTP real de producción (Fase F).
+5. ~~Notificación por correo real (CU-19) y plantillas.~~ Plantillas HTML listas (Fase D); SMTP configurable por env (Fase F, Mailpit por defecto en dev).
+6. Endurecimiento y despliegue (Fase F): JWT fail-fast en prod, CORS configurable, rate-limit Nginx, TLS (autofirmado dev / certs en volumen en prod), CI con push a GHCR, backups (`scripts/`: .sh y .ps1), S3/LocalStack conmutables, `.env.dev` + `.env.prod.example`, README con guía de producción.
 6. ~~Importación masiva de estudiantes y reportes exportables (PDF/Excel).~~ CERRADA Fase C: `POST /students/import` (upsert CSV por CI, RST-05) + 10 exports en reports-service (xlsx/pdf/csv por dominio + resumen pdf) + botones cableados.
 7. Migración de datos existentes (.NET/FluentMigrator → Flyway).

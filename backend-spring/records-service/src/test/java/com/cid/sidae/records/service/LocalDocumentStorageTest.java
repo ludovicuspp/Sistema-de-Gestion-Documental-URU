@@ -12,16 +12,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
 
-class DocumentStorageTest {
+class LocalDocumentStorageTest {
 
     @TempDir
     private Path tempDir;
 
-    private DocumentStorage storage;
+    private LocalDocumentStorage storage;
 
     @BeforeEach
     void setUp() {
-        storage = new DocumentStorage(tempDir.toString());
+        storage = new LocalDocumentStorage(tempDir.toString());
     }
 
     @Test

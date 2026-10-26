@@ -45,6 +45,7 @@ services:
       args:
         SERVICE: auth-service
     container_name: sidae-auth
+    image: sidae-auth-service:${IMAGE_TAG:-latest}
     environment:
       <<: *service-env
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sidae_auth
@@ -71,6 +72,7 @@ services:
       args:
         SERVICE: catalog-service
     container_name: sidae-catalog
+    image: sidae-catalog-service:${IMAGE_TAG:-latest}
     environment:
       <<: *service-env
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sidae_catalog
@@ -90,6 +92,7 @@ services:
       args:
         SERVICE: students-service
     container_name: sidae-students
+    image: sidae-students-service:${IMAGE_TAG:-latest}
     environment:
       <<: *service-env
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sidae_students
@@ -109,6 +112,7 @@ services:
       args:
         SERVICE: records-service
     container_name: sidae-records
+    image: sidae-records-service:${IMAGE_TAG:-latest}
     # El servicio escribe archivos en el volumen; corre como root para
     # evitar problemas de permisos del volumen nombrado en dev.
     user: root
@@ -118,6 +122,13 @@ services:
       STUDENTS_SERVICE_URL: http://students-service:8083
       CATALOG_SERVICE_URL: http://catalog-service:8082
       STORAGE_PATH: /data/documents
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      STORAGE_S3_ENDPOINT: ${STORAGE_S3_ENDPOINT:-http://localstack:4566}
+      STORAGE_S3_REGION: ${STORAGE_S3_REGION:-us-east-1}
+      STORAGE_S3_BUCKET: ${STORAGE_S3_BUCKET:-sidae-documents}
+      STORAGE_S3_ACCESS_KEY: ${STORAGE_S3_ACCESS_KEY:-test}
+      STORAGE_S3_SECRET_KEY: ${STORAGE_S3_SECRET_KEY:-test}
+      STORAGE_S3_PATH_STYLE: ${STORAGE_S3_PATH_STYLE:-true}
     volumes:
       - records_storage:/data/documents
     ports:
@@ -141,6 +152,7 @@ services:
       args:
         SERVICE: requests-service
     container_name: sidae-requests
+    image: sidae-requests-service:${IMAGE_TAG:-latest}
     environment:
       <<: *service-env
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sidae_requests
@@ -169,6 +181,7 @@ services:
       args:
         SERVICE: tasks-service
     container_name: sidae-tasks
+    image: sidae-tasks-service:${IMAGE_TAG:-latest}
     environment:
       <<: *service-env
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sidae_tasks
@@ -188,6 +201,7 @@ services:
       args:
         SERVICE: reports-service
     container_name: sidae-reports
+    image: sidae-reports-service:${IMAGE_TAG:-latest}
     environment:
       <<: *service-env
       RECORDS_SERVICE_URL: http://records-service:8084
@@ -224,13 +238,41 @@ services:
     networks:
       - sidae-net
 
+  localstack:
+    # S3 local para dev (perfil s3). Pinned pre-licencia; prod usa S3 real.
+    image: localstack/localstack:3.8.1
+    container_name: sidae-localstack
+    restart: unless-stopped
+    profiles:
+      - s3
+    environment:
+      SERVICES: s3
+    ports:
+      - "${LOCALSTACK_PORT:-4566}:4566"
+    volumes:
+      - localstack_data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/health | grep -q '\"s3\": \"available\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - sidae-net
+
   front:
     build:
       context: ./front
     container_name: sidae-front
+    image: sidae-front:${IMAGE_TAG:-latest}
     restart: unless-stopped
     ports:
       - "${FRONT_PORT:-8080}:80"
+      - "${FRONT_HTTPS_PORT:-8443}:443"
+    volumes:
+      # Persistencia del cert autofirmado de dev. En prod, copiar tls.crt/tls.key
+      # reales al volumen antes de levantar (ver README, seccion produccion).
+      - front_certs:/etc/nginx/certs
     depends_on:
       auth-service:
         condition: service_started
@@ -256,3 +298,5 @@ networks:
 volumes:
   pgdata:
   records_storage:
+  localstack_data:
+  front_certs:
