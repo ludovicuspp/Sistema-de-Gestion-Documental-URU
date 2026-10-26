@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { VerificationInbox } from "@/components/organisms/VerificationInbox";
@@ -9,60 +9,12 @@ import type { VerificationInboxItem } from "@/components/organisms/VerificationI
 import type { ExpedientSelectCardData } from "@/components/organisms/ExpedientSelectCard";
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
+import { AlertModal } from "@/components/molecules/AlertModal";
 import { VERIFIER_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
+import { ApiError, clearSession } from "@/services/api/http";
+import { recordsService, type DocumentDto, type FolderDto } from "@/services/api/recordsService";
+import { catalogService, type DocumentTypeDto } from "@/services/api/catalogService";
 import "./VerifierDocumentManagementPage.css";
-
-const MOCK_VERIFICATION_ITEMS: VerificationInboxItem[] = [
-  {
-    id: "1",
-    name: "Ludovicus Van Vargas",
-    details: "V-0113 · Pregrado · Asistente A",
-    date: "2025-11-12",
-    missingCount: 1,
-  },
-  {
-    id: "2",
-    name: "María Pérez",
-    details: "V-9876 · Postgrado · Asistente B",
-    date: "2025-11-10",
-    missingCount: 0,
-  },
-  {
-    id: "3",
-    name: "Carlos Gómez",
-    details: "V-2233 · Pregrado · Asistente A",
-    date: "2025-11",
-    missingCount: 2,
-    urgent: true,
-  },
-];
-
-const MOCK_DOCUMENTS: ExpedientDocumentItem[] = [
-  {
-    id: "d1",
-    type: "Partida de Nacimiento",
-    fileName: "partida.pdf",
-    uploadedBy: "Asistente B",
-    date: "2025-11-10",
-    validationStatus: "pending",
-  },
-  {
-    id: "d2",
-    type: "Cédula de Identidad",
-    fileName: "cedula.pdf",
-    uploadedBy: "Asistente B",
-    date: "2025-11-09",
-    validationStatus: "validated",
-  },
-  {
-    id: "d3",
-    type: "Notas Certificadas",
-    fileName: "notas.pdf",
-    uploadedBy: "Asistente B",
-    date: "2025-11-08",
-    validationStatus: "pending",
-  },
-];
 
 const QUICK_RULES = [
   "Todo documento debe asociarse a un expediente existente.",
@@ -70,71 +22,226 @@ const QUICK_RULES = [
   "Documento duplicado solicita confirmación para reemplazo.",
 ];
 
+const toInboxItem = (folder: FolderDto): VerificationInboxItem => ({
+  id: String(folder.id),
+  name: folder.studentName,
+  details: `${folder.studentCi} · ${folder.folderType} · ${folder.status}`,
+  date: (folder.createdAt ?? "").slice(0, 10) || "—",
+  missingCount: 0,
+});
+
+const toExpedientData = (folder: FolderDto): ExpedientSelectCardData => ({
+  ci: folder.studentCi,
+  tipo: folder.folderType,
+  cargado: (folder.createdAt ?? "").slice(0, 10) || "—",
+  ubicacion:
+    [folder.shelf, folder.box, folder.rowNumber].filter((v): v is string => Boolean(v)).join(" / ") ||
+    "—",
+});
+
 /**
  * VerifierDocumentManagementPage - Page (Verifier)
  *
  * Document management view for Verifier role: verification inbox, expedient selection,
  * documents list with viewer, and document upload. Same structure as admin but without
- * DocumentTypesCard (types management is admin-only).
+ * DocumentTypesCard (types management is admin-only; types are read-only here).
+ * Datos reales: records-service (carpetas/documentos) y catalog-service (tipos de documento).
  */
 export const VerifierDocumentManagementPage = () => {
   const navigate = useNavigate();
-  const [verificationItems] = useState<VerificationInboxItem[]>(MOCK_VERIFICATION_ITEMS);
-  const [selectedExpedientId, setSelectedExpedientId] = useState<string | null>("1");
-  const [expedientData, setExpedientData] = useState<ExpedientSelectCardData | null>({
-    ci: "0113",
-    tipo: "Pregrado",
-    cargado: "2025-11-12",
-    ubicacion: "Estante 3 / Caja 12",
-  });
-  const [documents, setDocuments] = useState<ExpedientDocumentItem[]>(MOCK_DOCUMENTS);
+  const [inboxFolders, setInboxFolders] = useState<FolderDto[]>([]);
+  const [selectedFolder, setSelectedFolder] = useState<FolderDto | null>(null);
+  const [rawDocs, setRawDocs] = useState<DocumentDto[]>([]);
+  const [docTypes, setDocTypes] = useState<DocumentTypeDto[]>([]);
+  const [viewingDocument, setViewingDocument] = useState<{ id: string; fileName: string } | null>(null);
   const [uploadTypeError, setUploadTypeError] = useState(false);
   const [confirmDeleteDocOpen, setConfirmDeleteDocOpen] = useState(false);
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [selectedTypeId, setSelectedTypeId] = useState("");
   const [verificationSearch, setVerificationSearch] = useState("");
+  const [ciResults, setCiResults] = useState<FolderDto[]>([]);
+  const [errorAlertOpen, setErrorAlertOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // Mock document types for upload (in real app, these would come from API)
-  const documentTypesForSelect = useMemo(
-    () => [
-      { value: "1", label: "Partida de Nacimiento" },
-      { value: "2", label: "Cédula de Identidad" },
-      { value: "3", label: "Notas Certificadas" },
-      { value: "4", label: "Veredicto" },
-    ],
-    []
+  const unauthorized = useCallback(() => {
+    clearSession();
+    navigate("/");
+  }, [navigate]);
+
+  const showError = useCallback((message: string) => {
+    setErrorMessage(message);
+    setErrorAlertOpen(true);
+  }, []);
+
+  const showApiError = useCallback(
+    (err: unknown, fallback: string) => {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          unauthorized();
+          return;
+        }
+        showError(err.message);
+      } else {
+        showError(fallback);
+      }
+    },
+    [unauthorized, showError],
+  );
+
+  const refreshFolderDetail = useCallback(
+    async (id: number) => {
+      try {
+        const [detail, docs] = await Promise.all([
+          recordsService.get(id),
+          recordsService.listDocuments(id),
+        ]);
+        setSelectedFolder(detail);
+        setRawDocs(docs);
+      } catch (err) {
+        showApiError(err, "No se pudo cargar el expediente.");
+      }
+    },
+    [showApiError],
+  );
+
+  const selectFolder = useCallback(
+    (folder: FolderDto) => {
+      setSelectedFolder(folder);
+      setRawDocs([]);
+      setViewingDocument(null);
+      void refreshFolderDetail(folder.id);
+    },
+    [refreshFolderDetail],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const [folders, types] = await Promise.all([
+          recordsService.list({ status: "PENDIENTE" }),
+          catalogService.documentTypes(),
+        ]);
+        if (cancelled) return;
+        setInboxFolders(folders);
+        setDocTypes(types);
+        if (folders.length > 0) selectFolder(folders[0]);
+      } catch (err) {
+        if (!cancelled) showApiError(err, "No se pudieron cargar los datos.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectFolder, showApiError]);
+
+  useEffect(() => {
+    const q = verificationSearch.trim();
+    if (!q) {
+      setCiResults([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = globalThis.setTimeout(() => {
+      void recordsService
+        .list({ ci: q })
+        .then((found) => {
+          if (!cancelled) setCiResults(found);
+        })
+        .catch((err: unknown) => {
+          if (!cancelled && err instanceof ApiError && err.status === 401) unauthorized();
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      globalThis.clearTimeout(timer);
+    };
+  }, [verificationSearch, unauthorized]);
+
+  const docTypeById = useMemo(() => new Map(docTypes.map((t) => [t.id, t])), [docTypes]);
+
+  const documents: ExpedientDocumentItem[] = useMemo(
+    () =>
+      rawDocs.map((d) => ({
+        id: String(d.id),
+        type: docTypeById.get(d.documentTypeId ?? -1)?.name ?? "Documento",
+        fileName: d.name,
+        uploadedBy: "—",
+        date: (d.createdAt ?? "").slice(0, 10) || "—",
+        validationStatus: "pending" as const,
+      })),
+    [rawDocs, docTypeById],
+  );
+
+  const verificationItems = useMemo<VerificationInboxItem[]>(
+    () => inboxFolders.map(toInboxItem),
+    [inboxFolders],
   );
 
   const filteredVerificationItems = useMemo(() => {
-    if (!verificationSearch.trim()) return verificationItems;
-    const q = verificationSearch.toLowerCase();
-    return verificationItems.filter(
-      (v) =>
-        v.name.toLowerCase().includes(q) ||
-        v.details.toLowerCase().includes(q)
+    const q = verificationSearch.trim().toLowerCase();
+    if (!q) return verificationItems;
+    const base = verificationItems.filter(
+      (v) => v.name.toLowerCase().includes(q) || v.details.toLowerCase().includes(q),
     );
-  }, [verificationItems, verificationSearch]);
+    const seen = new Set(base.map((v) => v.id));
+    const extra = ciResults.filter((f) => !seen.has(String(f.id))).map(toInboxItem);
+    return [...base, ...extra];
+  }, [verificationItems, verificationSearch, ciResults]);
 
-  const selectedExpedientLabel =
-    selectedExpedientId && expedientData?.ci
-      ? `${expedientData.tipo} · Ludovicus Van Vargas`
-      : undefined;
+  const documentTypesForSelect = useMemo(
+    () => docTypes.map((t) => ({ value: String(t.id), label: t.name })),
+    [docTypes],
+  );
 
-  const handleOpenVerification = useCallback((id: string) => {
-    setSelectedExpedientId(id);
-    setExpedientData({
-      ci: "0113",
-      tipo: "Pregrado",
-      cargado: "2025-11-12",
-      ubicacion: "Estante 3 / Caja 12",
-    });
-  }, []);
+  const expedientData: ExpedientSelectCardData | null = useMemo(
+    () => (selectedFolder ? toExpedientData(selectedFolder) : null),
+    [selectedFolder],
+  );
 
-  const handleLogout = useCallback(() => navigate("/"), [navigate]);
+  const selectedExpedientLabel = selectedFolder
+    ? `${selectedFolder.folderType} · ${selectedFolder.studentName}`
+    : undefined;
 
-  const handleViewDocument = useCallback((id: string) => {
-    console.log("Ver documento", id);
-  }, []);
+  const generalStatus = selectedFolder && /APROB|VALID/i.test(selectedFolder.status ?? "")
+    ? ("validated" as const)
+    : ("pending" as const);
+
+  const handleOpenVerification = useCallback(
+    (id: string) => {
+      const folder =
+        inboxFolders.find((f) => String(f.id) === id) ??
+        ciResults.find((f) => String(f.id) === id);
+      if (folder) {
+        selectFolder(folder);
+        return;
+      }
+      const numeric = Number(id);
+      if (Number.isFinite(numeric)) void refreshFolderDetail(numeric);
+    },
+    [inboxFolders, ciResults, selectFolder, refreshFolderDetail],
+  );
+
+  const handleLogout = useCallback(() => {
+    clearSession();
+    navigate("/");
+  }, [navigate]);
+
+  const handleViewDocument = useCallback(
+    async (id: string) => {
+      const doc = rawDocs.find((d) => d.id === Number(id));
+      try {
+        const blob = await recordsService.downloadDocument(Number(id));
+        const url = URL.createObjectURL(blob);
+        if (doc) setViewingDocument({ id, fileName: doc.name });
+        globalThis.open(url, "_blank", "noopener");
+        globalThis.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      } catch (err) {
+        showApiError(err, "El documento seleccionado no está disponible.");
+      }
+    },
+    [rawDocs, showApiError],
+  );
 
   const handleObservation = useCallback((id: string) => {
     console.log("Observación", id);
@@ -145,13 +252,47 @@ export const VerifierDocumentManagementPage = () => {
     setConfirmDeleteDocOpen(true);
   }, []);
 
-  const handleConfirmDeleteDocument = useCallback(() => {
-    if (deletingDocId) {
-      setDocuments((prev) => prev.filter((d) => d.id !== deletingDocId));
+  const handleConfirmDeleteDocument = useCallback(async () => {
+    if (!deletingDocId || !selectedFolder) {
       setConfirmDeleteDocOpen(false);
       setDeletingDocId(null);
+      return;
     }
-  }, [deletingDocId]);
+    try {
+      await recordsService.deleteDocument(Number(deletingDocId));
+      setRawDocs(await recordsService.listDocuments(selectedFolder.id));
+      if (viewingDocument?.id === deletingDocId) setViewingDocument(null);
+      setConfirmDeleteDocOpen(false);
+      setDeletingDocId(null);
+    } catch (err) {
+      showApiError(err, "No se pudo eliminar el documento.");
+    }
+  }, [deletingDocId, selectedFolder, viewingDocument, showApiError]);
+
+  const handleUpload = useCallback(
+    async (file: File | null, typeId: string) => {
+      if (!selectedFolder) {
+        showError("Seleccione un expediente antes de subir documentos.");
+        return;
+      }
+      if (!file) {
+        showError("Seleccione un archivo antes de subir.");
+        return;
+      }
+      if (typeId === "") {
+        setUploadTypeError(true);
+        showError("Seleccione el tipo de documento.");
+        return;
+      }
+      try {
+        await recordsService.uploadDocument(selectedFolder.id, file, Number(typeId));
+        setRawDocs(await recordsService.listDocuments(selectedFolder.id));
+      } catch (err) {
+        showApiError(err, "No se pudo subir el documento.");
+      }
+    },
+    [selectedFolder, showApiError, showError],
+  );
 
   return (
     <DashboardTemplate
@@ -169,7 +310,7 @@ export const VerifierDocumentManagementPage = () => {
         <aside className="verifier-document-management-page__bandeja">
           <VerificationInbox
             title="Bandeja de verificación"
-            pendingCount={2}
+            pendingCount={verificationItems.length}
             approvedToday="—"
             avgValidationTime="—"
             items={filteredVerificationItems}
@@ -190,9 +331,10 @@ export const VerifierDocumentManagementPage = () => {
           />
           <ExpedientDocumentsCard
             title="Documentos del expediente"
-            generalStatus="pending"
+            generalStatus={generalStatus}
             documents={documents}
-            onViewDocument={handleViewDocument}
+            viewingDocument={viewingDocument}
+            onViewDocument={(id) => void handleViewDocument(id)}
             onObservation={handleObservation}
             onDeleteDocument={handleDeleteDocument}
           />
@@ -207,9 +349,7 @@ export const VerifierDocumentManagementPage = () => {
             selectedTypeError={uploadTypeError}
             quickRules={QUICK_RULES}
             quickRulesTitle="Reglas rápidas"
-            onUpload={(_file, typeId) => {
-              setUploadTypeError(typeId === "");
-            }}
+            onUpload={(file, typeId) => void handleUpload(file, typeId)}
             onTypeChange={(id) => {
               setSelectedTypeId(id);
               setUploadTypeError(false);
@@ -223,7 +363,15 @@ export const VerifierDocumentManagementPage = () => {
         onCancel={() => { setConfirmDeleteDocOpen(false); setDeletingDocId(null); }}
         label="Eliminar"
         message="¿Seguro que desea eliminar el documento?"
-        onConfirm={handleConfirmDeleteDocument}
+        onConfirm={() => void handleConfirmDeleteDocument()}
+      />
+      <AlertModal
+        open={errorAlertOpen}
+        type="error"
+        title="Error"
+        message={errorMessage}
+        buttonLabel="Cerrar"
+        onClose={() => setErrorAlertOpen(false)}
       />
     </DashboardTemplate>
   );

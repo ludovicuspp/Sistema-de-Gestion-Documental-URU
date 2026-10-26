@@ -18,8 +18,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -281,6 +284,24 @@ public class RecordController {
                 .toList());
     }
 
+    /** Feed global de actividad reciente (dashboards). */
+    @GetMapping("/history/recent")
+    public ApiResponse<List<RecentHistoryResponse>> recentHistory(
+            @RequestParam(defaultValue = "20") int limit) {
+        int size = Math.min(Math.max(limit, 1), 100);
+        List<RecordHistory> entries =
+                history.findAllByOrderByCreatedAtDesc(PageRequest.of(0, size));
+        Map<Long, RecordFolder> folderById = folders.findAllById(entries.stream()
+                        .map(RecordHistory::getFolderId)
+                        .distinct()
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(RecordFolder::getId, folder -> folder));
+        return ApiResponse.ok(entries.stream()
+                .map(entry -> RecentHistoryResponse.from(entry, folderById.get(entry.getFolderId())))
+                .toList());
+    }
+
     private RecordFolder findFolder(Long id) {
         return folders.findById(id)
                 .filter(RecordFolder::isActive)
@@ -399,6 +420,29 @@ public class RecordController {
         static HistoryResponse from(RecordHistory entry) {
             return new HistoryResponse(
                     entry.getId(),
+                    entry.getAction(),
+                    entry.getDetail(),
+                    entry.getUserName(),
+                    entry.getCreatedAt().toString());
+        }
+    }
+
+    public record RecentHistoryResponse(
+            Long id,
+            Long folderId,
+            String studentCi,
+            String studentName,
+            String action,
+            String detail,
+            String userName,
+            String createdAt) {
+
+        static RecentHistoryResponse from(RecordHistory entry, RecordFolder folder) {
+            return new RecentHistoryResponse(
+                    entry.getId(),
+                    entry.getFolderId(),
+                    folder == null ? null : folder.getStudentCi(),
+                    folder == null ? null : folder.getStudentName(),
                     entry.getAction(),
                     entry.getDetail(),
                     entry.getUserName(),

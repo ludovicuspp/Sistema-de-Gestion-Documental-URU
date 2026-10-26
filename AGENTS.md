@@ -3,7 +3,7 @@
 > `README.md` está desactualizado a propósito por fases: el backend real hoy es **Spring Boot 3.5 / Java 21** en `backend-spring/` (rama `dev`). El backend .NET 10 en `backend/` está congelado como referencia del legado. Confía en los `pom.xml`/`docker-compose.yml`, no en la prosa.
 
 ## Layout
-- `front/` — React 19 + Vite 7 + TS, router v7, alias `@` → `front/src`. `src/services/api/http.ts` + `authService.ts` llaman al backend real (CU-01 verificado punta a punta); el resto de `src/services/api/*` sigue con mocks.
+- `front/` — React 19 + Vite 7 + TS, router v7, alias `@` → `front/src`. Servicios en `src/services/api/` contra la API real (sin mocks): `auth`, `students`, `records` (+documentos/verify/observations/history/recent), `requests` (+público), `tasks`, `users`, `catalog`, `reports`. Páginas de configuración/atajos estáticas.
 - `backend-spring/` — microservicios activos (parent Maven multi-módulo): `auth-service` (8081), `catalog-service` (8082), `students-service` (8083), `records-service` (8084), `requests-service` (8085), `tasks-service` (8086), `reports-service` (8087), más `commons` (JWT, `ApiResponse`, manejo de errores, `SecurityConfig`). **Nota local:** en esta máquina los puertos de host 8081/8082 están ocupados (otro frontend + proceso node), así que el `.env` local (no versionado) usa `AUTH_PORT=18081` y `CATALOG_PORT=18082`; `docker-compose.yml` y `.env.example` mantienen los canónicos.
 - `backend/` — legado .NET 10 (6 soluciones: authentication, commons, documents, security, sidae, support). No añadir features aquí; úsalo para entender reglas y modelo.
 - `migrations/` — FluentMigrator del legado (prefijo `SM`, SQL Server). El esquema nuevo usa **Flyway** por servicio (`src/main/resources/db/migration/V1__init.sql`).

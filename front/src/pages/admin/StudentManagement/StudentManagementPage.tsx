@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { StudentList } from "@/components/organisms/StudentList";
@@ -10,84 +10,139 @@ import { AlertModal } from "@/components/molecules/AlertModal";
 import { Button } from "@/components/atoms/Button";
 import type { StudentListItem } from "@/components/organisms/StudentList";
 import type { StudentDetail } from "@/components/organisms/StudentDetails";
-import type { ActivityEntry } from "@/components/organisms/RecentActivity";
+import { studentsService, type StudentDto } from "@/services/api/studentsService";
+import { ApiError, clearSession } from "@/services/api/http";
 import "./StudentManagementPage.css";
 
-const MOCK_STUDENTS: StudentListItem[] = [
-  {
-    id: "1",
-    name: "Ludovicus Van Vargas",
-    ciNivelEstado: "CI: 0113 - Pregrado - Activo",
-    levelLabel: "Pregrado",
-    status: "Activo",
-    lastModified: "2025-11-12",
-  },
-  {
-    id: "2",
-    name: "María Pérez",
-    ciNivelEstado: "CI: 98765432 - Postgrado - Activo",
-    levelLabel: "Postgrado",
-    status: "Activo",
-    lastModified: "2025-10-10",
-  },
-];
-
-const MOCK_DETAILS: Record<string, StudentDetail> = {
-  "1": {
-    id: "1",
-    name: "Ludovicus Van Vargas",
-    studentId: "0113",
-    birthDate: "01/09/2003",
-    email: "luis@brainv.com",
-    cedula: "0113",
-    nivel: "Pregrado",
-    carrera: "Ingeniería Informática",
-    estado: "Activo",
-    expedienteSummary: "Expediente · Pregrado · Estante 3/Caja 12/Fila B",
-  },
-  "2": {
-    id: "2",
-    name: "María Pérez",
-    studentId: "98765432",
-    birthDate: "15/03/1998",
-    email: "maria@example.com",
-    cedula: "98765432",
-    nivel: "Postgrado",
-    carrera: "Maestría en Sistemas",
-    estado: "Activo",
-  },
+const capitalizeLabel = (value: string | null | undefined): string => {
+  if (!value) return "—";
+  const lower = value.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
 };
 
-const MOCK_HISTORY: ActivityEntry[] = [
-  { text: "Partida de Nacimiento ilegible — solicitar reescan.", datetime: "2025-11-12 · Verificador A" },
-  { text: "Cédula cargada y vinculada correctamente.", datetime: "2025-11-10 · Asistente B" },
-  { text: "Estudiante creado en el sistema.", datetime: "2025-08-02 · Admin" },
-];
+const toListItem = (dto: StudentDto): StudentListItem => {
+  const name = `${dto.firstName} ${dto.lastName}`.trim();
+  const levelLabel = capitalizeLabel(dto.type);
+  const statusLabel = capitalizeLabel(dto.status);
+  return {
+    id: String(dto.id),
+    name,
+    ciNivelEstado: `CI: ${dto.ci} - ${levelLabel} - ${statusLabel}`,
+    levelLabel,
+    status: statusLabel,
+    lastModified: "",
+  };
+};
+
+const toDetail = (dto: StudentDto): StudentDetail => ({
+  id: String(dto.id),
+  name: `${dto.firstName} ${dto.lastName}`.trim(),
+  studentId: dto.ci,
+  birthDate: dto.birthdate ?? undefined,
+  email: dto.email ?? undefined,
+  cedula: dto.ci,
+  nivel: capitalizeLabel(dto.type),
+  carrera: dto.careerId != null ? String(dto.careerId) : undefined,
+  estado: capitalizeLabel(dto.status),
+});
+
+const resolveNames = (name: string): [string, string] => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const firstName = parts.shift() ?? "";
+  const lastName = parts.length > 0 ? parts.join(" ") : firstName;
+  return [firstName, lastName];
+};
+
+const resolveType = (nivel: string): string => {
+  if (nivel === "postgrado") return "POSTGRADO";
+  if (nivel === "cursos_avanzados") return "CURSOS_AVANZADOS";
+  return "PREGRADO";
+};
+
+const resolveStatus = (estado: string): string =>
+  estado === "inactivo" ? "INACTIVO" : "ACTIVO";
 
 /**
  * StudentManagementPage - Page
  *
  * Student management view: consult students, view detail, academic info and history.
+ * Datos reales desde students-service (search/crear/editar/eliminar).
  * Based on UserManagementPage layout.
  */
 export const StudentManagementPage = () => {
   const navigate = useNavigate();
-  const [students, setStudents] = useState<StudentListItem[]>(MOCK_STUDENTS);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>("1");
+  const [dtos, setDtos] = useState<StudentDto[]>([]);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loadingList, setLoadingList] = useState(false);
+  const [apiErrorMessage, setApiErrorMessage] = useState("");
   const [studentModalOpen, setStudentModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<StudentDetail | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deletingStudentId, setDeletingStudentId] = useState<string | null>(null);
   const [studentNotFoundAlert, setStudentNotFoundAlert] = useState(false);
   const [noRecordAlert, setNoRecordAlert] = useState(false);
+  const searchSeq = useRef(0);
 
-  const selectedStudent =
-    selectedStudentId ? (MOCK_DETAILS[selectedStudentId] ?? null) : null;
+  const loadStudents = useCallback(async (query: string) => {
+    const seq = ++searchSeq.current;
+    setLoadingList(true);
+    try {
+      const data = await studentsService.search(query);
+      if (searchSeq.current !== seq) return;
+      setDtos(data);
+    } catch (err) {
+      if (searchSeq.current !== seq) return;
+      if (err instanceof ApiError && err.status === 401) {
+        clearSession();
+        navigate("/");
+        return;
+      }
+      setApiErrorMessage(
+        err instanceof ApiError ? err.message : "No se pudo cargar la lista de estudiantes."
+      );
+      setNetworkErrorAlert(true);
+    } finally {
+      if (searchSeq.current === seq) setLoadingList(false);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadStudents(searchQuery);
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [loadStudents, searchQuery]);
+
+  const selectedDto =
+    selectedStudentId ? (dtos.find((d) => String(d.id) === selectedStudentId) ?? null) : null;
+  const selectedStudent = selectedDto ? toDetail(selectedDto) : null;
+  const items = dtos.map(toListItem);
 
   const handleViewStudent = useCallback((id: string) => {
     setSelectedStudentId(id);
-  }, []);
+    void (async () => {
+      try {
+        const fresh = await studentsService.byId(Number(id));
+        setDtos((prev) =>
+          prev.some((d) => d.id === fresh.id)
+            ? prev.map((d) => (d.id === fresh.id ? fresh : d))
+            : [...prev, fresh]
+        );
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          clearSession();
+          navigate("/");
+          return;
+        }
+        setApiErrorMessage(
+          err instanceof ApiError ? err.message : "No se pudo cargar el estudiante."
+        );
+        setSelectedStudentId(null);
+        setStudentNotFoundAlert(true);
+      }
+    })();
+  }, [navigate]);
 
   const handleNewStudent = useCallback(() => {
     setEditingStudent(null);
@@ -97,50 +152,78 @@ export const StudentManagementPage = () => {
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
     setSelectedStudentId(null);
-    console.log("Refrescar");
-  }, []);
+    void loadStudents("");
+  }, [loadStudents]);
 
-  const handleEdit = useCallback((id: string) => {
-    const student = MOCK_DETAILS[id] ?? null;
-    setEditingStudent(student);
-    setStudentModalOpen(true);
-  }, []);
+  const handleEdit = useCallback(async (id: string) => {
+    const cached = dtos.find((d) => String(d.id) === id) ?? null;
+    if (cached) {
+      setEditingStudent(toDetail(cached));
+      setStudentModalOpen(true);
+      return;
+    }
+    try {
+      const fresh = await studentsService.byId(Number(id));
+      setDtos((prev) =>
+        prev.some((d) => d.id === fresh.id)
+          ? prev.map((d) => (d.id === fresh.id ? fresh : d))
+          : [...prev, fresh]
+      );
+      setEditingStudent(toDetail(fresh));
+      setStudentModalOpen(true);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        clearSession();
+        navigate("/");
+        return;
+      }
+      setApiErrorMessage(
+        err instanceof ApiError ? err.message : "No se pudo cargar el estudiante."
+      );
+      setStudentNotFoundAlert(true);
+    }
+  }, [dtos, navigate]);
 
   const handleDelete = useCallback((id: string) => {
     setDeletingStudentId(id);
     setConfirmDeleteOpen(true);
   }, []);
 
-  const handleConfirmDelete = useCallback(() => {
-    if (deletingStudentId) {
-      setStudents((prev) => prev.filter((s) => s.id !== deletingStudentId));
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deletingStudentId) return;
+    const id = Number(deletingStudentId);
+    try {
+      await studentsService.remove(id);
+      setDtos((prev) => prev.filter((d) => d.id !== id));
       if (selectedStudentId === deletingStudentId) setSelectedStudentId(null);
       setConfirmDeleteOpen(false);
       setDeletingStudentId(null);
+      setOperationCompletedAlert(true);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        clearSession();
+        navigate("/");
+        return;
+      }
+      setApiErrorMessage(
+        err instanceof ApiError ? err.message : "No se pudo eliminar el estudiante."
+      );
+      setConfirmDeleteOpen(false);
+      if (err instanceof ApiError && err.status === 403) {
+        setCannotDeleteGraduatedAlert(true);
+      } else {
+        setOperationFailedAlert(true);
+      }
     }
-  }, [deletingStudentId, selectedStudentId]);
+  }, [deletingStudentId, selectedStudentId, navigate]);
 
-  const handleViewExpedientes = useCallback((id: string) => {
-    const student = MOCK_DETAILS[id];
-    if (!student?.expedienteSummary) {
-      setNoRecordAlert(true);
-      return;
-    }
+  const handleViewExpedientes = useCallback(() => {
     navigate("/admin/records");
   }, [navigate]);
 
-  const handleNewExpediente = useCallback((_id: string) => {
+  const handleNewExpediente = useCallback(() => {
     navigate("/admin/records");
   }, [navigate]);
-
-  // TEMPORAL: Funciones para probar las alertas - ELIMINAR después de probar
-  const handleTestNoRecordAlert = useCallback(() => {
-    setNoRecordAlert(true);
-  }, []);
-
-  const handleTestStudentNotFound = useCallback(() => {
-    setStudentNotFoundAlert(true);
-  }, []);
 
   const [incompleteDataAlert, setIncompleteDataAlert] = useState(false);
   const [duplicateRecordAlert, setDuplicateRecordAlert] = useState(false);
@@ -197,262 +280,58 @@ export const StudentManagementPage = () => {
   const [importErrorAlert, setImportErrorAlert] = useState(false);
   const [pendingSendAlert, setPendingSendAlert] = useState(false);
 
-  const handleTestIncompleteData = useCallback(() => {
-    setIncompleteDataAlert(true);
-  }, []);
-
-  const handleTestDuplicateRecord = useCallback(() => {
-    setDuplicateRecordAlert(true);
-  }, []);
-
-  const handleTestEditNotAllowed = useCallback(() => {
-    setEditNotAllowedAlert(true);
-  }, []);
-
-  const handleTestCannotEdit = useCallback(() => {
-    setCannotEditAlert(true);
-  }, []);
-
-  const handleTestInvalidData = useCallback(() => {
-    setInvalidDataAlert(true);
-  }, []);
-
-  const handleTestRecordNotFound = useCallback(() => {
-    setRecordNotFoundAlert(true);
-  }, []);
-
-  const handleTestRecordDeleted = useCallback(() => {
-    setRecordDeletedAlert(true);
-  }, []);
-
-  const handleTestCannotDelete = useCallback(() => {
-    setCannotDeleteAlert(true);
-  }, []);
-
-  const handleTestRecordLinked = useCallback(() => {
-    setRecordLinkedAlert(true);
-  }, []);
-
-  const handleTestRecordBlocked = useCallback(() => {
-    setRecordBlockedAlert(true);
-  }, []);
-
-  const handleTestErrorsFound = useCallback(() => {
-    setErrorsFoundAlert(true);
-  }, []);
-
-  const handleTestIncompleteFields = useCallback(() => {
-    setIncompleteFieldsAlert(true);
-  }, []);
-
-  const handleTestDuplicateStudent = useCallback(() => {
-    setDuplicateStudentAlert(true);
-  }, []);
-
-  const handleTestNetworkError = useCallback(() => {
-    setNetworkErrorAlert(true);
-  }, []);
-
-  const handleTestEditConflict = useCallback(() => {
-    setEditConflictAlert(true);
-  }, []);
-
-  const handleTestCannotEditGraduated = useCallback(() => {
-    setCannotEditGraduatedAlert(true);
-  }, []);
-
-  const handleTestSaveChangesError = useCallback(() => {
-    setSaveChangesErrorAlert(true);
-  }, []);
-
-  const handleTestEditConflict2 = useCallback(() => {
-    setEditConflictAlert2(true);
-  }, []);
-
-  const handleTestIncompleteData2 = useCallback(() => {
-    setIncompleteDataAlert2(true);
-  }, []);
-
-  const handleTestNoStudentsFound = useCallback(() => {
-    setNoStudentsFoundAlert(true);
-  }, []);
-
-  const handleTestCannotDeleteGraduated = useCallback(() => {
-    setCannotDeleteGraduatedAlert(true);
-  }, []);
-
-  const handleTestCannotDeleteActiveRecords = useCallback(() => {
-    setCannotDeleteActiveRecordsAlert(true);
-  }, []);
-
-  const handleTestIncompleteData3 = useCallback(() => {
-    setIncompleteDataAlert3(true);
-  }, []);
-
-  const handleTestTaskNotFound = useCallback(() => {
-    setTaskNotFoundAlert(true);
-  }, []);
-
-  const handleTestFormNotAvailable = useCallback(() => {
-    setFormNotAvailableAlert(true);
-  }, []);
-
-  const handleTestIncompleteData4 = useCallback(() => {
-    setIncompleteDataAlert4(true);
-  }, []);
-
-  const handleTestInvalidEmail = useCallback(() => {
-    setInvalidEmailAlert(true);
-  }, []);
-
-  const handleTestStudentNotRegistered = useCallback(() => {
-    setStudentNotRegisteredAlert(true);
-  }, []);
-
-  const handleTestDocumentsNotAvailable = useCallback(() => {
-    setDocumentsNotAvailableAlert(true);
-  }, []);
-
-  const handleTestDuplicateRequest = useCallback(() => {
-    setDuplicateRequestAlert(true);
-  }, []);
-
-  const handleTestSaveRequestError = useCallback(() => {
-    setSaveRequestErrorAlert(true);
-  }, []);
-
-  const handleTestRecordNotFoundHistory = useCallback(() => {
-    setRecordNotFoundHistoryAlert(true);
-  }, []);
-
-  const handleTestNoPermissionHistory = useCallback(() => {
-    setNoPermissionHistoryAlert(true);
-  }, []);
-
-  const handleTestNoHistoryChanges = useCallback(() => {
-    setNoHistoryChangesAlert(true);
-  }, []);
-
-  const handleTestConfirmReject = useCallback(() => {
-    setConfirmRejectAlert(true);
-  }, []);
-
-  const handleTestMissingDocs = useCallback(() => {
-    setMissingDocsAlert(true);
-  }, []);
-
-  const handleTestInvalidObservation = useCallback(() => {
-    setInvalidObservationAlert(true);
-  }, []);
-
-  const handleTestNoDataAvailable = useCallback(() => {
-    setNoDataAvailableAlert(true);
-  }, []);
-
-  const handleTestSaveChangesError2 = useCallback(() => {
-    setSaveChangesErrorAlert2(true);
-  }, []);
-
-  const handleTestServerError = useCallback(() => {
-    setServerErrorAlert(true);
-  }, []);
-
-  const handleTestEmailServerError = useCallback(() => {
-    setEmailServerErrorAlert(true);
-  }, []);
-
-  const handleTestSessionExpired = useCallback(() => {
-    setSessionExpiredAlert(true);
-  }, []);
-
-  const handleTestAccessDenied = useCallback(() => {
-    setAccessDeniedAlert(true);
-  }, []);
-
-  const handleTestMaintenance = useCallback(() => {
-    setMaintenanceAlert(true);
-  }, []);
-
-  const handleTestOperationCompleted = useCallback(() => {
-    setOperationCompletedAlert(true);
-  }, []);
-
-  const handleTestOperationFailed = useCallback(() => {
-    setOperationFailedAlert(true);
-  }, []);
-
-  const handleTestObservationSaved = useCallback(() => {
-    setObservationSavedAlert(true);
-  }, []);
-
-  const handleTestPreviewNotAvailable = useCallback(() => {
-    setPreviewNotAvailableAlert(true);
-  }, []);
-
-  const handleTestImportCompleted = useCallback(() => {
-    setImportCompletedAlert(true);
-  }, []);
-
-  const handleTestDownloadCompleted = useCallback(() => {
-    setDownloadCompletedAlert(true);
-  }, []);
-
-  const handleTestCorruptedFile = useCallback(() => {
-    setCorruptedFileAlert(true);
-  }, []);
-
-  const handleTestImportError = useCallback(() => {
-    setImportErrorAlert(true);
-  }, []);
-
-  const handleTestPendingSend = useCallback(() => {
-    setPendingSendAlert(true);
-  }, []);
-
   const handleStudentSubmit = useCallback(
-    (data: { name: string; cedula: string; nivel: string; carrera: string; estado: string }) => {
-      const nivelLabel = data.nivel === "todos" ? "Pregrado" : data.nivel === "pregrado" ? "Pregrado" : "Postgrado";
-      const estadoLabel = data.estado === "activo" ? "Activo" : "Inactivo";
-      if (editingStudent) {
-        setStudents((prev) =>
-          prev.map((s) =>
-            s.id === editingStudent.id
-              ? {
-                  ...s,
-                  name: data.name,
-                  ciNivelEstado: `CI: ${data.cedula} - ${nivelLabel} - ${estadoLabel}`,
-                  levelLabel: nivelLabel,
-                  status: estadoLabel,
-                }
-              : s
-          )
+    async (data: { name: string; cedula: string; nivel: string; carrera: string; estado: string }) => {
+      const [firstName, lastName] = resolveNames(data.name);
+      const type = resolveType(data.nivel);
+      const status = resolveStatus(data.estado);
+      try {
+        if (editingStudent) {
+          const id = Number(editingStudent.id);
+          const previous = dtos.find((d) => String(d.id) === editingStudent.id) ?? null;
+          const updated = await studentsService.update(id, {
+            ci: data.cedula.trim(),
+            firstName,
+            lastName,
+            careerId: previous?.careerId ?? undefined,
+            academicLevelId: previous?.academicLevelId ?? undefined,
+            status,
+            type,
+          });
+          setDtos((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
+        } else {
+          const created = await studentsService.create({
+            ci: data.cedula.trim(),
+            firstName,
+            lastName,
+            status,
+            type,
+          });
+          setDtos((prev) => [...prev, created]);
+          setSelectedStudentId(String(created.id));
+        }
+        setEditingStudent(null);
+        setOperationCompletedAlert(true);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          clearSession();
+          navigate("/");
+          return;
+        }
+        setApiErrorMessage(
+          err instanceof ApiError ? err.message : "No se pudo guardar el estudiante."
         );
-        // Actualizar MOCK_DETAILS no es posible directamente, pero la UI usará students
-      } else {
-        const newId = String(students.length + 1);
-        setStudents((prev) => [
-          ...prev,
-          {
-            id: newId,
-            name: data.name,
-            ciNivelEstado: `CI: ${data.cedula} - ${nivelLabel} - ${estadoLabel}`,
-            levelLabel: nivelLabel,
-            status: estadoLabel,
-            lastModified: new Date().toISOString().slice(0, 10),
-          },
-        ]);
+        if (err instanceof ApiError && err.status === 403) {
+          setCannotEditGraduatedAlert(true);
+        } else if (err instanceof ApiError && (err.status === 409 || err.code === "ALREADY_EXISTS")) {
+          setDuplicateStudentAlert(true);
+        } else {
+          setSaveChangesErrorAlert(true);
+        }
       }
     },
-    [editingStudent, students.length]
+    [editingStudent, dtos, navigate]
   );
-
-  const filteredStudents = searchQuery
-    ? students.filter(
-        (s) =>
-          s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          s.ciNivelEstado.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : students;
 
   return (
     <DashboardTemplate
@@ -461,181 +340,9 @@ export const StudentManagementPage = () => {
       onRefresh={handleRefresh}
     >
       <div className="student-management-page">
-        {/* TEMPORAL: Botones de prueba - ELIMINAR después de probar */}
-        <div style={{ padding: "1rem", background: "#fff3cd", marginBottom: "1rem", borderRadius: "4px" }}>
-          <strong>🧪 Botones de prueba (eliminar después):</strong>
-          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
-            <Button variant="secondary" size="small" onClick={handleTestStudentNotFound}>
-              1. Estudiante no registrado
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestNoRecordAlert}>
-              2. Sin expediente asociado
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestIncompleteData}>
-              5. Datos incompletos
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestDuplicateRecord}>
-              6. Ya existe expediente
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestEditNotAllowed}>
-              9. Edición no permitida
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestCannotEdit}>
-              10. No se puede editar
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestInvalidData}>
-              11. Datos inválidos
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestRecordNotFound}>
-              12. Expediente no encontrado
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestRecordDeleted}>
-              13. Expediente ya eliminado
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestCannotDelete}>
-              14. No se puede eliminar
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestRecordLinked}>
-              15. Expediente vinculado
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestRecordBlocked}>
-              16. Expediente bloqueado
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestErrorsFound}>
-              32. Errores encontrados
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestIncompleteFields}>
-              33. Campos obligatorios (v3)
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestDuplicateStudent}>
-              34. Posible estudiante duplicado
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestNetworkError}>
-              35. Error de red
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestEditConflict}>
-              36. Conflicto de edición
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestCannotEditGraduated}>
-              37. No se puede editar (egresado)
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestSaveChangesError}>
-              38. Error al guardar cambios
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestEditConflict2}>
-              39. Conflicto de edición (v2)
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestIncompleteData2}>
-              40. Datos incompletos (v2)
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestNoStudentsFound}>
-              41. No se encontraron estudiantes
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestCannotDeleteGraduated}>
-              42. No se puede eliminar (egresado)
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestCannotDeleteActiveRecords}>
-              43. No se puede eliminar (expedientes activos)
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestIncompleteData3}>
-              44. Datos incompletos o inválidos (v3)
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestTaskNotFound}>
-              45. Tarea no encontrada
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestFormNotAvailable}>
-              46. Formulario no disponible
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestIncompleteData4}>
-              47. Datos incompletos o inválidos (v4)
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestInvalidEmail}>
-              48. Correo inválido
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestStudentNotRegistered}>
-              49. Estudiante no registrado (solicitud)
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestDocumentsNotAvailable}>
-              50. Documentos no disponibles
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestDuplicateRequest}>
-              51. Solicitud duplicada
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestSaveRequestError}>
-              52. Error al guardar solicitud
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestRecordNotFoundHistory}>
-              53. Expediente no encontrado (historial)
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestNoPermissionHistory}>
-              54. Sin permisos para ver historial
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestNoHistoryChanges}>
-              55. Sin modificaciones registradas
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestConfirmReject}>
-              56. Confirmar rechazo
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestMissingDocs}>
-              57. Documentos obligatorios faltantes
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestInvalidObservation}>
-              58. Observación inválida
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestNoDataAvailable}>
-              59. No hay datos disponibles
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestSaveChangesError2}>
-              60. Error al guardar cambios (v2)
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestServerError}>
-              61. Error interno del servidor
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestEmailServerError}>
-              62. Falla en servidor de correo
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestSessionExpired}>
-              63. Sesión expirada
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestAccessDenied}>
-              64. Acceso denegado
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestMaintenance}>
-              65. Mantenimiento programado
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestOperationCompleted}>
-              66. Operación completada
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestOperationFailed}>
-              67. Operación fallida
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestObservationSaved}>
-              68. Observación guardada
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestPreviewNotAvailable}>
-              69. Previsualización no disponible
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestImportCompleted}>
-              70. Importación completada
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestDownloadCompleted}>
-              71. Descarga completada
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestCorruptedFile}>
-              72. Archivo dañado o ilegible
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestImportError}>
-              73. Importación con errores
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestPendingSend}>
-              74. Pendiente de envío
-            </Button>
-          </div>
-        </div>
-        
         <div className="student-management-page__top">
           <StudentList
-            students={filteredStudents}
+            students={items}
             onSearch={setSearchQuery}
             onViewStudent={handleViewStudent}
             onFilterCareer={() => {}}
@@ -644,7 +351,9 @@ export const StudentManagementPage = () => {
             onImportList={() => {}}
           />
         </div>
-        <div className="student-management-page__count">{filteredStudents.length} estudiantes</div>
+        <div className="student-management-page__count">
+          {loadingList ? "Cargando estudiantes…" : `${items.length} estudiantes`}
+        </div>
         <div className="student-management-page__bottom">
           <div className="student-management-page__detail">
             <StudentDetails
@@ -659,7 +368,7 @@ export const StudentManagementPage = () => {
             <RecentActivity
               title="Historial / Observaciones"
               linkText="Ver todo"
-              entries={selectedStudent ? MOCK_HISTORY : []}
+              entries={[]}
               onViewAll={() => {}}
             />
           </div>
@@ -669,20 +378,20 @@ export const StudentManagementPage = () => {
         open={studentModalOpen}
         onClose={() => setStudentModalOpen(false)}
         student={editingStudent}
-        onSubmit={handleStudentSubmit}
+        onSubmit={(data) => { void handleStudentSubmit(data); }}
       />
       <ConfirmModal
         open={confirmDeleteOpen}
         onCancel={() => { setConfirmDeleteOpen(false); setDeletingStudentId(null); }}
         label="Eliminar"
         message="¿Seguro que desea eliminar?"
-        onConfirm={handleConfirmDelete}
+        onConfirm={() => { void handleConfirmDelete(); }}
       />
       <AlertModal
         open={studentNotFoundAlert}
         type="warning"
         title="Estudiante no registrado"
-        message="No existe un estudiante con esos datos. Puedes registrarlo."
+        message={apiErrorMessage || "No existe un estudiante con esos datos. Puedes registrarlo."}
         buttonLabel="Cancelar"
         onClose={() => setStudentNotFoundAlert(false)}
         actions={
@@ -711,7 +420,7 @@ export const StudentManagementPage = () => {
             size="medium"
             onClick={() => {
               setNoRecordAlert(false);
-              handleNewExpediente(selectedStudentId ?? "");
+              handleNewExpediente();
             }}
           >
             Crear expediente
@@ -850,7 +559,7 @@ export const StudentManagementPage = () => {
         open={duplicateStudentAlert}
         type="warning"
         title="Posible estudiante duplicado"
-        message="Se encontraron coincidencias con los datos ingresados."
+        message={apiErrorMessage || "Se encontraron coincidencias con los datos ingresados."}
         buttonLabel="Cerrar"
         onClose={() => setDuplicateStudentAlert(false)}
       >
@@ -862,7 +571,7 @@ export const StudentManagementPage = () => {
         open={networkErrorAlert}
         type="error"
         title="Error de red"
-        message="No se pudo conectar con el servidor. Verifica tu conexión y vuelve a intentarlo."
+        message={apiErrorMessage || "No se pudo conectar con el servidor. Verifica tu conexión y vuelve a intentarlo."}
         buttonLabel="Cerrar"
         onClose={() => setNetworkErrorAlert(false)}
         actions={
@@ -871,7 +580,7 @@ export const StudentManagementPage = () => {
             size="medium"
             onClick={() => {
               setNetworkErrorAlert(false);
-              console.log("Reintentar conexión");
+              void loadStudents(searchQuery);
             }}
           >
             Reintentar
@@ -904,7 +613,7 @@ export const StudentManagementPage = () => {
         open={cannotEditGraduatedAlert}
         type="error"
         title="No se puede editar"
-        message="El estudiante es egresado."
+        message={apiErrorMessage || "El estudiante es egresado."}
         buttonLabel="Entendido"
         onClose={() => setCannotEditGraduatedAlert(false)}
       />
@@ -913,7 +622,7 @@ export const StudentManagementPage = () => {
         open={saveChangesErrorAlert}
         type="error"
         title="Error al guardar los cambios"
-        message="No se pudo guardar el registro en la base de datos."
+        message={apiErrorMessage || "No se pudo guardar el registro en la base de datos."}
         buttonLabel="Cerrar"
         onClose={() => setSaveChangesErrorAlert(false)}
       />
@@ -962,7 +671,7 @@ export const StudentManagementPage = () => {
         open={cannotDeleteGraduatedAlert}
         type="error"
         title="No se puede eliminar"
-        message="El estudiante es egresado."
+        message={apiErrorMessage || "El estudiante es egresado."}
         buttonLabel="Entendido"
         onClose={() => setCannotDeleteGraduatedAlert(false)}
       />
@@ -1256,7 +965,8 @@ export const StudentManagementPage = () => {
             size="medium"
             onClick={() => {
               setSessionExpiredAlert(false);
-              console.log("Ir a inicio de sesión");
+              clearSession();
+              navigate("/");
             }}
           >
             Ir a inicio de sesión
@@ -1323,7 +1033,7 @@ export const StudentManagementPage = () => {
         open={operationFailedAlert}
         type="error"
         title="Operación fallida"
-        message="No se pudo completar la acción."
+        message={apiErrorMessage || "No se pudo completar la acción."}
         buttonLabel="Cerrar"
         onClose={() => setOperationFailedAlert(false)}
         actions={
@@ -1332,7 +1042,9 @@ export const StudentManagementPage = () => {
             size="medium"
             onClick={() => {
               setOperationFailedAlert(false);
-              console.log("Reintentar operación");
+              if (deletingStudentId) {
+                void handleConfirmDelete();
+              }
             }}
           >
             Reintentar

@@ -3,6 +3,8 @@ import { Header } from "@/components/organisms/Header";
 import { Footer } from "@/components/organisms/Footer";
 import { Input } from "@/components/atoms/Input";
 import { Button } from "@/components/atoms/Button";
+import { ApiError } from "@/services/api/http";
+import { publicRequestsService } from "@/services/api/requestsService";
 import "./ExpedientRequestPage.css";
 
 type DocLevel = "todos" | "pregrado" | "postgrado" | "egresado";
@@ -98,6 +100,20 @@ export const ExpedientRequestPage = () => {
     Partial<Record<keyof typeof form, string>>
   >({});
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState<{
+    trackingCode: string;
+    status: string;
+    createdAt: string;
+  } | null>(null);
+  const [trackingCode, setTrackingCode] = useState("");
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingError, setTrackingError] = useState<string | null>(null);
+  const [trackingResult, setTrackingResult] = useState<{
+    trackingCode: string;
+    status: string;
+    createdAt: string;
+  } | null>(null);
 
   const handleChange = (field: keyof typeof form, value: string | string[]) => {
     setForm((prev) => {
@@ -144,22 +160,59 @@ export const ExpedientRequestPage = () => {
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validate() || loading) return;
     setLoading(true);
-    // TODO: enviar a API
-    setTimeout(() => {
-      console.log("Solicitud enviada:", form);
-      setLoading(false);
+    setSubmitError(null);
+    try {
+      const result = await publicRequestsService.create({
+        ci: form.cedula.trim(),
+        fullName: `${form.nombres.trim()} ${form.apellidos.trim()}`.trim(),
+        email: form.correo.trim(),
+        phone: form.telefono.trim() || undefined,
+        comment: form.comentario.trim() || undefined,
+        documents: form.documentos.map((name) => ({ name })),
+      });
+      setReceipt(result);
       setForm(initialForm);
       setErrors({});
-    }, 1000);
+    } catch (err) {
+      setSubmitError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo enviar la solicitud. Por favor, intente nuevamente.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTracking = async () => {
+    const code = trackingCode.trim();
+    if (!code || trackingLoading) return;
+    setTrackingLoading(true);
+    setTrackingError(null);
+    setTrackingResult(null);
+    try {
+      const result = await publicRequestsService.tracking(code);
+      setTrackingResult(result);
+    } catch (err) {
+      setTrackingError(
+        err instanceof ApiError
+          ? err.message
+          : "No se pudo consultar la solicitud. Por favor, intente nuevamente.",
+      );
+    } finally {
+      setTrackingLoading(false);
+    }
   };
 
   const handleLimpiar = () => {
     setForm(initialForm);
     setErrors({});
+    setSubmitError(null);
+    setReceipt(null);
   };
 
   return (
@@ -215,6 +268,41 @@ export const ExpedientRequestPage = () => {
               <p className="expedient-request__intro">
                 Si deseas solicitar tu expediente, llena el siguiente formulario
               </p>
+
+              {receipt && (
+                <div
+                  role="status"
+                  style={{
+                    margin: "0 0 1.5rem",
+                    padding: "1rem 1.25rem",
+                    borderRadius: "0.625rem",
+                    backgroundColor: "#f0fdf4",
+                    border: "1px solid #bbf7d0",
+                    textAlign: "center",
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: "0.875rem", color: "#15803d" }}>
+                    Solicitud enviada correctamente. Guarda tu código de seguimiento:
+                  </p>
+                  <p
+                    style={{
+                      margin: "0.5rem 0 0",
+                      fontSize: "1.5rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.05em",
+                      color: "#14532d",
+                    }}
+                  >
+                    {receipt.trackingCode}
+                  </p>
+                </div>
+              )}
+
+              {submitError && (
+                <p className="expedient-request__error" role="alert" style={{ marginBottom: "1rem" }}>
+                  {submitError}
+                </p>
+              )}
 
               <form
                 onSubmit={handleSubmit}
@@ -438,6 +526,53 @@ export const ExpedientRequestPage = () => {
                   </div>
                 </div>
               </form>
+            </section>
+
+            <section
+              className="expedient-request__card"
+              aria-labelledby="tracking-title"
+            >
+              <h2 id="tracking-title" className="expedient-request__card-title">
+                Seguimiento de solicitud
+              </h2>
+              <p className="expedient-request__intro">
+                Ingresa tu código de seguimiento para consultar el estado de tu solicitud
+              </p>
+              <div className="expedient-request__field">
+                <Input
+                  label="Código de seguimiento"
+                  placeholder="Ej: CID-XXXX-XXXX"
+                  value={trackingCode}
+                  onChange={(e) => setTrackingCode(e.target.value)}
+                  fullWidth
+                  className="expedient-request__control"
+                />
+              </div>
+              <div className="expedient-request__buttons" style={{ marginTop: "1rem" }}>
+                <Button
+                  type="button"
+                  variant="primary"
+                  loading={trackingLoading}
+                  onClick={() => void handleTracking()}
+                >
+                  Consultar
+                </Button>
+              </div>
+              {trackingError && (
+                <p className="expedient-request__error" role="alert" style={{ marginTop: "1rem" }}>
+                  {trackingError}
+                </p>
+              )}
+              {trackingResult && (
+                <div role="status" style={{ marginTop: "1rem", fontSize: "0.875rem", color: "#374151" }}>
+                  <p style={{ margin: 0 }}>
+                    Código: <strong>{trackingResult.trackingCode}</strong>
+                  </p>
+                  <p style={{ margin: "0.25rem 0 0" }}>
+                    Estado: <strong>{trackingResult.status}</strong>
+                  </p>
+                </div>
+              )}
             </section>
           </div>
         </div>

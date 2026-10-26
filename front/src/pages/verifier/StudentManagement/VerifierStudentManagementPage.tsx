@@ -1,57 +1,48 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { StudentList } from "@/components/organisms/StudentList";
-import { StudentDetails } from "@/components/organisms/StudentDetails";
 import type { StudentListItem } from "@/components/organisms/StudentList";
+import { StudentDetails } from "@/components/organisms/StudentDetails";
 import type { StudentDetail } from "@/components/organisms/StudentDetails";
+import { AlertModal } from "@/components/molecules/AlertModal";
+import { Button } from "@/components/atoms/Button";
 import { VERIFIER_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
+import { studentsService, type StudentDto } from "@/services/api/studentsService";
+import { ApiError, clearSession } from "@/services/api/http";
 import "./VerifierStudentManagementPage.css";
 
-const MOCK_STUDENTS: StudentListItem[] = [
-  {
-    id: "1",
-    name: "Ludovicus Van Vargas",
-    ciNivelEstado: "CI: 0113 - Pregrado - Activo",
-    levelLabel: "Pregrado",
-    status: "Activo",
-    lastModified: "2025-11-12",
-  },
-  {
-    id: "2",
-    name: "María Pérez",
-    ciNivelEstado: "CI: 98765432 - Postgrado - Activo",
-    levelLabel: "Postgrado",
-    status: "Activo",
-    lastModified: "2025-10-10",
-  },
-];
-
-const MOCK_DETAILS: Record<string, StudentDetail> = {
-  "1": {
-    id: "1",
-    name: "Ludovicus Van Vargas",
-    studentId: "0113",
-    birthDate: "01/09/2003",
-    email: "luis@brainv.com",
-    cedula: "0113",
-    nivel: "Pregrado",
-    carrera: "Ingeniería Informática",
-    estado: "Activo",
-    expedienteSummary: "Expediente · Pregrado · Estante 3/Caja 12/Fila B",
-  },
-  "2": {
-    id: "2",
-    name: "María Pérez",
-    studentId: "98765432",
-    birthDate: "15/03/1998",
-    email: "maria@example.com",
-    cedula: "98765432",
-    nivel: "Postgrado",
-    carrera: "Maestría en Sistemas",
-    estado: "Activo",
-  },
+const capitalizeLabel = (value: string | null | undefined): string => {
+  if (!value) return "—";
+  const lower = value.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
 };
+
+const toListItem = (dto: StudentDto): StudentListItem => {
+  const name = `${dto.firstName} ${dto.lastName}`.trim();
+  const levelLabel = capitalizeLabel(dto.type);
+  const statusLabel = capitalizeLabel(dto.status);
+  return {
+    id: String(dto.id),
+    name,
+    ciNivelEstado: `CI: ${dto.ci} - ${levelLabel} - ${statusLabel}`,
+    levelLabel,
+    status: statusLabel,
+    lastModified: "",
+  };
+};
+
+const toDetail = (dto: StudentDto): StudentDetail => ({
+  id: String(dto.id),
+  name: `${dto.firstName} ${dto.lastName}`.trim(),
+  studentId: dto.ci,
+  birthDate: dto.birthdate ?? undefined,
+  email: dto.email ?? undefined,
+  cedula: dto.ci,
+  nivel: capitalizeLabel(dto.type),
+  carrera: dto.careerId != null ? String(dto.careerId) : undefined,
+  estado: capitalizeLabel(dto.status),
+});
 
 /**
  * VerifierStudentManagementPage - Page (Verifier)
@@ -59,25 +50,80 @@ const MOCK_DETAILS: Record<string, StudentDetail> = {
  * Student management view for Verifier role: consult students, view detail,
  * academic info and associated records. Same structure as admin but without
  * history/observations section. Based on the provided image layout.
+ * Solo lectura: sin botones de crear/editar/eliminar.
  */
 export const VerifierStudentManagementPage = () => {
   const navigate = useNavigate();
-  const [students] = useState<StudentListItem[]>(MOCK_STUDENTS);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>("1");
+  const [dtos, setDtos] = useState<StudentDto[]>([]);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loadingList, setLoadingList] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const searchSeq = useRef(0);
 
-  const selectedStudent =
-    selectedStudentId ? (MOCK_DETAILS[selectedStudentId] ?? null) : null;
+  const loadStudents = useCallback(async (query: string) => {
+    const seq = ++searchSeq.current;
+    setLoadingList(true);
+    try {
+      const data = await studentsService.search(query);
+      if (searchSeq.current !== seq) return;
+      setDtos(data);
+    } catch (err) {
+      if (searchSeq.current !== seq) return;
+      if (err instanceof ApiError && err.status === 401) {
+        clearSession();
+        navigate("/");
+        return;
+      }
+      setLoadError(
+        err instanceof ApiError ? err.message : "No se pudo cargar la lista de estudiantes."
+      );
+    } finally {
+      if (searchSeq.current === seq) setLoadingList(false);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadStudents(searchQuery);
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [loadStudents, searchQuery]);
+
+  const selectedDto =
+    selectedStudentId ? (dtos.find((d) => String(d.id) === selectedStudentId) ?? null) : null;
+  const selectedStudent = selectedDto ? toDetail(selectedDto) : null;
+  const items = dtos.map(toListItem);
 
   const handleViewStudent = useCallback((id: string) => {
     setSelectedStudentId(id);
-  }, []);
+    void (async () => {
+      try {
+        const fresh = await studentsService.byId(Number(id));
+        setDtos((prev) =>
+          prev.some((d) => d.id === fresh.id)
+            ? prev.map((d) => (d.id === fresh.id ? fresh : d))
+            : [...prev, fresh]
+        );
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          clearSession();
+          navigate("/");
+          return;
+        }
+        setLoadError(
+          err instanceof ApiError ? err.message : "No se pudo cargar el estudiante."
+        );
+        setSelectedStudentId(null);
+      }
+    })();
+  }, [navigate]);
 
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
     setSelectedStudentId(null);
-    console.log("Refrescar");
-  }, []);
+    void loadStudents("");
+  }, [loadStudents]);
 
   const handleViewExpedientes = useCallback(() => {
     navigate("/verifier/records");
@@ -86,14 +132,6 @@ export const VerifierStudentManagementPage = () => {
   const handleNewExpediente = useCallback(() => {
     navigate("/verifier/records");
   }, [navigate]);
-
-  const filteredStudents = searchQuery
-    ? students.filter(
-        (s) =>
-          s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          s.ciNivelEstado.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : students;
 
   return (
     <DashboardTemplate
@@ -110,7 +148,7 @@ export const VerifierStudentManagementPage = () => {
       <div className="verifier-student-management-page">
         <div className="verifier-student-management-page__top">
           <StudentList
-            students={filteredStudents}
+            students={items}
             onSearch={setSearchQuery}
             onViewStudent={handleViewStudent}
             onFilterCareer={() => {}}
@@ -119,7 +157,7 @@ export const VerifierStudentManagementPage = () => {
           />
         </div>
         <div className="verifier-student-management-page__count">
-          {filteredStudents.length} estudiantes
+          {loadingList ? "Cargando estudiantes…" : `${items.length} estudiantes`}
         </div>
         <div className="verifier-student-management-page__bottom">
           <div className="verifier-student-management-page__detail">
@@ -132,6 +170,26 @@ export const VerifierStudentManagementPage = () => {
           </div>
         </div>
       </div>
+      <AlertModal
+        open={loadError !== null}
+        type="error"
+        title="Error al cargar estudiantes"
+        message={loadError ?? ""}
+        buttonLabel="Cerrar"
+        onClose={() => setLoadError(null)}
+        actions={
+          <Button
+            variant="secondary"
+            size="medium"
+            onClick={() => {
+              setLoadError(null);
+              void loadStudents(searchQuery);
+            }}
+          >
+            Reintentar
+          </Button>
+        }
+      />
     </DashboardTemplate>
   );
 };

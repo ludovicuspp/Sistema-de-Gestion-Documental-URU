@@ -1,73 +1,64 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { RequestList, type RequestListItem } from "@/components/organisms/RequestList";
 import { RequestDetailCard, type RequestDetailData } from "@/components/organisms/RequestDetailCard";
 import { RequestActionsCard } from "@/components/organisms/RequestActionsCard";
+import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { VERIFIER_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
+import { ApiError, clearSession } from "@/services/api/http";
+import { requestsService, type RequestDto } from "@/services/api/requestsService";
 import "./VerifierRequestManagementPage.css";
 
-const MOCK_REQUESTS: RequestListItem[] = [
-  {
-    id: "1",
-    studentName: "José Luis Pérez Gómez",
-    studentCI: "V-12345678",
-    level: "Pregrado",
-    date: "2025-11-10 14:32",
-    status: "pending",
-  },
-  {
-    id: "2",
-    studentName: "María González",
-    studentCI: "V-87654321",
-    level: "Postgrado",
-    date: "2025-11-12 09:12",
-    status: "validated",
-  },
-  {
-    id: "3",
-    studentName: "Carlos Andrés Rojas M.",
-    studentCI: "V-11223344",
-    level: "Pregrado",
-    date: "2025-11-13 08:20",
-    status: "rejected",
-  },
-];
+type Feedback = { kind: "success" | "error" | "info"; text: string };
 
-const MOCK_REQUEST_DETAILS: Record<string, RequestDetailData> = {
-  "1": {
-    id: "1",
-    studentName: "José Luis",
-    studentSurname: "Pérez Gómez",
-    studentCI: "V-12345678",
-    level: "Pregrado",
-    email: "jose.perez@example.com",
-    comment: "Solicito los documentos necesarios para mi expediente académico.",
-    requestedDocuments: ["Fondo negro titular bachiller", "Veredicto"],
-    status: "not-validated",
-  },
-  "2": {
-    id: "2",
-    studentName: "María",
-    studentSurname: "González",
-    studentCI: "V-87654321",
-    level: "Postgrado",
-    email: "maria.gonzalez@example.com",
-    comment: "Necesito los documentos para completar mi expediente.",
-    requestedDocuments: ["Título universitario", "Certificado de notas"],
-    status: "validated",
-  },
-  "3": {
-    id: "3",
-    studentName: "Carlos Andrés",
-    studentSurname: "Rojas M.",
-    studentCI: "V-11223344",
-    level: "Pregrado",
-    email: "carlos.rojas@example.com",
-    comment: "Documentos requeridos para mi expediente.",
-    requestedDocuments: ["Cédula", "Partida de nacimiento"],
-    status: "rejected",
-  },
+const toListStatus = (status: string): RequestListItem["status"] => {
+  if (status === "COMPLETADA") return "validated";
+  if (status === "RECHAZADA") return "rejected";
+  return "pending";
+};
+
+const toDetailStatus = (status: string): RequestDetailData["status"] => {
+  if (status === "COMPLETADA") return "validated";
+  if (status === "RECHAZADA") return "rejected";
+  return "not-validated";
+};
+
+const formatDateTime = (iso: string): string => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const splitName = (fullName: string): [string, string] => {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 2) return [parts[0] ?? "", parts.slice(1).join(" ")];
+  return [parts.slice(0, 2).join(" "), parts.slice(2).join(" ")];
+};
+
+const toListItem = (r: RequestDto): RequestListItem => ({
+  id: String(r.id),
+  studentName: r.fullName,
+  studentCI: r.ci,
+  level: "—",
+  date: formatDateTime(r.createdAt),
+  status: toListStatus(r.status),
+});
+
+const toDetail = (r: RequestDto): RequestDetailData => {
+  const [name, surname] = splitName(r.fullName);
+  return {
+    id: String(r.id),
+    studentName: name,
+    studentSurname: surname,
+    studentCI: r.ci,
+    level: "—",
+    email: r.email,
+    comment: r.comment ?? "",
+    requestedDocuments: r.documents.map((d) => d.name),
+    status: toDetailStatus(r.status),
+  };
 };
 
 /**
@@ -75,23 +66,91 @@ const MOCK_REQUEST_DETAILS: Record<string, RequestDetailData> = {
  *
  * Request management view for verifier role: search requests, view request details, and administrative actions.
  * Same structure and base as admin RequestManagementPage.
+ * Datos reales desde requests-service (CU-18/CU-19).
  */
 export const VerifierRequestManagementPage = () => {
   const navigate = useNavigate();
+  const [requests, setRequests] = useState<RequestDto[]>([]);
+  const [listError, setListError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRequestId, setSelectedRequestId] = useState<string | null>("1");
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<RequestDetailData | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
+  const [confirmRejectOpen, setConfirmRejectOpen] = useState(false);
+
+  const resolveError = useCallback((err: unknown, fallback: string): string | null => {
+    if (err instanceof ApiError) {
+      if (err.status === 401) {
+        clearSession();
+        navigate("/");
+        return null;
+      }
+      return err.message;
+    }
+    return fallback;
+  }, [navigate]);
+
+  const loadDetail = useCallback(async (id: number) => {
+    setDetailError(null);
+    try {
+      const dto = await requestsService.get(id);
+      setDetail(toDetail(dto));
+    } catch (err) {
+      setDetail(null);
+      const msg = err instanceof ApiError && err.status === 401
+        ? (clearSession(), navigate("/"), null)
+        : err instanceof ApiError ? err.message : "No se pudo cargar el detalle de la solicitud.";
+      if (msg) setDetailError(msg);
+    }
+  }, [navigate]);
+
+  const fetchAll = useCallback(async (keepSelection?: string | null) => {
+    setListError(null);
+    try {
+      const data = await requestsService.list();
+      setRequests(data);
+      const wanted = keepSelection === undefined
+        ? (data.length > 0 ? String(data[0].id) : null)
+        : keepSelection;
+      const exists = wanted != null && data.some((r) => String(r.id) === wanted);
+      const finalId = exists ? wanted : (data.length > 0 ? String(data[0].id) : null);
+      setSelectedRequestId(finalId);
+      if (finalId != null) {
+        await loadDetail(Number(finalId));
+      } else {
+        setDetail(null);
+      }
+    } catch (err) {
+      const msg = err instanceof ApiError && err.status === 401
+        ? (clearSession(), navigate("/"), null)
+        : err instanceof ApiError ? err.message : "No se pudieron cargar las solicitudes.";
+      if (msg) setListError(msg);
+    }
+  }, [loadDetail, navigate]);
+
+  useEffect(() => {
+    void fetchAll();
+  }, [fetchAll]);
 
   const filteredRequests = useMemo(() => {
-    if (!searchQuery.trim()) return MOCK_REQUESTS;
-    const query = searchQuery.toLowerCase();
-    return MOCK_REQUESTS.filter(
-      (r) =>
+    const items = requests.map(toListItem);
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return items;
+    return items.filter((r) => {
+      const raw = requests.find((x) => String(x.id) === r.id);
+      return (
         r.studentName.toLowerCase().includes(query) ||
-        r.studentCI.toLowerCase().includes(query)
-    );
-  }, [searchQuery]);
+        r.studentCI.toLowerCase().includes(query) ||
+        (raw?.trackingCode.toLowerCase().includes(query) ?? false)
+      );
+    });
+  }, [requests, searchQuery]);
 
-  const selectedRequest = selectedRequestId ? MOCK_REQUEST_DETAILS[selectedRequestId] ?? null : null;
+  const selectedRawStatus = useMemo(() => (
+    requests.find((r) => String(r.id) === selectedRequestId)?.status ?? null
+  ), [requests, selectedRequestId]);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -99,25 +158,60 @@ export const VerifierRequestManagementPage = () => {
 
   const handleOpenRequest = useCallback((id: string) => {
     setSelectedRequestId(id);
-  }, []);
+    setFeedback(null);
+    void loadDetail(Number(id));
+  }, [loadDetail]);
 
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
-    setSelectedRequestId(null);
-    console.log("Refrescar");
-  }, []);
+    setFeedback(null);
+    void fetchAll(undefined);
+  }, [fetchAll]);
 
-  const handleExport = useCallback(() => {
-    console.log("Exportar solicitud", selectedRequestId);
-  }, [selectedRequestId]);
-
-  const handleSaveNote = useCallback((note: string) => {
-    console.log("Guardar nota", note);
+  const handleSaveNote = useCallback(() => {
+    setFeedback({
+      kind: "info",
+      text: "El backend actual no persiste observaciones administrativas.",
+    });
   }, []);
 
   const handleClearNote = useCallback(() => {
-    console.log("Limpiar nota");
+    setFeedback(null);
   }, []);
+
+  const handleApprove = useCallback(async () => {
+    if (selectedRequestId == null) return;
+    setConfirmApproveOpen(false);
+    setFeedback(null);
+    try {
+      await requestsService.updateStatus(Number(selectedRequestId), "COMPLETADA");
+      setFeedback({
+        kind: "success",
+        text: "Solicitud completada. Se envió un correo de notificación al solicitante.",
+      });
+      await fetchAll(selectedRequestId);
+    } catch (err) {
+      const msg = resolveError(err, "No se pudo completar la solicitud.");
+      if (msg) setFeedback({ kind: "error", text: msg });
+    }
+  }, [selectedRequestId, fetchAll, resolveError]);
+
+  const handleReject = useCallback(async () => {
+    if (selectedRequestId == null) return;
+    setConfirmRejectOpen(false);
+    setFeedback(null);
+    try {
+      await requestsService.updateStatus(Number(selectedRequestId), "RECHAZADA");
+      setFeedback({ kind: "success", text: "Solicitud rechazada." });
+      await fetchAll(selectedRequestId);
+    } catch (err) {
+      const msg = resolveError(err, "No se pudo rechazar la solicitud.");
+      if (msg) setFeedback({ kind: "error", text: msg });
+    }
+  }, [selectedRequestId, fetchAll, resolveError]);
+
+  const canApproveReject = selectedRawStatus === "RECIBIDA" || selectedRawStatus === "EN_PROCESO";
+  const bannerError = listError ?? detailError;
 
   return (
     <DashboardTemplate
@@ -131,6 +225,30 @@ export const VerifierRequestManagementPage = () => {
       sidebarTaskItems={[]}
     >
       <div className="request-management-page">
+        {bannerError && (
+          <p
+            role="alert"
+            style={{ margin: 0, padding: "0.75rem 1rem", borderRadius: "0.5rem", backgroundColor: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca", fontSize: "0.875rem" }}
+          >
+            {bannerError}
+          </p>
+        )}
+        {feedback && (
+          <p
+            role="status"
+            style={{
+              margin: 0,
+              padding: "0.75rem 1rem",
+              borderRadius: "0.5rem",
+              fontSize: "0.875rem",
+              backgroundColor: feedback.kind === "success" ? "#f0fdf4" : feedback.kind === "error" ? "#fef2f2" : "#eff6ff",
+              color: feedback.kind === "success" ? "#15803d" : feedback.kind === "error" ? "#b91c1c" : "#1d4ed8",
+              border: `1px solid ${feedback.kind === "success" ? "#bbf7d0" : feedback.kind === "error" ? "#fecaca" : "#bfdbfe"}`,
+            }}
+          >
+            {feedback.text}
+          </p>
+        )}
         <div className="request-management-page__content">
           <div className="request-management-page__left">
             <div className="request-management-page__list">
@@ -141,10 +259,7 @@ export const VerifierRequestManagementPage = () => {
               />
             </div>
             <div className="request-management-page__detail">
-              <RequestDetailCard
-                request={selectedRequest}
-                onExport={handleExport}
-              />
+              <RequestDetailCard request={detail} />
             </div>
           </div>
           <div className="request-management-page__right">
@@ -153,10 +268,27 @@ export const VerifierRequestManagementPage = () => {
               onClear={handleClearNote}
               confirmBeforeSave
               confirmSaveMessage="¿Desea guardar la nota?"
+              onApprove={() => setConfirmApproveOpen(true)}
+              onReject={() => setConfirmRejectOpen(true)}
+              canApproveReject={canApproveReject}
             />
           </div>
         </div>
       </div>
+      <ConfirmModal
+        open={confirmApproveOpen}
+        onCancel={() => setConfirmApproveOpen(false)}
+        label="aprobar"
+        message="¿Seguro que desea aprobar?"
+        onConfirm={() => void handleApprove()}
+      />
+      <ConfirmModal
+        open={confirmRejectOpen}
+        onCancel={() => setConfirmRejectOpen(false)}
+        label="Rechazar"
+        message="¿Seguro que desea rechazar?"
+        onConfirm={() => void handleReject()}
+      />
     </DashboardTemplate>
   );
 };

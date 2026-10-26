@@ -15,6 +15,8 @@ export interface NewExpedientFormData {
 export interface NewExpedientFormProps {
   onSubmit: (data: NewExpedientFormData) => void;
   onCancel: () => void;
+  /** Valores iniciales para reutilizar el formulario en edición. */
+  initial?: Partial<NewExpedientFormData>;
 }
 
 /**
@@ -23,13 +25,13 @@ export interface NewExpedientFormProps {
  * Formulario para crear un nuevo expediente (CI, nombre, tipo, email, etc.).
  * Pensado para usarse dentro de un Modal.
  */
-export const NewExpedientForm = ({ onSubmit, onCancel }: NewExpedientFormProps) => {
-  const [studentCI, setStudentCI] = useState("");
-  const [studentName, setStudentName] = useState("");
-  const [recordType, setRecordType] = useState("Pregrado");
-  const [studentEmail, setStudentEmail] = useState("");
-  const [studentBirthDate, setStudentBirthDate] = useState("");
-  const [recordLocation, setRecordLocation] = useState("");
+export const NewExpedientForm = ({ onSubmit, onCancel, initial }: NewExpedientFormProps) => {
+  const [studentCI, setStudentCI] = useState(initial?.studentCI ?? "");
+  const [studentName, setStudentName] = useState(initial?.studentName ?? "");
+  const [recordType, setRecordType] = useState(initial?.recordType ?? "Pregrado");
+  const [studentEmail, setStudentEmail] = useState(initial?.studentEmail ?? "");
+  const [studentBirthDate, setStudentBirthDate] = useState(initial?.studentBirthDate ?? "");
+  const [recordLocation, setRecordLocation] = useState(initial?.recordLocation ?? "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

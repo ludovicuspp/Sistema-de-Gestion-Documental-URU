@@ -10,7 +10,13 @@ import { CharacterCounter } from "@/components/atoms/CharacterCounter";
 import type { QuickAccessItem } from "@/components/organisms/QuickAccess";
 import type { ActivityEntry } from "@/components/organisms/RecentActivity";
 import { ASSISTANT_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
-import { remindersService, activityService } from "@/services/api";
+import {
+  recordsService,
+  tasksService,
+  ApiError,
+  clearSession,
+} from "@/services/api";
+import type { RecentHistoryDto, TaskDto } from "@/services/api";
 import "./AssistantDashboardPage.css";
 
 const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
@@ -19,31 +25,32 @@ const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   { label: "Ver solicitudes", onClick: () => {} },
 ];
 
-const ACTIVITY_MOCK: ActivityEntry[] = [
-  { text: "Expediente #0113 creado", datetime: "2025-11-25" },
-  { text: "Documento cedula.pdf subido", datetime: "2025-11-25" },
-  { text: "Solicitud de José Luis revisada", datetime: "2025-11-24" },
-];
-
-const TASK_PANEL_TODO = [
-  "Revisar expediente 00060-001",
-  "Subir actas lote 12",
-];
-const TASK_PANEL_IN_PROGRESS = ["Validar documentos Verificador A"];
-const TASK_PANEL_COMPLETED = ["Generar reporte mensual"];
-
 const MAX_REMINDER_CHARS = 200;
+
+const formatHistoryEntry = (h: RecentHistoryDto): ActivityEntry => {
+  const who = h.studentName?.trim() || h.userName?.trim() || "";
+  let text = who ? `${h.action} — ${who}` : h.action;
+  if (h.detail?.trim()) text += `: ${h.detail}`;
+  return { text, datetime: h.createdAt };
+};
+
+const formatReminder = (t: TaskDto): string =>
+  t.dueDate ? `${t.title} — vence ${t.dueDate.slice(0, 10)}` : t.title;
 
 /**
  * AssistantDashboardPage - Page (Asistente)
  *
  * Panel principal para el rol Asistente: Recordatorios, Accesos rápidos,
  * Actividad reciente y Panel de tareas. Misma estructura y base que Admin/Verificador.
+ * Recordatorios derivados de tareas pendientes reales; actividad de recentHistory.
  */
 export const AssistantDashboardPage = () => {
   const navigate = useNavigate();
   const [reminders, setReminders] = useState<string[]>([]);
-  const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>(ACTIVITY_MOCK);
+  const [todo, setTodo] = useState<string[]>([]);
+  const [inProgress, setInProgress] = useState<string[]>([]);
+  const [completed, setCompleted] = useState<string[]>([]);
+  const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [addReminderOpen, setAddReminderOpen] = useState(false);
   const [newReminderText, setNewReminderText] = useState("");
@@ -52,22 +59,31 @@ export const AssistantDashboardPage = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const [remindersList, activityList] = await Promise.all([
-          remindersService.list(),
-          activityService.getRecent(),
+        const [allTasks, history] = await Promise.all([
+          tasksService.list(),
+          recordsService.recentHistory(10),
         ]);
-        setReminders(remindersList.map((r) => r.text));
-        setActivityEntries(
-          activityList.map((a) => ({ text: a.text, datetime: a.datetime }))
-        );
-      } catch {
-        setActivityEntries(ACTIVITY_MOCK);
+        const byStatus = (status: string) =>
+          allTasks
+            .filter((t) => t.status.toUpperCase() === status)
+            .slice(0, 5);
+        const pending = byStatus("PENDIENTE");
+        setReminders(pending.map(formatReminder));
+        setTodo(pending.map((t) => t.title));
+        setInProgress(byStatus("EN_PROCESO").map((t) => t.title));
+        setCompleted(byStatus("COMPLETADA").map((t) => t.title));
+        setActivityEntries(history.map(formatHistoryEntry));
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 401) {
+          clearSession();
+          navigate("/");
+        }
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, [navigate]);
 
   const handleQuickAccess = (index: number) => {
     if (index === 0) navigate("/assistant/records");
@@ -142,9 +158,9 @@ export const AssistantDashboardPage = () => {
               </div>
             </FormModal>
             <TaskPanelCard
-              todo={TASK_PANEL_TODO}
-              inProgress={TASK_PANEL_IN_PROGRESS}
-              completed={TASK_PANEL_COMPLETED}
+              todo={loading ? [] : todo}
+              inProgress={loading ? [] : inProgress}
+              completed={loading ? [] : completed}
             />
           </div>
           <aside className="assistant-dashboard__right">

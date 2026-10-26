@@ -69,3 +69,19 @@
     grid-template-columns: 1fr;
   }
 }
+
+.expedient-management-page__observation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.expedient-management-page__observation-input {
+  width: 100%;
+  min-height: 6rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font: inherit;
+  resize: vertical;
+}

@@ -1,9 +1,12 @@
-import { useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { Card } from "@/components/molecules/Card";
 import { SummaryCard } from "@/components/molecules/SummaryCard";
 import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
+import { reportsService, ApiError, clearSession } from "@/services/api";
+import type { ReportsSummary } from "@/services/api";
 import "./ReportsPage.css";
 
 const IconCalendar = () => (
@@ -36,65 +39,144 @@ const IconFileText = () => (
 interface ReportDetailRow {
   date: string;
   metric: string;
-  quantity: number;
+  quantity: string;
   source: string;
   comments: string;
 }
 
 interface StatusDistribution {
   status: string;
-  count: number;
+  count: number | string;
 }
 
-interface TopCareer {
-  rank: number;
-  name: string;
-  count: number;
-}
+/** Extrae un numero del map crudo del backend (Map<String, Object> serializado). */
+const getNumber = (map: Record<string, number> | null, key: string): number | null => {
+  const v = map?.[key];
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+};
+
+const fmt = (v: number | null): string => (v == null ? "—" : v.toLocaleString("es"));
 
 /**
  * ReportsPage - Page
  *
- * Reports view: filters, metrics, charts, status distribution, top careers, and detail table.
+ * Reports view: filters, metrics, status distribution and detail table,
+ * alimentados por reportsService.summary() (solo Administrador).
+ * Sin fuente en el backend se ocultan: Top 5 carreras y disponibilidad del sistema ("—").
  */
 export const ReportsPage = () => {
+  const navigate = useNavigate();
   const [selectedMetric, setSelectedMetric] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [summary, setSummary] = useState<ReportsSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        setSummary(await reportsService.summary());
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 401) {
+          clearSession();
+          navigate("/");
+          return;
+        }
+        setError(e instanceof Error ? e.message : "No se pudieron cargar los reportes");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [navigate]);
+
+  const recordsTotal = getNumber(summary?.records ?? null, "total");
+  const recordsPending = getNumber(summary?.records ?? null, "pending");
+  const recordsApproved = getNumber(summary?.records ?? null, "approved");
+  const recordsRejected = getNumber(summary?.records ?? null, "rejected");
+  const requestsTotal = getNumber(summary?.requests ?? null, "total");
+  const requestsReceived = getNumber(summary?.requests ?? null, "received");
+  const requestsInProgress = getNumber(summary?.requests ?? null, "inProgress");
+  const requestsCompleted = getNumber(summary?.requests ?? null, "completed");
+  const unattended =
+    requestsReceived != null && requestsInProgress != null
+      ? requestsReceived + requestsInProgress
+      : null;
+  const tasksTotal = getNumber(summary?.tasks ?? null, "total");
+  const tasksPending = getNumber(summary?.tasks ?? null, "pending");
 
   const metrics = [
     { value: "expedientes", label: "Expedientes totales" },
     { value: "documentos", label: "Documentos pendientes" },
     { value: "solicitudes", label: "Solicitudes sin atender" },
-    { value: "disponibilidad", label: "Disponibilidad sistema" },
   ];
 
   const kpiData = [
-    { value: "1,248", label: "Expedientes totales", subtitle: "Periodo seleccionado" },
-    { value: "312", label: "Documentos pendientes", subtitle: "Por validar" },
-    { value: "24", label: "Solicitudes sin atender", subtitle: "Tiempo medio: 2.3 días" },
-    { value: "98%", label: "Disponibilidad sistema", subtitle: "Últimos 30 días" },
+    {
+      value: loading ? "…" : fmt(recordsTotal),
+      label: "Expedientes totales",
+      subtitle: "Periodo seleccionado",
+    },
+    {
+      value: loading ? "…" : fmt(recordsPending),
+      label: "Documentos pendientes",
+      subtitle: "Por validar",
+    },
+    {
+      value: loading ? "…" : fmt(unattended),
+      label: "Solicitudes sin atender",
+      subtitle: requestsTotal != null ? `Total: ${requestsTotal.toLocaleString("es")}` : "—",
+    },
+    { value: "—", label: "Disponibilidad sistema", subtitle: "Sin datos del backend" },
   ];
 
   const statusDistribution: StatusDistribution[] = [
-    { status: "Pendientes", count: 312 },
-    { status: "Aprobados", count: 820 },
-    { status: "Rechazados", count: 116 },
+    { status: "Pendientes", count: loading ? "…" : fmt(recordsPending) },
+    { status: "Aprobados", count: loading ? "…" : fmt(recordsApproved) },
+    { status: "Rechazados", count: loading ? "…" : fmt(recordsRejected) },
   ];
 
-  const topCareers: TopCareer[] = [
-    { rank: 1, name: "Ingeniería Informática", count: 312 },
-    { rank: 2, name: "Contaduría", count: 210 },
-    { rank: 3, name: "Administración", count: 180 },
-    { rank: 4, name: "Derecho", count: 120 },
-    { rank: 5, name: "Psicología", count: 96 },
-  ];
-
-  const detailRows: ReportDetailRow[] = [
-    { date: "2025-11-12", metric: "Expedientes creados", quantity: 24, source: "Sistema", comments: "Periodo: 2025-11" },
-    { date: "2025-11-11", metric: "Documentos validados", quantity: 34, source: "Verificadores", comments: "Alta carga en Asistente B" },
-    { date: "2025-10-21", metric: "Solicitudes recibidas", quantity: 12, source: "Portal", comments: "Pico por cierre de semestre" },
-  ];
+  const detailRows: ReportDetailRow[] = summary
+    ? [
+        {
+          date: "—",
+          metric: "Expedientes totales",
+          quantity: fmt(recordsTotal),
+          source: "Sistema",
+          comments:
+            recordsApproved != null || recordsRejected != null
+              ? `Aprobados: ${fmt(recordsApproved)} · Rechazados: ${fmt(recordsRejected)}`
+              : "—",
+        },
+        {
+          date: "—",
+          metric: "Solicitudes recibidas",
+          quantity: fmt(requestsTotal),
+          source: "Portal",
+          comments:
+            requestsReceived != null || requestsCompleted != null
+              ? `Recibidas: ${fmt(requestsReceived)} · En proceso: ${fmt(requestsInProgress)} · Completadas: ${fmt(requestsCompleted)}`
+              : "—",
+        },
+        {
+          date: "—",
+          metric: "Tareas",
+          quantity: fmt(tasksTotal),
+          source: "Sistema",
+          comments: tasksPending != null ? `Pendientes: ${fmt(tasksPending)}` : "—",
+        },
+        {
+          date: "—",
+          metric: "Estudiantes activos",
+          quantity: fmt(summary.activeStudents),
+          source: "Sistema",
+          comments: "—",
+        },
+      ]
+    : [];
 
   const handleExport = useCallback(() => {
     console.log("Exportar reporte");
@@ -175,6 +257,8 @@ export const ReportsPage = () => {
           </Card>
         </section>
 
+        {error && <p style={{ color: "#b42318" }}>{error}</p>}
+
         {/* KPI Cards */}
         <section className="reports-page__kpis">
           <div className="reports-page__kpis-grid">
@@ -212,7 +296,7 @@ export const ReportsPage = () => {
             </Card>
           </section>
 
-          {/* Right Column: Status Distribution and Top Careers */}
+          {/* Right Column: Status Distribution */}
           <aside className="reports-page__right-column">
             {/* Status Distribution */}
             <Card variant="elevated" className="reports-page__status-card">
@@ -223,21 +307,6 @@ export const ReportsPage = () => {
                   <li key={index} className="reports-page__status-item">
                     <span className="reports-page__status-label">{item.status}:</span>
                     <span className="reports-page__status-count">{item.count}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-
-            {/* Top Careers */}
-            <Card variant="elevated" className="reports-page__careers-card">
-              <h3 className="reports-page__section-title">Top 5 carreras</h3>
-              <p className="reports-page__section-subtitle">Periodo</p>
-              <ul className="reports-page__careers-list">
-                {topCareers.map((career) => (
-                  <li key={career.rank} className="reports-page__career-item">
-                    <span className="reports-page__career-rank">{career.rank}.</span>
-                    <span className="reports-page__career-name">{career.name}</span>
-                    <span className="reports-page__career-count">- {career.count}</span>
                   </li>
                 ))}
               </ul>

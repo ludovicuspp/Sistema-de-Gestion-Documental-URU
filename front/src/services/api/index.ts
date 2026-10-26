@@ -1,20 +1,37 @@
 /**
- * API services per entity.
- * Each module exposes sample data for the dashboard.
+ * API services (backend real).
+ * Todos los modulos consumen /api/v1/* via Nginx (mismo origen) con JWT.
  */
-export { recordsService } from "./recordsService";
-export type { RecordSummary } from "./recordsService";
-export { documentsService } from "./documentsService";
-export type { DocumentsSummary } from "./documentsService";
-export { tasksService } from "./tasksService";
-export type { TasksSummary, TaskDto } from "./tasksService";
-export { remindersService } from "./remindersService";
-export type { Reminder } from "./remindersService";
-export { activityService } from "./activityService";
-export type { ActivityEntry } from "./activityService";
-export { indicatorsService } from "./indicatorsService";
-export type { IndicatorsState, SummaryToday } from "./indicatorsService";
 export { authService } from "./authService";
 export type { AuthResponse, MeResponse } from "./authService";
-export { ApiError, apiFetch, clearSession, getSessionUser, getToken, saveSession } from "./http";
+export { studentsService, studentFullName } from "./studentsService";
+export type { StudentDto, StudentRequest } from "./studentsService";
+export { recordsService } from "./recordsService";
+export type {
+  FolderDto,
+  FolderRequest,
+  FolderUpdateRequest,
+  DocumentDto,
+  ObservationDto,
+  HistoryDto,
+  RecentHistoryDto,
+  FolderStats,
+} from "./recordsService";
+export { requestsService, publicRequestsService } from "./requestsService";
+export type {
+  RequestDto,
+  RequestDocumentDto,
+  RequestStats,
+  PublicRequestPayload,
+  PublicRequestReceipt,
+} from "./requestsService";
+export { tasksService } from "./tasksService";
+export type { TaskDto, TaskStats, TaskRequest } from "./tasksService";
+export { usersService } from "./usersService";
+export type { UserDto, CreateUserRequest } from "./usersService";
+export { catalogService } from "./catalogService";
+export type { CareerDto, OptionDto, DocumentTypeDto } from "./catalogService";
+export { reportsService } from "./reportsService";
+export type { ReportsSummary } from "./reportsService";
+export { ApiError, apiFetch, apiFetchBlob, clearSession, getSessionUser, getToken, saveSession } from "./http";
 export type { ApiResponse, SessionUser } from "./http";

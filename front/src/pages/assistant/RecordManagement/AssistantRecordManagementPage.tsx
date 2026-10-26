@@ -1,17 +1,27 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { Modal } from "@/components/molecules/Modal";
 import { RecordFormModal } from "@/components/molecules/RecordFormModal";
+import type { RecordFormData } from "@/components/molecules/RecordFormModal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { AlertModal } from "@/components/molecules/AlertModal";
 import { CargarExpedientForm } from "@/components/molecules/CargarExpedientForm";
 import type { CargarExpedientFormData } from "@/components/molecules/CargarExpedientForm";
 import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordList } from "@/components/organisms/RecordList";
+import type { RecordListItem } from "@/components/organisms/RecordList";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
 import { RecordDocumentsList } from "@/components/organisms/RecordDocumentsList";
 import { RecentActivity } from "@/components/organisms/RecentActivity";
+import { recordsService } from "@/services/api/recordsService";
+import type {
+  DocumentDto,
+  FolderDto,
+  HistoryDto,
+  ObservationDto,
+} from "@/services/api/recordsService";
+import { ApiError, clearSession } from "@/services/api/http";
 import type { RecordStatusFilter } from "@/components/organisms/RecordSearchCard";
 import type { RecordDetailData } from "@/components/organisms/RecordDetailCard";
 import type { RecordDocumentListItem } from "@/components/organisms/RecordDocumentsList";
@@ -19,135 +29,308 @@ import type { ActivityEntry } from "@/components/organisms/RecentActivity";
 import { ASSISTANT_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
 import "./AssistantRecordManagementPage.css";
 
-/** Record with id and optional flag for "sin documentos" filter. */
-type RecordWithId = RecordDetailData & { id: string; withoutDocuments?: boolean };
-
 const STATUS_LABELS: Record<string, string> = {
   pending: "Pendiente",
   approved: "Aprobado",
   rejected: "Rechazado",
 };
 
-const MOCK_RECORDS: RecordWithId[] = [
-  { id: "1", studentId: "1", studentName: "Ludovicus Van Vargas", studentCI: "V-0113", studentBirthDate: "01/09/2003", studentEmail: "luis@brainv.com", recordType: "Pregrado", recordCreatedDate: "2025-08-01", recordLocation: "Estante 3 / Caja 12 / Fila B", recordStatus: "pending" },
-  { id: "2", studentId: "2", studentName: "María Pérez González", studentCI: "V-98765432", studentBirthDate: "15/03/1998", studentEmail: "maria@mail.com", recordType: "Postgrado", recordCreatedDate: "2025-09-10", recordLocation: "Estante 1 / Caja 5", recordStatus: "pending" },
-  { id: "3", studentId: "3", studentName: "Carlos Andrés Rojas", studentCI: "V-11223344", studentBirthDate: "22/07/2001", studentEmail: "carlos@mail.com", recordType: "Pregrado", recordCreatedDate: "2025-10-02", recordLocation: "Estante 2 / Caja 8 / Fila A", recordStatus: "pending" },
-  { id: "4", studentId: "4", studentName: "Ana Lucía Fernández", studentCI: "V-55667788", studentBirthDate: "10/11/2000", studentEmail: "ana@mail.com", recordType: "Pregrado", recordCreatedDate: "2025-10-15", recordLocation: "Estante 4 / Caja 15", recordStatus: "pending" },
-  { id: "5", studentId: "5", studentName: "José Luis Martínez", studentCI: "V-99887766", studentBirthDate: "05/04/1999", studentEmail: "jose@mail.com", recordType: "Postgrado", recordCreatedDate: "2025-08-20", recordLocation: "Estante 1 / Caja 3", recordStatus: "approved" },
-  { id: "6", studentId: "6", studentName: "Carmen Elena Díaz", studentCI: "V-44332211", studentBirthDate: "18/12/2002", studentEmail: "carmen@mail.com", recordType: "Pregrado", recordCreatedDate: "2025-07-12", recordLocation: "Estante 3 / Caja 10", recordStatus: "approved" },
-  { id: "7", studentId: "7", studentName: "Roberto Sánchez Mora", studentCI: "V-22334455", studentBirthDate: "30/01/1997", studentEmail: "roberto@mail.com", recordType: "Postgrado", recordCreatedDate: "2025-09-05", recordLocation: "Estante 2 / Caja 7", recordStatus: "approved" },
-  { id: "8", studentId: "8", studentName: "Laura Patricia Vega", studentCI: "V-66778899", studentBirthDate: "14/06/2000", studentEmail: "laura@mail.com", recordType: "Pregrado", recordCreatedDate: "2025-11-01", recordLocation: "Estante 5 / Caja 20", recordStatus: "approved" },
-  { id: "9", studentId: "9", studentName: "Miguel Ángel Torres", studentCI: "V-10101010", studentBirthDate: "08/08/2001", studentEmail: "miguel@mail.com", recordType: "Pregrado", recordCreatedDate: "2025-10-20", recordLocation: "Estante 2 / Caja 9", recordStatus: "rejected" },
-  { id: "10", studentId: "10", studentName: "Sandra Milena López", studentCI: "V-20202020", studentBirthDate: "25/02/1998", studentEmail: "sandra@mail.com", recordType: "Postgrado", recordCreatedDate: "2025-09-18", recordLocation: "Estante 1 / Caja 4", recordStatus: "rejected" },
-  { id: "11", studentId: "11", studentName: "Daniel Eduardo Castro", studentCI: "V-30303030", studentBirthDate: "12/11/2002", studentEmail: "daniel@mail.com", recordType: "Pregrado", recordCreatedDate: "2025-11-05", recordLocation: "—", recordStatus: "pending", withoutDocuments: true },
-  { id: "12", studentId: "12", studentName: "Patricia Isabel Ruiz", studentCI: "V-40404040", studentBirthDate: "03/05/1999", studentEmail: "patricia@mail.com", recordType: "Pregrado", recordCreatedDate: "2025-11-08", recordLocation: "—", recordStatus: "pending", withoutDocuments: true },
-  { id: "13", studentId: "13", studentName: "Fernando José Herrera", studentCI: "V-50505050", studentBirthDate: "19/07/2000", studentEmail: "fernando@mail.com", recordType: "Postgrado", recordCreatedDate: "2025-11-10", recordLocation: "—", recordStatus: "pending", withoutDocuments: true },
-  { id: "14", studentId: "14", studentName: "Gabriela Morales", studentCI: "V-60606060", studentBirthDate: "28/09/2001", studentEmail: "gabriela@mail.com", recordType: "Pregrado", recordCreatedDate: "2025-11-12", recordLocation: "—", recordStatus: "pending", withoutDocuments: true },
-  { id: "15", studentId: "15", studentName: "Ricardo Alfonso Núñez", studentCI: "V-70707070", studentBirthDate: "15/04/1997", studentEmail: "ricardo@mail.com", recordType: "Postgrado", recordCreatedDate: "2025-10-25", recordLocation: "—", recordStatus: "pending", withoutDocuments: true },
-];
+const FRONT_TO_BACK: Record<RecordStatusFilter, string | undefined> = {
+  pending: "PENDIENTE",
+  approved: "APROBADO",
+  rejected: "RECHAZADO",
+  "without-documents": undefined,
+};
 
-const MOCK_DOCUMENTS: RecordDocumentListItem[] = [
-  { id: "1", type: "Cédula de Identidad", fileName: "cedula.pdf", fileSize: "220 KB" },
-  { id: "2", type: "Partida de Nacimiento", fileName: "partida.pdf", fileSize: "180 KB" },
-  { id: "3", type: "Notas Certificadas", fileName: "notas.pdf", fileSize: "1.2 MB" },
-];
+const toFrontStatus = (status: string): "pending" | "approved" | "rejected" =>
+  status === "APROBADO" ? "approved" : status === "RECHAZADO" ? "rejected" : "pending";
 
-const MOCK_OBSERVATIONS: ActivityEntry[] = [
-  { text: 'Documento "Partida de Nacimiento" ilegible — solicitar reescan.', datetime: "2025-11-12 · Verificador A" },
-  { text: "Cédula cargada y vinculada correctamente.", datetime: "2025-11-10 · Asistente B" },
-];
+const errorMessage = (err: unknown, navigate: (path: string) => void): string => {
+  if (err instanceof ApiError && err.status === 401) {
+    clearSession();
+    navigate("/");
+  }
+  return err instanceof Error ? err.message : "Error inesperado";
+};
+
+const locationOf = (folder: FolderDto): string | undefined => {
+  const location = [folder.shelf, folder.box, folder.rowNumber].filter(Boolean).join(" / ");
+  return location || undefined;
+};
+
+const parseLocation = (location?: string): { shelf?: string; box?: string; rowNumber?: string } => {
+  if (!location) return {};
+  const parts = location
+    .split("/")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return { shelf: parts[0], box: parts[1], rowNumber: parts[2] };
+};
+
+const formatSize = (size?: number | null): string => {
+  if (size == null) return "—";
+  if (size < 1024) return `${size} B`;
+  const kb = size / 1024;
+  if (kb < 1024) return `${Math.round(kb)} KB`;
+  return `${(kb / 1024).toFixed(1)} MB`;
+};
+
+const docToItem = (doc: DocumentDto): RecordDocumentListItem => ({
+  id: String(doc.id),
+  type: doc.name,
+  fileName: doc.name,
+  fileSize: formatSize(doc.size),
+});
+
+const observationToEntry = (obs: ObservationDto): ActivityEntry => ({
+  text: obs.content,
+  datetime: [obs.createdAt, obs.authorName].filter(Boolean).join(" · "),
+});
+
+const historyToEntry = (h: HistoryDto): ActivityEntry => ({
+  text: h.detail ? `${h.action} — ${h.detail}` : h.action,
+  datetime: [h.createdAt, h.userName].filter(Boolean).join(" · "),
+});
+
+const toDetail = (folder: FolderDto): RecordDetailData => ({
+  studentId: String(folder.id),
+  studentName: folder.studentName,
+  studentCI: folder.studentCi,
+  recordType: folder.folderType,
+  recordCreatedDate: folder.createdAt.slice(0, 10),
+  recordLocation: locationOf(folder),
+  recordStatus: toFrontStatus(folder.status),
+});
 
 export const AssistantRecordManagementPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<RecordStatusFilter>("pending");
-  const [selectedId, setSelectedId] = useState<string | null>("1");
+  const [folders, setFolders] = useState<FolderDto[]>([]);
+  const [docCounts, setDocCounts] = useState<Record<number, number>>({});
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [folder, setFolder] = useState<FolderDto | null>(null);
+  const [documents, setDocuments] = useState<DocumentDto[]>([]);
+  const [entries, setEntries] = useState<ActivityEntry[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [expedientModalOpen, setExpedientModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<RecordDetailData | null>(null);
   const [confirmCreateOpen, setConfirmCreateOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [studentNotFoundAlert, setStudentNotFoundAlert] = useState(false);
   const [showCargarExpedientModal, setShowCargarExpedientModal] = useState(false);
 
-  const filteredRecords = useMemo(() => {
-    let list = MOCK_RECORDS;
-    if (activeFilter === "pending") list = list.filter((r) => r.recordStatus === "pending" && !r.withoutDocuments);
-    else if (activeFilter === "approved") list = list.filter((r) => r.recordStatus === "approved");
-    else if (activeFilter === "rejected") list = list.filter((r) => r.recordStatus === "rejected");
-    else if (activeFilter === "without-documents") list = list.filter((r) => r.withoutDocuments === true);
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      list = list.filter((r) => r.studentName.toLowerCase().includes(q) || r.studentCI.toLowerCase().includes(q));
+  const fetchList = useCallback(async () => {
+    try {
+      const params: { ci?: string; status?: string } = {};
+      const ci = searchQuery.trim();
+      if (ci) params.ci = ci;
+      const status = FRONT_TO_BACK[activeFilter];
+      if (status) params.status = status;
+      const list = await recordsService.list(params);
+      let counts: Record<number, number> = {};
+      if (activeFilter === "without-documents") {
+        const pairs = await Promise.all(
+          list.map(async (f) => ({
+            id: f.id,
+            count: (await recordsService.listDocuments(f.id)).length,
+          }))
+        );
+        counts = Object.fromEntries(pairs.map((p) => [p.id, p.count]));
+        setFolders(list.filter((f) => (counts[f.id] ?? 0) === 0));
+      } else {
+        setFolders(list);
+      }
+      setDocCounts(counts);
+      setSelectedId((prev) => {
+        const visible = activeFilter === "without-documents"
+          ? list.filter((f) => (counts[f.id] ?? 0) === 0)
+          : list;
+        const next = visible.some((f) => String(f.id) === prev) ? prev : (visible[0] ? String(visible[0].id) : null);
+        if (visible.length === 0 && ci) setStudentNotFoundAlert(true);
+        return next;
+      });
+    } catch (err) {
+      setError(errorMessage(err, navigate));
     }
-    return list;
-  }, [activeFilter, searchQuery]);
+  }, [searchQuery, activeFilter, navigate]);
 
-  const recordListItems = useMemo(
-    () =>
-      filteredRecords.map((r) => ({
-        id: r.id,
-        name: r.studentName,
-        ci: r.studentCI,
-        recordType: r.recordType ?? "—",
-        statusLabel: r.withoutDocuments ? "Sin documentos" : (r.recordStatus ? STATUS_LABELS[r.recordStatus] : "—"),
-        statusType: (r.withoutDocuments ? "without-documents" : r.recordStatus ?? "pending") as "pending" | "approved" | "rejected" | "without-documents",
-      })),
-    [filteredRecords]
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void fetchList();
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [fetchList]);
+
+  const loadDetail = useCallback(
+    async (folderId: number) => {
+      try {
+        const [detail, docs, observations, history] = await Promise.all([
+          recordsService.get(folderId),
+          recordsService.listDocuments(folderId),
+          recordsService.listObservations(folderId),
+          recordsService.listHistory(folderId),
+        ]);
+        setFolder(detail);
+        setDocuments(docs);
+        setEntries([...observations.map(observationToEntry), ...history.map(historyToEntry)]);
+      } catch (err) {
+        setError(errorMessage(err, navigate));
+      }
+    },
+    [navigate]
   );
 
-  const selectedRecord = useMemo(() => {
-    if (!selectedId) return null;
-    const r = MOCK_RECORDS.find((x) => x.id === selectedId);
-    if (!r) return null;
-    const { id: _id, withoutDocuments: _w, ...detail } = r;
-    return detail as RecordDetailData;
-  }, [selectedId]);
+  useEffect(() => {
+    if (selectedId == null) {
+      setFolder(null);
+      setDocuments([]);
+      setEntries([]);
+      return;
+    }
+    void loadDetail(Number(selectedId));
+  }, [selectedId, loadDetail]);
+
+  const recordListItems: RecordListItem[] = useMemo(
+    () =>
+      folders.map((f) => {
+        const withoutDocs = activeFilter === "without-documents" || (docCounts[f.id] ?? -1) === 0;
+        const frontStatus = toFrontStatus(f.status);
+        return {
+          id: String(f.id),
+          name: f.studentName,
+          ci: f.studentCi,
+          recordType: f.folderType ?? "—",
+          statusLabel: withoutDocs ? "Sin documentos" : (STATUS_LABELS[frontStatus] ?? "—"),
+          statusType: (withoutDocs ? "without-documents" : frontStatus) as RecordListItem["statusType"],
+        };
+      }),
+    [folders, activeFilter, docCounts]
+  );
+
+  const selectedRecord = folder ? toDetail(folder) : null;
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
-    // Simular búsqueda sin resultado para estudiante inexistente
-    if (value.toLowerCase().includes("inexistente")) {
-      setStudentNotFoundAlert(true);
-    }
   }, []);
   const handleFilterChange = useCallback((filter: RecordStatusFilter) => setActiveFilter(filter), []);
   const handleNewRecord = useCallback(() => setConfirmCreateOpen(true), []);
 
   const handleConfirmCreate = useCallback(() => {
     setConfirmCreateOpen(false);
+    setEditingRecord(null);
     setExpedientModalOpen(true);
   }, []);
 
   const handleExpedientSubmit = useCallback(
-    (data: { studentCI: string; studentName: string; recordType: string; studentEmail?: string; studentBirthDate?: string; recordLocation?: string }) => {
-      console.log("Nuevo expediente creado", data);
-      setSelectedId("1");
+    async (data: RecordFormData) => {
+      try {
+        if (editingRecord && selectedId != null) {
+          await recordsService.update(Number(selectedId), parseLocation(data.recordLocation));
+          setEditingRecord(null);
+          await loadDetail(Number(selectedId));
+        } else {
+          const created = await recordsService.create({
+            studentCi: data.studentCI.trim(),
+            folderType: data.recordType,
+            ...parseLocation(data.recordLocation),
+          });
+          await fetchList();
+          setSelectedId(String(created.id));
+        }
+      } catch (err) {
+        setEditingRecord(null);
+        setError(errorMessage(err, navigate));
+      }
     },
-    []
+    [editingRecord, selectedId, fetchList, loadDetail, navigate]
   );
   const handleRefresh = useCallback(() => {
     setSearchQuery("");
     setActiveFilter("pending");
     setSelectedId(null);
-    console.log("Refrescar");
   }, []);
-  const handleUpdateDocuments = useCallback(() => console.log("Actualizar documentos"), []);
+  const handleUpdateDocuments = useCallback(() => {
+    if (selectedId != null) void loadDetail(Number(selectedId));
+  }, [selectedId, loadDetail]);
   const handleUploadRecord = useCallback(() => setShowCargarExpedientModal(true), []);
 
-  const handleCargarExpedientSubmit = useCallback((data: CargarExpedientFormData) => {
-    console.log("Cargar expediente", data);
-    setShowCargarExpedientModal(false);
-  }, []);
+  const handleCargarExpedientSubmit = useCallback(
+    async (data: CargarExpedientFormData) => {
+      if (selectedId == null) {
+        setShowCargarExpedientModal(false);
+        return;
+      }
+      try {
+        if (data.file) {
+          await recordsService.uploadDocument(Number(selectedId), data.file);
+        }
+        if (data.recordLocation) {
+          await recordsService.update(Number(selectedId), parseLocation(data.recordLocation));
+        }
+        setShowCargarExpedientModal(false);
+        await loadDetail(Number(selectedId));
+      } catch (err) {
+        setShowCargarExpedientModal(false);
+        setError(errorMessage(err, navigate));
+      }
+    },
+    [selectedId, loadDetail, navigate]
+  );
   const handleCargarExpedientCancel = useCallback(() => setShowCargarExpedientModal(false), []);
-  const handleEdit = useCallback(() => console.log("Editar expediente"), []);
+  const handleEdit = useCallback(() => {
+    if (selectedRecord) {
+      setEditingRecord(selectedRecord);
+      setExpedientModalOpen(true);
+    }
+  }, [selectedRecord]);
   const handleDelete = useCallback(() => setConfirmDeleteOpen(true), []);
 
-  const handleConfirmDelete = useCallback(() => {
-    setSelectedId(null);
-    setConfirmDeleteOpen(false);
-  }, []);
-  const handleViewDocument = useCallback((id: string) => console.log("Ver documento", id), []);
-  const handleDocumentObservation = useCallback((id: string) => console.log("Observación documento", id), []);
-  const handleViewHistory = useCallback(() => console.log("Ver historial"), []);
+  const handleConfirmDelete = useCallback(async () => {
+    if (selectedId == null) {
+      setConfirmDeleteOpen(false);
+      return;
+    }
+    try {
+      await recordsService.remove(Number(selectedId));
+      setConfirmDeleteOpen(false);
+      setSelectedId(null);
+      await fetchList();
+    } catch (err) {
+      setConfirmDeleteOpen(false);
+      setError(errorMessage(err, navigate));
+    }
+  }, [selectedId, fetchList, navigate]);
+  const handleViewDocument = useCallback(
+    async (id: string) => {
+      try {
+        const blob = await recordsService.downloadDocument(Number(id));
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank", "noopener");
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      } catch (err) {
+        setError(errorMessage(err, navigate));
+      }
+    },
+    [navigate]
+  );
+  const handleDocumentObservation = useCallback(
+    async (id: string) => {
+      if (selectedId == null) return;
+      const content = window.prompt("Observación del documento:");
+      if (!content || !content.trim()) return;
+      try {
+        await recordsService.addObservation(Number(selectedId), content.trim(), Number(id));
+        await loadDetail(Number(selectedId));
+      } catch (err) {
+        setError(errorMessage(err, navigate));
+      }
+    },
+    [selectedId, loadDetail, navigate]
+  );
+  const handleViewHistory = useCallback(() => {
+    if (selectedId != null) void loadDetail(Number(selectedId));
+  }, [selectedId, loadDetail]);
 
   return (
     <DashboardTemplate
@@ -196,7 +379,7 @@ export const AssistantRecordManagementPage = () => {
             <div className="assistant-record-management-page__documents">
               <RecordDocumentsList
                 title="Documentos"
-                documents={selectedRecord ? MOCK_DOCUMENTS : []}
+                documents={selectedRecord ? documents.map(docToItem) : []}
                 onViewDocument={handleViewDocument}
                 onObservation={handleDocumentObservation}
                 showObservation={false}
@@ -208,7 +391,7 @@ export const AssistantRecordManagementPage = () => {
               <RecentActivity
                 title="Observaciones"
                 linkText="Ver historial"
-                entries={selectedRecord ? MOCK_OBSERVATIONS : []}
+                entries={selectedRecord ? entries : []}
                 onViewAll={handleViewHistory}
               />
             </div>
@@ -217,8 +400,11 @@ export const AssistantRecordManagementPage = () => {
       </div>
       <RecordFormModal
         open={expedientModalOpen}
-        onClose={() => setExpedientModalOpen(false)}
-        record={null}
+        onClose={() => {
+          setExpedientModalOpen(false);
+          setEditingRecord(null);
+        }}
+        record={editingRecord}
         onSubmit={handleExpedientSubmit}
       />
       <ConfirmModal
@@ -242,6 +428,14 @@ export const AssistantRecordManagementPage = () => {
         message="No se encontró el estudiante al procesar la solicitud."
         buttonLabel="Cerrar"
         onClose={() => setStudentNotFoundAlert(false)}
+      />
+      <AlertModal
+        open={error !== null}
+        type="error"
+        title="Error"
+        message={error ?? ""}
+        buttonLabel="Cerrar"
+        onClose={() => setError(null)}
       />
       <Modal
         open={showCargarExpedientModal}

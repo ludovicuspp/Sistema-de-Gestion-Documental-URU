@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { ExpedientSelectCard } from "@/components/organisms/ExpedientSelectCard";
@@ -8,23 +8,14 @@ import { Card } from "@/components/molecules/Card";
 import { Button } from "@/components/atoms/Button";
 import { Modal } from "@/components/molecules/Modal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
+import { AlertModal } from "@/components/molecules/AlertModal";
 import type { ExpedientSelectCardData } from "@/components/organisms/ExpedientSelectCard";
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
 import { ASSISTANT_SIDEBAR_MODULES } from "@/components/organisms/Sidebar";
+import { ApiError, clearSession } from "@/services/api/http";
+import { recordsService, type DocumentDto, type FolderDto } from "@/services/api/recordsService";
+import { catalogService, type DocumentTypeDto } from "@/services/api/catalogService";
 import "./AssistantDocumentManagementPage.css";
-
-const MOCK_DOCUMENTS: ExpedientDocumentItem[] = [
-  { id: "d1", type: "Partida de Nacimiento", fileName: "partida.pdf", uploadedBy: "Asistente B", date: "2025-11-10", validationStatus: "pending" },
-  { id: "d2", type: "Cédula de Identidad", fileName: "cedula.pdf", uploadedBy: "Asistente B", date: "2025-11-09", validationStatus: "validated" },
-  { id: "d3", type: "Notas Certificadas", fileName: "notas.pdf", uploadedBy: "Asistente B", date: "2025-11-08", validationStatus: "pending" },
-  { id: "d4", type: "Veredicto", fileName: "veredicto_2025.pdf", uploadedBy: "Asistente A", date: "2025-11-07", validationStatus: "validated" },
-  { id: "d5", type: "Título de Bachiller", fileName: "titulo_bachiller.pdf", uploadedBy: "Asistente B", date: "2025-11-06", validationStatus: "pending" },
-  { id: "d6", type: "Cédula de Identidad", fileName: "cedula_actualizada.pdf", uploadedBy: "Asistente A", date: "2025-11-05", validationStatus: "validated" },
-  { id: "d7", type: "Notas Certificadas", fileName: "notas_semestre1.pdf", uploadedBy: "Asistente B", date: "2025-11-04", validationStatus: "pending" },
-  { id: "d8", type: "Partida de Nacimiento", fileName: "partida_nacimiento.pdf", uploadedBy: "Asistente A", date: "2025-11-03", validationStatus: "validated" },
-  { id: "d9", type: "Certificado de Calificaciones", fileName: "certificado_calificaciones.pdf", uploadedBy: "Asistente B", date: "2025-11-02", validationStatus: "pending" },
-  { id: "d10", type: "Veredicto", fileName: "veredicto.pdf", uploadedBy: "Asistente A", date: "2025-11-01", validationStatus: "validated" },
-];
 
 const QUICK_RULES = [
   "Todo documento debe asociarse a un expediente existente.",
@@ -34,21 +25,27 @@ const QUICK_RULES = [
 
 const MAX_OBSERVATION_CHARS = 200;
 
+const toExpedientData = (folder: FolderDto): ExpedientSelectCardData => ({
+  ci: folder.studentCi,
+  tipo: folder.folderType,
+  cargado: (folder.createdAt ?? "").slice(0, 10) || "—",
+  ubicacion:
+    [folder.shelf, folder.box, folder.rowNumber].filter((v): v is string => Boolean(v)).join(" / ") ||
+    "—",
+});
+
 /**
  * AssistantDocumentManagementPage - Page
  *
  * Document management view for Asistente: expedient selection, upload document, documents table, and quick rules.
  * Layout matches design: upload section on top, document table in middle, reglas rápidas at bottom.
+ * Datos reales: records-service (carpetas/documentos) y catalog-service (tipos de documento, solo lectura).
  */
 export const AssistantDocumentManagementPage = () => {
   const navigate = useNavigate();
-  const [expedientData] = useState<ExpedientSelectCardData | null>({
-    ci: "0113",
-    tipo: "Pregrado",
-    cargado: "2025-11-12",
-    ubicacion: "Estante 3 / Caja 12",
-  });
-  const [documents, setDocuments] = useState<ExpedientDocumentItem[]>(MOCK_DOCUMENTS);
+  const [selectedFolder, setSelectedFolder] = useState<FolderDto | null>(null);
+  const [rawDocs, setRawDocs] = useState<DocumentDto[]>([]);
+  const [docTypes, setDocTypes] = useState<DocumentTypeDto[]>([]);
   const [uploadTypeError, setUploadTypeError] = useState(false);
   const [confirmDeleteDocOpen, setConfirmDeleteDocOpen] = useState(false);
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
@@ -58,34 +55,120 @@ export const AssistantDocumentManagementPage = () => {
   const [observationDoc, setObservationDoc] = useState<{ id: string; fileName: string } | null>(null);
   const [observationText, setObservationText] = useState("");
   const [documentObservations, setDocumentObservations] = useState<Record<string, string>>({});
+  const [errorAlertOpen, setErrorAlertOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const unauthorized = useCallback(() => {
+    clearSession();
+    navigate("/");
+  }, [navigate]);
+
+  const showError = useCallback((message: string) => {
+    setErrorMessage(message);
+    setErrorAlertOpen(true);
+  }, []);
+
+  const showApiError = useCallback(
+    (err: unknown, fallback: string) => {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          unauthorized();
+          return;
+        }
+        showError(err.message);
+      } else {
+        showError(fallback);
+      }
+    },
+    [unauthorized, showError],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const [folders, types] = await Promise.all([
+          recordsService.list(),
+          catalogService.documentTypes(),
+        ]);
+        if (cancelled) return;
+        setDocTypes(types);
+        if (folders.length > 0) {
+          setSelectedFolder(folders[0]);
+          const docs = await recordsService.listDocuments(folders[0].id);
+          if (!cancelled) setRawDocs(docs);
+        }
+      } catch (err) {
+        if (!cancelled) showApiError(err, "No se pudieron cargar los datos.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showApiError]);
+
+  const docTypeById = useMemo(() => new Map(docTypes.map((t) => [t.id, t])), [docTypes]);
+
+  const documents: ExpedientDocumentItem[] = useMemo(
+    () =>
+      rawDocs.map((d) => ({
+        id: String(d.id),
+        type: docTypeById.get(d.documentTypeId ?? -1)?.name ?? "Documento",
+        fileName: d.name,
+        uploadedBy: "—",
+        date: (d.createdAt ?? "").slice(0, 10) || "—",
+        validationStatus: "pending" as const,
+      })),
+    [rawDocs, docTypeById],
+  );
+
+  const expedientData: ExpedientSelectCardData | null = useMemo(
+    () => (selectedFolder ? toExpedientData(selectedFolder) : null),
+    [selectedFolder],
+  );
 
   const documentTypesForSelect = useMemo(
-    () => [
-      { value: "1", label: "Partida de Nacimiento" },
-      { value: "2", label: "Cédula de Identidad" },
-      { value: "3", label: "Notas Certificadas" },
-      { value: "4", label: "Veredicto" },
-    ],
-    []
+    () => docTypes.map((t) => ({ value: String(t.id), label: t.name })),
+    [docTypes],
   );
 
   const selectedExpedientLabel =
-    expedientData?.ci && expedientData?.tipo ? `${expedientData.tipo} - Ludovicus Van Vargas` : undefined;
+    selectedFolder ? `${selectedFolder.folderType} - ${selectedFolder.studentName}` : undefined;
 
-  const handleViewDocument = useCallback((id: string) => {
-    const doc = documents.find((d) => d.id === id);
-    if (doc) setViewingDocument({ id: doc.id, fileName: doc.fileName });
-  }, [documents]);
+  const generalStatus = selectedFolder && /APROB|VALID/i.test(selectedFolder.status ?? "")
+    ? ("validated" as const)
+    : ("pending" as const);
+
+  const handleLogout = useCallback(() => {
+    clearSession();
+    navigate("/");
+  }, [navigate]);
+
+  const handleViewDocument = useCallback(
+    async (id: string) => {
+      const doc = rawDocs.find((d) => d.id === Number(id));
+      if (doc) setViewingDocument({ id, fileName: doc.name });
+      try {
+        const blob = await recordsService.downloadDocument(Number(id));
+        const url = URL.createObjectURL(blob);
+        globalThis.open(url, "_blank", "noopener");
+        globalThis.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      } catch (err) {
+        showApiError(err, "El documento seleccionado no está disponible.");
+      }
+    },
+    [rawDocs, showApiError],
+  );
 
   const handleObservation = useCallback((id: string) => {
-    const doc = documents.find((d) => d.id === id);
+    const doc = rawDocs.find((d) => d.id === Number(id));
     if (doc) {
-      setObservationDoc({ id: doc.id, fileName: doc.fileName });
-      const saved = documentObservations[doc.id] ?? "";
+      setObservationDoc({ id, fileName: doc.name });
+      const saved = documentObservations[id] ?? "";
       setObservationText(saved.length > MAX_OBSERVATION_CHARS ? saved.slice(0, MAX_OBSERVATION_CHARS) : saved);
       setObservationModalOpen(true);
     }
-  }, [documents, documentObservations]);
+  }, [rawDocs, documentObservations]);
 
   const handleObservationTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -115,21 +198,54 @@ export const AssistantDocumentManagementPage = () => {
     setConfirmDeleteDocOpen(true);
   }, []);
 
-  const handleConfirmDeleteDocument = useCallback(() => {
-    if (deletingDocId) {
-      setDocuments((prev) => prev.filter((d) => d.id !== deletingDocId));
+  const handleConfirmDeleteDocument = useCallback(async () => {
+    if (!deletingDocId || !selectedFolder) {
+      setConfirmDeleteDocOpen(false);
+      setDeletingDocId(null);
+      return;
+    }
+    try {
+      await recordsService.deleteDocument(Number(deletingDocId));
+      setRawDocs(await recordsService.listDocuments(selectedFolder.id));
       if (viewingDocument?.id === deletingDocId) setViewingDocument(null);
       setConfirmDeleteDocOpen(false);
       setDeletingDocId(null);
+    } catch (err) {
+      showApiError(err, "No se pudo eliminar el documento.");
     }
-  }, [deletingDocId, viewingDocument]);
+  }, [deletingDocId, selectedFolder, viewingDocument, showApiError]);
+
+  const handleUpload = useCallback(
+    async (file: File | null, typeId: string) => {
+      if (!selectedFolder) {
+        showError("Seleccione un expediente antes de subir documentos.");
+        return;
+      }
+      if (!file) {
+        showError("Seleccione un archivo antes de subir.");
+        return;
+      }
+      if (typeId === "") {
+        setUploadTypeError(true);
+        showError("Seleccione el tipo de documento.");
+        return;
+      }
+      try {
+        await recordsService.uploadDocument(selectedFolder.id, file, Number(typeId));
+        setRawDocs(await recordsService.listDocuments(selectedFolder.id));
+      } catch (err) {
+        showApiError(err, "No se pudo subir el documento.");
+      }
+    },
+    [selectedFolder, showApiError, showError],
+  );
 
   return (
     <DashboardTemplate
       currentView="Gestión de documentos"
       userRole="Asistente"
       userEmail="username@mail.co"
-      onLogout={() => navigate("/")}
+      onLogout={handleLogout}
       onRefresh={() => globalThis.location.reload()}
       onPrivacyClick={() => {}}
       sidebarModules={ASSISTANT_SIDEBAR_MODULES}
@@ -154,7 +270,7 @@ export const AssistantDocumentManagementPage = () => {
               documentTypes={documentTypesForSelect}
               selectedTypeId={selectedTypeId}
               selectedTypeError={uploadTypeError}
-              onUpload={(_file, typeId) => setUploadTypeError(typeId === "")}
+              onUpload={(file, typeId) => void handleUpload(file, typeId)}
               onTypeChange={(id) => {
                 setSelectedTypeId(id);
                 setUploadTypeError(false);
@@ -165,10 +281,10 @@ export const AssistantDocumentManagementPage = () => {
           <div className="assistant-document-management-page__documents">
             <ExpedientDocumentsCard
               title="Documentos del expediente"
-              generalStatus="pending"
+              generalStatus={generalStatus}
               documents={documents}
               viewingDocument={viewingDocument}
-              onViewDocument={handleViewDocument}
+              onViewDocument={(id) => void handleViewDocument(id)}
               onObservation={handleObservation}
               onDeleteDocument={handleDeleteDocument}
             />
@@ -193,7 +309,15 @@ export const AssistantDocumentManagementPage = () => {
         onCancel={() => { setConfirmDeleteDocOpen(false); setDeletingDocId(null); }}
         label="Eliminar"
         message="¿Seguro que desea eliminar el documento?"
-        onConfirm={handleConfirmDeleteDocument}
+        onConfirm={() => void handleConfirmDeleteDocument()}
+      />
+      <AlertModal
+        open={errorAlertOpen}
+        type="error"
+        title="Error"
+        message={errorMessage}
+        buttonLabel="Cerrar"
+        onClose={() => setErrorAlertOpen(false)}
       />
       <Modal
         open={observationModalOpen}

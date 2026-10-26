@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { TaskFiltersCard } from "@/components/organisms/TaskFiltersCard";
@@ -7,124 +7,131 @@ import { TaskDetailCard } from "@/components/organisms/TaskDetailCard";
 import { TaskRecentCard } from "@/components/organisms/TaskRecentCard";
 import { TaskFormModal } from "@/components/molecules/TaskFormModal";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
+import { AlertModal } from "@/components/molecules/AlertModal";
 import type { TaskFilterTab } from "@/components/organisms/TaskFiltersCard";
 import type { TaskListItem } from "@/components/organisms/TaskListCard";
 import type { TaskDetail } from "@/components/organisms/TaskDetailCard";
+import { tasksService } from "@/services/api/tasksService";
+import type { TaskDto } from "@/services/api/tasksService";
+import { ApiError, clearSession } from "@/services/api/http";
 import "./TaskManagementPage.css";
 
-const MOCK_LIST: TaskListItem[] = [
-  {
-    id: "1",
-    title: "Revisión de partidas - Grupo A",
-    assignee: "Verificador A",
-    assignmentDate: "2025-11-13",
-    status: "Pendiente",
-  },
-  {
-    id: "2",
-    title: "Digitalizar cédulas batch 3",
-    assignee: "Asistente B",
-    assignmentDate: "2025-11-10",
-    status: "Finalizada",
-  },
-];
+const toListItem = (t: TaskDto): TaskListItem => ({
+  id: String(t.id),
+  title: t.title,
+  assignee: t.assignedToName ?? t.createdByName ?? "—",
+  assignmentDate: (t.createdAt ?? "").slice(0, 10),
+  dueDate: t.dueDate ?? undefined,
+  status: t.status === "COMPLETADA" ? "Finalizada" : "Pendiente",
+});
 
-const MOCK_RECENT: TaskListItem[] = [
-  {
-    id: "3",
-    title: "Asignar escaneo - Lote 4",
-    assignee: "Asistente D",
-    assignmentDate: "2025-11-11",
-    status: "Pendiente",
-  },
-];
-
-const MOCK_DETAILS: Record<string, TaskDetail> = {
-  "1": {
-    id: "1",
-    title: "Revisión de partidas - Grupo A",
-    assignee: "Verificador A",
-    assignmentDate: "2025-11-13",
-    status: "Pendiente",
-    description:
-      "Revisar integridad y legibilidad de partidas de nacimiento del lote A. Reportar observaciones y marcar como validada.",
-    workDetail: [
-      "Verificar documentos escaneados.",
-      "Agregar observaciones por documento si aplica.",
-      "Marcar expediente como validado en el sistema.",
-    ],
-    historyCount: 3,
-    historyResponsible: "Admin",
-    total: 2,
-  },
-  "2": {
-    id: "2",
-    title: "Digitalizar cédulas batch 3",
-    assignee: "Asistente B",
-    assignmentDate: "2025-11-10",
-    status: "Finalizada",
-    description: "Digitalización del batch 3 de cédulas. Revisar calidad de escaneo y completar índice.",
-    workDetail: [
-      "Escanear documentos del lote.",
-      "Revisar calidad de imágenes.",
-      "Completar metadatos en sistema.",
-    ],
-    historyCount: 5,
-    historyResponsible: "Admin",
-  },
-  "3": {
-    id: "3",
-    title: "Asignar escaneo - Lote 4",
-    assignee: "Asistente D",
-    assignmentDate: "2025-11-11",
-    status: "Pendiente",
-    description: "Asignar tareas de escaneo del lote 4 a los asistentes disponibles.",
-    workDetail: ["Verificar disponibilidad.", "Asignar lotes.", "Registrar en sistema."],
-    historyCount: 1,
-    historyResponsible: "Admin",
-  },
-};
+const toDetail = (t: TaskDto): TaskDetail => ({
+  ...toListItem(t),
+  description: t.description ?? t.detail ?? t.title,
+  workDetail: (t.detail ?? "")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean),
+  historyCount: 0,
+  historyResponsible: t.createdByName ?? "—",
+});
 
 /**
  * TaskManagementPage - Page (Admin)
  *
- * Task management view: filters, list, detail, recent tasks.
+ * Task management view: filters, list, detail, recent tasks. Datos del backend real.
  */
 export const TaskManagementPage = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<TaskFilterTab>("pending");
-  const [selectedId, setSelectedId] = useState<string | null>("1");
-  const [list, setList] = useState<TaskListItem[]>(MOCK_LIST);
-  const [recent, setRecent] = useState<TaskListItem[]>(MOCK_RECENT);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [tasks, setTasks] = useState<TaskDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<TaskDetail | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
 
+  const handleAuthError = (err: unknown): boolean => {
+    if (err instanceof ApiError && err.status === 401) {
+      clearSession();
+      navigate("/");
+      return true;
+    }
+    return false;
+  };
+
+  const showError = (err: unknown) => {
+    if (handleAuthError(err)) return;
+    setAlertMessage(
+      err instanceof ApiError ? err.message : "Error al cargar las tareas. Intente nuevamente."
+    );
+  };
+
+  const load = useCallback(async (tab: TaskFilterTab) => {
+    setLoading(true);
+    try {
+      let data: TaskDto[];
+      if (tab === "pending") {
+        const [pending, inProgress] = await Promise.all([
+          tasksService.list({ status: "PENDIENTE" }),
+          tasksService.list({ status: "EN_PROCESO" }),
+        ]);
+        data = [...pending, ...inProgress].sort((a, b) =>
+          (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+        );
+      } else if (tab === "completed") {
+        data = await tasksService.list({ status: "COMPLETADA" });
+      } else {
+        data = await tasksService.list();
+      }
+      setTasks(data);
+      setSelectedId((prev) =>
+        prev != null && data.some((t) => String(t.id) === prev)
+          ? prev
+          : data.length > 0
+            ? String(data[0].id)
+            : null
+      );
+    } catch (err) {
+      showError(err);
+    } finally {
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    void load(activeTab);
+  }, [load, activeTab]);
+
+  const items = useMemo(() => tasks.map(toListItem), [tasks]);
+
   const filteredList = useMemo(() => {
-    let out = list;
-    if (activeTab === "pending") out = out.filter((t) => t.status === "Pendiente");
-    else if (activeTab === "completed") out = out.filter((t) => t.status === "Finalizada");
     const q = search.trim().toLowerCase();
-    if (!q) return out;
-    return out.filter(
+    if (!q) return items;
+    return items.filter(
       (t) =>
         t.title.toLowerCase().includes(q) ||
         t.assignee.toLowerCase().includes(q)
     );
-  }, [list, search, activeTab]);
+  }, [items, search]);
 
-  const selectedDetail =
-    selectedId == null ? null : (MOCK_DETAILS[selectedId] ?? null);
+  const recent = useMemo(() => items.slice(0, 3), [items]);
+
+  const selectedDetail = useMemo(() => {
+    if (selectedId == null) return null;
+    const found = tasks.find((t) => String(t.id) === selectedId);
+    return found ? toDetail(found) : null;
+  }, [tasks, selectedId]);
 
   const handleCreateTask = useCallback(() => {
-    setEditingTask(null);
     setTaskModalOpen(true);
   }, []);
 
   const handleTaskSubmit = useCallback(
-    (data: {
+    async (data: {
       title: string;
       assignee: string;
       assignmentDate: string;
@@ -133,35 +140,21 @@ export const TaskManagementPage = () => {
       description: string;
       workDetail: string[];
     }) => {
-      if (editingTask) {
-        setList((prev) =>
-          prev.map((t) =>
-            t.id === editingTask.id
-              ? {
-                  ...t,
-                  title: data.title,
-                  assignee: data.assignee,
-                  assignmentDate: data.assignmentDate,
-                  status: data.status,
-                }
-              : t
-          )
-        );
-      } else {
-        const newId = String(Math.max(...list.map((t) => parseInt(t.id, 10)), 0) + 1);
-        setList((prev) => [
-          ...prev,
-          {
-            id: newId,
-            title: data.title,
-            assignee: data.assignee,
-            assignmentDate: data.assignmentDate,
-            status: data.status,
-          },
-        ]);
+      try {
+        await tasksService.create({
+          title: data.title.trim(),
+          description: data.description.trim() || undefined,
+          detail: data.workDetail.join("\n") || undefined,
+          assignedToName: data.assignee.trim() || undefined,
+          dueDate: data.dueDate || undefined,
+        });
+        await load(activeTab);
+      } catch (err) {
+        showError(err);
       }
     },
-    [editingTask, list]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [load, activeTab]
   );
 
   const handleDelete = useCallback((id: string) => {
@@ -169,17 +162,49 @@ export const TaskManagementPage = () => {
     setConfirmDeleteOpen(true);
   }, []);
 
-  const handleConfirmDelete = useCallback(() => {
-    if (deletingTaskId) {
-      setList((prev) => prev.filter((t) => t.id !== deletingTaskId));
-      setRecent((prev) => prev.filter((t) => t.id !== deletingTaskId));
-      if (selectedId === deletingTaskId) setSelectedId(null);
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deletingTaskId) return;
+    try {
+      await tasksService.remove(Number(deletingTaskId));
       setConfirmDeleteOpen(false);
       setDeletingTaskId(null);
+      await load(activeTab);
+    } catch (err) {
+      setConfirmDeleteOpen(false);
+      showError(err);
     }
-  }, [deletingTaskId, selectedId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deletingTaskId, load, activeTab]);
 
-  const handleLogout = () => navigate("/");
+  const handleMarkPending = useCallback(async () => {
+    if (selectedId == null) return;
+    try {
+      await tasksService.updateStatus(Number(selectedId), "PENDIENTE");
+      await load(activeTab);
+    } catch (err) {
+      showError(err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, load, activeTab]);
+
+  const handleNotifyAssigned = useCallback(async () => {
+    if (selectedId == null) return;
+    try {
+      await tasksService.updateStatus(Number(selectedId), "EN_PROCESO");
+      await load(activeTab);
+    } catch (err) {
+      showError(err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, load, activeTab]);
+
+  const handleLogout = () => {
+    clearSession();
+    navigate("/");
+  };
+
+  const visibleList = loading ? [] : filteredList;
+  const visibleRecent = loading ? [] : recent;
 
   return (
     <DashboardTemplate
@@ -200,18 +225,18 @@ export const TaskManagementPage = () => {
           onCreateTask={handleCreateTask}
         />
         <TaskListCard
-          items={filteredList}
+          items={visibleList}
           selectedId={selectedId}
           onSelect={setSelectedId}
           onDelete={handleDelete}
         />
         <TaskDetailCard
           task={selectedDetail}
-          onMarkPending={() => {}}
-          onNotifyAssigned={() => {}}
+          onMarkPending={handleMarkPending}
+          onNotifyAssigned={handleNotifyAssigned}
         />
         <TaskRecentCard
-          items={recent}
+          items={visibleRecent}
           selectedId={selectedId}
           onViewAll={() => {}}
           onSelect={setSelectedId}
@@ -221,15 +246,23 @@ export const TaskManagementPage = () => {
       <TaskFormModal
         open={taskModalOpen}
         onClose={() => setTaskModalOpen(false)}
-        task={editingTask}
-        onSubmit={handleTaskSubmit}
+        task={null}
+        onSubmit={(data) => void handleTaskSubmit(data)}
       />
       <ConfirmModal
         open={confirmDeleteOpen}
         onCancel={() => { setConfirmDeleteOpen(false); setDeletingTaskId(null); }}
         label="Eliminar"
         message="¿Seguro que desea eliminar la tarea?"
-        onConfirm={handleConfirmDelete}
+        onConfirm={() => void handleConfirmDelete()}
+      />
+      <AlertModal
+        open={alertMessage != null}
+        type="error"
+        title="Error"
+        message={alertMessage ?? ""}
+        buttonLabel="Cerrar"
+        onClose={() => setAlertMessage(null)}
       />
     </DashboardTemplate>
   );

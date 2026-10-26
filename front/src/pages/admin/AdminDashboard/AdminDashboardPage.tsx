@@ -5,23 +5,21 @@ import { KPICards } from "@/components/organisms/KPICards";
 import { RecentTasks } from "@/components/organisms/RecentTasks";
 import { Reminders } from "@/components/organisms/Reminders";
 import { QuickAccess } from "@/components/organisms/QuickAccess";
-import { QuickSummary } from "@/components/organisms/QuickSummary";
 import { MonthlyActivityCard } from "@/components/organisms/MonthlyActivityCard";
 import { IndicatorsStatusCard } from "@/components/organisms/IndicatorsStatusCard";
 import { RecentActivity } from "@/components/organisms/RecentActivity";
 import type { KPIData } from "@/components/organisms/KPICards";
 import type { Task } from "@/components/organisms/RecentTasks";
 import type { QuickAccessItem } from "@/components/organisms/QuickAccess";
-import type { QuickSummaryItem } from "@/components/organisms/QuickSummary";
 import type { ActivityEntry } from "@/components/organisms/RecentActivity";
 import {
   recordsService,
-  documentsService,
+  requestsService,
   tasksService,
-  remindersService,
-  activityService,
-  indicatorsService,
+  ApiError,
+  clearSession,
 } from "@/services/api";
+import type { RecentHistoryDto, TaskDto } from "@/services/api";
 import "./AdminDashboardPage.css";
 
 const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
@@ -30,19 +28,30 @@ const QUICK_ACCESS_ITEMS: QuickAccessItem[] = [
   { label: "Generar reporte", onClick: () => {}, primary: true },
 ];
 
+const formatHistoryEntry = (h: RecentHistoryDto): ActivityEntry => {
+  const who = h.studentName?.trim() || h.userName?.trim() || "";
+  let text = who ? `${h.action} — ${who}` : h.action;
+  if (h.detail?.trim()) text += `: ${h.detail}`;
+  return { text, datetime: h.createdAt };
+};
+
+const formatReminder = (t: TaskDto): string =>
+  t.dueDate ? `${t.title} — vence ${t.dueDate.slice(0, 10)}` : t.title;
+
 /**
  * AdminDashboardPage - Page (Admin)
  *
  * Layout: top row = 3 KPI cards; two columns: left = KPIs + Recent tasks + (Monthly activity | Indicators);
- * right = Reminders, Quick access, Quick summary, Recent activity.
+ * right = Reminders, Quick access, Recent activity.
+ * Sin fuente de datos en el backend se ocultan: QuickSummary ("Hoy") y las tarjetas
+ * de usuarios inactivos / disponibilidad del sistema.
  */
 export const AdminDashboardPage = () => {
   const navigate = useNavigate();
   const [kpis, setKpis] = useState<KPIData[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [reminders, setReminders] = useState<string[]>([]);
-  const [summaryToday, setSummaryToday] = useState<QuickSummaryItem[]>([]);
-  const [monthlyActivityValue, setMonthlyActivityValue] = useState<string>("Expedientes creados +84");
+  const [monthlyActivityValue, setMonthlyActivityValue] = useState<string>("—");
   const [indicatorItems, setIndicatorItems] = useState<string[]>([]);
   const [activityEntries, setActivityEntries] = useState<ActivityEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,63 +60,68 @@ export const AdminDashboardPage = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const [recordsSummary, documentsSummary, tasksSummary, remindersList, activityList, indicatorsState, summaryTodayData] = await Promise.all([
-          recordsService.getSummary(),
-          documentsService.getSummary(),
-          tasksService.getSummary(),
-          remindersService.list(),
-          activityService.getRecent(),
-          indicatorsService.getCurrentState(),
-          indicatorsService.getSummaryToday(),
-        ]);
+        const [recordsStats, requestsStats, tasksStats, pendingTasks, history] =
+          await Promise.all([
+            recordsService.stats(),
+            requestsService.stats(),
+            tasksService.stats(),
+            tasksService.list({ status: "PENDIENTE" }),
+            recordsService.recentHistory(10),
+          ]);
 
         setKpis([
-          { value: recordsSummary.total.toLocaleString("es"), label: "Expedientes totales", subtitle: `Actualizado: ${recordsSummary.updatedAt}.` },
-          { value: documentsSummary.pending.toString(), label: "Documentos pendientes", subtitle: documentsSummary.subtitle },
-          { value: tasksSummary.active.toString(), label: "Tareas activas", subtitle: tasksSummary.subtitle },
+          {
+            value: recordsStats.total.toLocaleString("es"),
+            label: "Expedientes totales",
+            subtitle: `Aprobados: ${recordsStats.approved} · Rechazados: ${recordsStats.rejected}`,
+          },
+          {
+            value: recordsStats.pending.toLocaleString("es"),
+            label: "Documentos pendientes",
+            subtitle: `Documentos: ${recordsStats.documents.toLocaleString("es")}`,
+          },
+          {
+            value: (tasksStats.pending + tasksStats.inProgress).toLocaleString("es"),
+            label: "Tareas activas",
+            subtitle: `Pendientes: ${tasksStats.pending} · En proceso: ${tasksStats.inProgress}`,
+          },
         ]);
 
-        const mapTask = (t: { id: string; title: string; date: string; priority?: "Alta" | "Media" | "Baja"; assignee?: string }): Task => ({
-          id: t.id,
-          title: t.title,
-          date: t.date,
-          priority: t.priority,
-          assignee: t.assignee,
-          actions:
-            t.priority === "Alta"
-              ? [
-                  { label: "Ver", onClick: () => {}, variant: "ghost" as const },
-                  { label: "Asignar", onClick: () => {}, variant: "primary" as const },
-                ]
-              : [
-                  { label: "Ver", onClick: () => {} },
-                  { label: "Notificar", onClick: () => {} },
-                  { label: "Marcar completada", onClick: () => {} },
-                  { label: "Asignar", onClick: () => {} },
-                ],
-        });
-        setTasks(tasksSummary.recent.map(mapTask));
+        setTasks(
+          pendingTasks.slice(0, 5).map(
+            (t): Task => ({
+              id: String(t.id),
+              title: t.title,
+              date: (t.dueDate ?? t.createdAt).slice(0, 10),
+              assignee: t.assignedToName ?? undefined,
+              actions: [
+                { label: "Ver", onClick: () => {}, variant: "ghost" as const },
+                { label: "Asignar", onClick: () => {}, variant: "primary" as const },
+              ],
+            }),
+          ),
+        );
 
-        setReminders(remindersList.map((r) => r.text));
-        setSummaryToday([
-          { label: "Nuevos expedientes", value: summaryTodayData.newRecords },
-          { label: "Documentos validados", value: summaryTodayData.validatedDocuments },
-          { label: "Solicitudes procesadas", value: summaryTodayData.processedRequests },
-        ]);
-        setMonthlyActivityValue(`Expedientes creados +${recordsSummary.createdLast30Days}`);
+        setReminders(pendingTasks.slice(0, 5).map(formatReminder));
+        setMonthlyActivityValue(
+          `Expedientes totales ${recordsStats.total.toLocaleString("es")}`,
+        );
         setIndicatorItems([
-          `${indicatorsState.pendingDocuments} Documentos pendientes`,
-          `${indicatorsState.unattendedRequests} Solicitudes sin atender`,
-          `${indicatorsState.inactiveUsers} Usuarios inactivos`,
-          `${indicatorsState.systemAvailability} Disponibilidad sistema`,
+          `${recordsStats.pending} Documentos pendientes`,
+          `${requestsStats.received + requestsStats.inProgress} Solicitudes sin atender`,
         ]);
-        setActivityEntries(activityList.map((a) => ({ text: a.text, datetime: a.datetime })));
+        setActivityEntries(history.map(formatHistoryEntry));
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 401) {
+          clearSession();
+          navigate("/");
+        }
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, [navigate]);
 
   const handleLogout = () => navigate("/");
 
@@ -140,7 +154,6 @@ export const AdminDashboardPage = () => {
           <aside className="admin-dashboard__right">
             <Reminders items={loading ? [] : reminders} onAddReminder={() => {}} />
             <QuickAccess items={QUICK_ACCESS_ITEMS} />
-            <QuickSummary title="Resumen rápido" subtitle="Hoy" items={summaryToday} />
             <RecentActivity
               entries={activityEntries}
               subtitle="Últimas acciones registradas"

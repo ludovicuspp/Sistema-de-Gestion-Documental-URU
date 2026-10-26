@@ -1,51 +1,61 @@
-/**
- * API service: Tasks
- * Sample data for active and recent tasks.
- */
+import { apiFetch } from "./http";
 
 export interface TaskDto {
-  id: string;
+  id: number;
   title: string;
-  date: string;
-  priority?: "Alta" | "Media" | "Baja";
-  assignee?: string;
+  description?: string | null;
+  detail?: string | null;
+  assignedToId?: number | null;
+  assignedToName?: string | null;
+  dueDate?: string | null;
+  status: string;
+  createdByName?: string | null;
+  createdAt: string;
 }
 
-export interface TasksSummary {
-  active: number;
-  subtitle: string;
-  recent: TaskDto[];
+export interface TaskStats {
+  total: number;
+  pending: number;
+  inProgress: number;
+  completed: number;
 }
 
-const MOCK_TASKS: TaskDto[] = [
-  {
-    id: "1",
-    title: "Subir estudiantes periodo 2025B",
-    date: "2025-05-12",
-    assignee: "Cargador N",
-  },
-  {
-    id: "2",
-    title: "Revisión masiva de expedientes",
-    date: "2025-11-11",
-    priority: "Alta",
-    assignee: "Equipo CID",
-  },
-];
+export interface TaskRequest {
+  title: string;
+  description?: string;
+  detail?: string;
+  assignedToId?: number;
+  assignedToName?: string;
+  dueDate?: string;
+}
 
-const MOCK: TasksSummary = {
-  active: 28,
-  subtitle: "Asignadas a equipo CID",
-  recent: MOCK_TASKS,
-};
+const BASE = "/api/v1/tasks";
 
 export const tasksService = {
-  async getSummary(): Promise<TasksSummary> {
-    await delay(200);
-    return MOCK;
+  async list(params: { assignedTo?: number; status?: string } = {}): Promise<TaskDto[]> {
+    const query = new URLSearchParams();
+    if (params.assignedTo != null) query.set("assignedTo", String(params.assignedTo));
+    if (params.status) query.set("status", params.status);
+    const suffix = query.toString();
+    return apiFetch<TaskDto[]>(suffix ? `${BASE}?${suffix}` : BASE);
+  },
+
+  async stats(): Promise<TaskStats> {
+    return apiFetch<TaskStats>(`${BASE}/stats`);
+  },
+
+  async create(request: TaskRequest): Promise<TaskDto> {
+    return apiFetch<TaskDto>(BASE, { method: "POST", body: JSON.stringify(request) });
+  },
+
+  async updateStatus(id: number, status: string): Promise<TaskDto> {
+    return apiFetch<TaskDto>(`${BASE}/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
+  },
+
+  async remove(id: number): Promise<void> {
+    await apiFetch<void>(`${BASE}/${id}`, { method: "DELETE" });
   },
 };
-
-function delay(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}

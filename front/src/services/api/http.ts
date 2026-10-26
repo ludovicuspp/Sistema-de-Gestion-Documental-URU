@@ -76,3 +76,22 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   }
   return payload.data;
 }
+
+/** Descarga binaria (el backend exige Authorization, asi que no sirve un <a href> directo). */
+export async function apiFetchBlob(path: string): Promise<Blob> {
+  const headers = new Headers();
+  const token = getToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  const response = await fetch(`${BASE_URL}${path}`, { headers });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as ApiResponse<unknown> | null;
+    throw new ApiError(
+      payload?.error?.code ?? "HTTP_ERROR",
+      payload?.error?.message ?? `Error ${response.status}`,
+      response.status,
+    );
+  }
+  return response.blob();
+}

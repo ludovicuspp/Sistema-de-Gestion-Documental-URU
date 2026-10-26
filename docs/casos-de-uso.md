@@ -7,10 +7,8 @@ Total definidos: **30 CU** (21 con flujo detallado). Actores: Administrador, Ver
 
 - **Verificado punta a punta el 2026-10-26 (stack Docker):** login admin → crear estudiante → crear expediente → subir PDF → aprobar con observaciones → historial (3 eventos) → solicitud pública → seguimiento por código → COMPLETADA → correo en Mailpit → `GET /reports/summary` agregado → catálogo (9 tipos) → tarea. Front servido en `:8080` con proxy `/api/v1/*` a los servicios.
 - **CU-01 completo de punta a punta** (front `LoginPage` → `auth-service` → JWT; redirección por rol).
-- Resto del front (`front/src/services/api/*`, salvo `http.ts`/`authService.ts`) sigue con mocks; el backend Spring cubre el núcleo (ver columna "Spring").
-- **1 CU completo solo en backend .NET**: CU-01 (login + JWT).
-- **~8 CU parciales en backend .NET** (CRUD de entidades, sin reglas de negocio ni integración).
-- El backend .NET **no tiene** entidad ni endpoints de Estudiante, Tarea, Observación con historial, verificación, solicitudes públicas ni estadísticas.
+- **Front 100% cableado a la API real** (2026-10-26): eliminados todos los servicios mock (`activityService`, `documentsService`, `indicatorsService`, `remindersService`) y todos los `MOCK_*` de las páginas. Las 20 páginas de gestión/dashboards/pública consumen los servicios; feed global de actividad vía `GET /records/history/recent`; recordatorios derivados de tareas pendientes; creación de usuarios con contraseña temporal aleatoria mostrada al admin.
+- El backend .NET queda como referencia histórica (CU-01 completo, ~8 CU parciales).
 - La nueva implementación Spring Boot (rama `dev`) cubre el núcleo; ver columna "Spring".
 
 ## Matriz

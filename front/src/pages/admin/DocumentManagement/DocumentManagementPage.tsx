@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 import { VerificationInbox } from "@/components/organisms/VerificationInbox";
@@ -14,73 +14,10 @@ import { AlertModal } from "@/components/molecules/AlertModal";
 import { Button } from "@/components/atoms/Button";
 import type { DocumentTypeItem } from "@/components/organisms/DocumentTypesCard";
 import type { ExpedientDocumentItem } from "@/components/organisms/ExpedientDocumentsCard";
+import { ApiError, clearSession } from "@/services/api/http";
+import { recordsService, type DocumentDto, type FolderDto } from "@/services/api/recordsService";
+import { catalogService, type DocumentTypeDto, type OptionDto } from "@/services/api/catalogService";
 import "./DocumentManagementPage.css";
-
-const MOCK_VERIFICATION_ITEMS: VerificationInboxItem[] = [
-  {
-    id: "1",
-    name: "Ludovicus Van Vargas",
-    details: "V-0113 - Pregrado - Asistente A",
-    date: "2025-11-12",
-    missingCount: 1,
-  },
-  {
-    id: "2",
-    name: "María Pérez",
-    details: "V-9876 - Postgrado - Asistente B",
-    date: "2025-11-10",
-    missingCount: 0,
-  },
-  {
-    id: "3",
-    name: "Carlos Gómez",
-    details: "V-2233 - Pregrado - Asistente A",
-    date: "2025-11-11",
-    missingCount: 2,
-    urgent: true,
-  },
-];
-
-const MOCK_DOCUMENT_TYPES: DocumentTypeItem[] = [
-  { id:  "1", name: "Cédula de Identidad",                description: "Obligatorio - Todos"     },
-  { id:  "2", name: "Partida de Nacimiento",              description: "Obligatorio - Todos"     },
-  { id:  "3", name: "Fondo Negro Título de Bachiller",    description: "Obligatorio - Todos"     },
-  { id:  "4", name: "Notas Certificadas",                 description: "Obligatorio - Todos"     },
-  { id:  "5", name: "Suscripción Militar",                description: "Opcional - Todos"        },
-  { id:  "6", name: "Manejo de Idioma",                   description: "Opcional - Todos"        },
-  { id:  "7", name: "Constancia de Servicio Comunitario", description: "Obligatorio - Todos"     },
-  { id:  "8", name: "Constancia de Pasantías",            description: "Obligatorio - Todos"     },
-  { id:  "9", name: "Certificado de Aprobación OPSU",     description: "Obligatorio - Pregrado"  },
-  { id: "10", name: "Veredicto",                          description: "Obligatorio - Egresado"  },
-  { id: "11", name: "Repetición de Expediente",           description: "Opcional - Egresado"     },
-];
-
-const MOCK_DOCUMENTS: ExpedientDocumentItem[] = [
-  {
-    id: "d1",
-    type: "Partida de Nacimiento",
-    fileName: "partida.pdf",
-    uploadedBy: "Asistente B",
-    date: "2025-11-10",
-    validationStatus: "pending",
-  },
-  {
-    id: "d2",
-    type: "Cédula de Identidad",
-    fileName: "cedula.pdf",
-    uploadedBy: "Asistente B",
-    date: "2025-11-09",
-    validationStatus: "validated",
-  },
-  {
-    id: "d3",
-    type: "Notas Certificadas",
-    fileName: "notas.pdf",
-    uploadedBy: "Asistente B",
-    date: "2025-11-08",
-    validationStatus: "pending",
-  },
-];
 
 const QUICK_RULES = [
   "Todo documento debe asociarse a un expediente existente.",
@@ -88,26 +25,41 @@ const QUICK_RULES = [
   "Documento duplicado solicita confirmación para reemplazo.",
 ];
 
+const toInboxItem = (folder: FolderDto): VerificationInboxItem => ({
+  id: String(folder.id),
+  name: folder.studentName,
+  details: `${folder.studentCi} · ${folder.folderType} · ${folder.status}`,
+  date: (folder.createdAt ?? "").slice(0, 10) || "—",
+  missingCount: 0,
+});
+
+const toExpedientData = (folder: FolderDto): ExpedientSelectCardData => ({
+  ci: folder.studentCi,
+  tipo: folder.folderType,
+  cargado: (folder.createdAt ?? "").slice(0, 10) || "—",
+  ubicacion:
+    [folder.shelf, folder.box, folder.rowNumber].filter((v): v is string => Boolean(v)).join(" / ") ||
+    "—",
+});
+
 /**
  * DocumentManagementPage - Page
  *
  * Document management view: verification inbox, expedient selection, document types, documents list and upload.
+ * Datos reales: records-service (carpetas/documentos) y catalog-service (tipos de documento).
  */
 export const DocumentManagementPage = () => {
   const navigate = useNavigate();
-  const [verificationItems] = useState<VerificationInboxItem[]>(MOCK_VERIFICATION_ITEMS);
-  const [selectedExpedientId, setSelectedExpedientId] = useState<string | null>("1");
-  const [expedientData, setExpedientData] = useState<ExpedientSelectCardData | null>({
-    ci: "0113",
-    tipo: "Pregrado",
-    cargado: "2025-11-12",
-    ubicacion: "Estante 3 / Caja 12",
-  });
-  const [documentTypes, setDocumentTypes] = useState<DocumentTypeItem[]>(MOCK_DOCUMENT_TYPES);
-  const [documents, setDocuments] = useState<ExpedientDocumentItem[]>(MOCK_DOCUMENTS);
+  const [inboxFolders, setInboxFolders] = useState<FolderDto[]>([]);
+  const [selectedFolder, setSelectedFolder] = useState<FolderDto | null>(null);
+  const [rawDocs, setRawDocs] = useState<DocumentDto[]>([]);
+  const [docTypes, setDocTypes] = useState<DocumentTypeDto[]>([]);
+  const [academicLevels, setAcademicLevels] = useState<OptionDto[]>([]);
+  const [viewingDocument, setViewingDocument] = useState<{ id: string; fileName: string } | null>(null);
   const [uploadTypeError, setUploadTypeError] = useState(false);
   const [selectedTypeId, setSelectedTypeId] = useState("");
   const [verificationSearch, setVerificationSearch] = useState("");
+  const [ciResults, setCiResults] = useState<FolderDto[]>([]);
   const [documentTypeModalOpen, setDocumentTypeModalOpen] = useState(false);
   const [editingDocumentType, setEditingDocumentType] = useState<DocumentTypeItem | null>(null);
   const [confirmDeleteTypeOpen, setConfirmDeleteTypeOpen] = useState(false);
@@ -115,120 +67,301 @@ export const DocumentManagementPage = () => {
   const [confirmDeleteDocOpen, setConfirmDeleteDocOpen] = useState(false);
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [documentNotAvailableAlert, setDocumentNotAvailableAlert] = useState(false);
+  const [documentNotAvailableMessage, setDocumentNotAvailableMessage] = useState(
+    "El documento seleccionado no esta disponible",
+  );
 
-  // TEMPORAL: Función para probar alert - ELIMINAR después
-  const handleTestDocumentNotAvailable = useCallback(() => {
+  const [saveErrorAlert, setSaveErrorAlert] = useState(false);
+  const [saveErrorMessage, setSaveErrorMessage] = useState(
+    "Ocurrió un error al guardar en la base de datos.",
+  );
+  const [incompleteDataAlert2, setIncompleteDataAlert2] = useState(false);
+  const [incompleteDataMessage, setIncompleteDataMessage] = useState(
+    "Rellena toda la información requerida",
+  );
+  const [duplicateDocTypeAlert, setDuplicateDocTypeAlert] = useState(false);
+  const [duplicateDocTypeMessage, setDuplicateDocTypeMessage] = useState(
+    "Se encontró un tipo de documento con el mismo nombre",
+  );
+  const [recordNotFoundAlert2, setRecordNotFoundAlert2] = useState(false);
+  const [recordNotFoundMessage, setRecordNotFoundMessage] = useState("No existe el expediente indicado.");
+  const [formatNotAllowedAlert, setFormatNotAllowedAlert] = useState(false);
+  const [formatNotAllowedMessage, setFormatNotAllowedMessage] = useState(
+    "Solo se permiten PDF, JPG y PNG.",
+  );
+  const [fileSizeExceededAlert, setFileSizeExceededAlert] = useState(false);
+  const [fileSizeExceededMessage, setFileSizeExceededMessage] = useState(
+    "El archivo supera el límite permitido. Ejemplo: límite 10 MB por archivo.",
+  );
+  const [duplicateDocumentAlert, setDuplicateDocumentAlert] = useState(false);
+  const [duplicateDocumentMessage, setDuplicateDocumentMessage] = useState(
+    "Se encontró un documento del mismo tipo. ¿Deseas reemplazarlo?",
+  );
+
+  const unauthorized = useCallback(() => {
+    clearSession();
+    navigate("/");
+  }, [navigate]);
+
+  const showSaveError = useCallback((message: string) => {
+    setSaveErrorMessage(message);
+    setSaveErrorAlert(true);
+  }, []);
+  const showIncomplete = useCallback((message: string) => {
+    setIncompleteDataMessage(message);
+    setIncompleteDataAlert2(true);
+  }, []);
+  const showDuplicateType = useCallback((message: string) => {
+    setDuplicateDocTypeMessage(message);
+    setDuplicateDocTypeAlert(true);
+  }, []);
+  const showRecordNotFound = useCallback((message: string) => {
+    setRecordNotFoundMessage(message);
+    setRecordNotFoundAlert2(true);
+  }, []);
+  const showFormatError = useCallback((message: string) => {
+    setFormatNotAllowedMessage(message);
+    setFormatNotAllowedAlert(true);
+  }, []);
+  const showFileSizeError = useCallback((message: string) => {
+    setFileSizeExceededMessage(message);
+    setFileSizeExceededAlert(true);
+  }, []);
+  const showDuplicateDoc = useCallback((message: string) => {
+    setDuplicateDocumentMessage(message);
+    setDuplicateDocumentAlert(true);
+  }, []);
+  const showDocNotAvailable = useCallback((message: string) => {
+    setDocumentNotAvailableMessage(message);
     setDocumentNotAvailableAlert(true);
   }, []);
 
-  const [saveErrorAlert, setSaveErrorAlert] = useState(false);
-  const [cannotApproveAlert, setCannotApproveAlert] = useState(false);
-  const [incompleteDataAlert2, setIncompleteDataAlert2] = useState(false);
-  const [duplicateDocTypeAlert, setDuplicateDocTypeAlert] = useState(false);
-  const [recordNotFoundAlert2, setRecordNotFoundAlert2] = useState(false);
-  const [formatNotAllowedAlert, setFormatNotAllowedAlert] = useState(false);
-  const [fileSizeExceededAlert, setFileSizeExceededAlert] = useState(false);
-  const [duplicateDocumentAlert, setDuplicateDocumentAlert] = useState(false);
-
-  const handleTestSaveError = useCallback(() => {
-    setSaveErrorAlert(true);
-  }, []);
-
-  const handleTestCannotApprove = useCallback(() => {
-    setCannotApproveAlert(true);
-  }, []);
-
-  const handleTestIncompleteData2 = useCallback(() => {
-    setIncompleteDataAlert2(true);
-  }, []);
-
-  const handleTestDuplicateDocType = useCallback(() => {
-    setDuplicateDocTypeAlert(true);
-  }, []);
-
-  const handleTestRecordNotFound2 = useCallback(() => {
-    setRecordNotFoundAlert2(true);
-  }, []);
-
-  const handleTestFormatNotAllowed = useCallback(() => {
-    setFormatNotAllowedAlert(true);
-  }, []);
-
-  const handleTestFileSizeExceeded = useCallback(() => {
-    setFileSizeExceededAlert(true);
-  }, []);
-
-  const handleTestDuplicateDocument = useCallback(() => {
-    setDuplicateDocumentAlert(true);
-  }, []);
-
-  const filteredVerificationItems = useMemo(() => {
-    if (!verificationSearch.trim()) return verificationItems;
-    const q = verificationSearch.toLowerCase();
-    return verificationItems.filter(
-      (v) =>
-        v.name.toLowerCase().includes(q) ||
-        v.details.toLowerCase().includes(q)
-    );
-  }, [verificationItems, verificationSearch]);
-
-  const documentTypesForSelect = useMemo(
-    () => documentTypes.map((t) => ({ value: t.id, label: t.name })),
-    [documentTypes]
+  const showApiError = useCallback(
+    (err: unknown, show: (message: string) => void, fallback: string) => {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          unauthorized();
+          return;
+        }
+        show(err.message);
+      } else {
+        show(fallback);
+      }
+    },
+    [unauthorized],
   );
 
-  const selectedExpedientLabel =
-    selectedExpedientId && expedientData?.ci
-      ? `Pregrado - Ludovicus Van Vargas`
-      : undefined;
+  const refreshFolderDetail = useCallback(
+    async (id: number) => {
+      try {
+        const [detail, docs] = await Promise.all([
+          recordsService.get(id),
+          recordsService.listDocuments(id),
+        ]);
+        setSelectedFolder(detail);
+        setRawDocs(docs);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          showRecordNotFound(err.message);
+          return;
+        }
+        showApiError(err, showSaveError, "No se pudo cargar el expediente.");
+      }
+    },
+    [showApiError, showRecordNotFound, showSaveError],
+  );
 
-  const handleOpenVerification = useCallback((id: string) => {
-    setSelectedExpedientId(id);
-    setExpedientData({
-      ci: "0113",
-      tipo: "Pregrado",
-      cargado: "2025-11-12",
-      ubicacion: "Estante 3 / Caja 12",
-    });
-  }, []);
+  const selectFolder = useCallback(
+    (folder: FolderDto) => {
+      setSelectedFolder(folder);
+      setRawDocs([]);
+      setViewingDocument(null);
+      void refreshFolderDetail(folder.id);
+    },
+    [refreshFolderDetail],
+  );
 
-  const handleLogout = () => navigate("/");
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const [folders, types, levels] = await Promise.all([
+          recordsService.list({ status: "PENDIENTE" }),
+          catalogService.documentTypes(),
+          catalogService.academicLevels(),
+        ]);
+        if (cancelled) return;
+        setInboxFolders(folders);
+        setDocTypes(types);
+        setAcademicLevels(levels);
+        if (folders.length > 0) selectFolder(folders[0]);
+      } catch (err) {
+        if (!cancelled) showApiError(err, showSaveError, "No se pudieron cargar los datos.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectFolder, showApiError, showSaveError]);
+
+  useEffect(() => {
+    const q = verificationSearch.trim();
+    if (!q) {
+      setCiResults([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = globalThis.setTimeout(() => {
+      void recordsService
+        .list({ ci: q })
+        .then((found) => {
+          if (!cancelled) setCiResults(found);
+        })
+        .catch((err: unknown) => {
+          if (!cancelled && err instanceof ApiError && err.status === 401) unauthorized();
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      globalThis.clearTimeout(timer);
+    };
+  }, [verificationSearch, unauthorized]);
+
+  const docTypeById = useMemo(() => new Map(docTypes.map((t) => [t.id, t])), [docTypes]);
+
+  const documents: ExpedientDocumentItem[] = useMemo(
+    () =>
+      rawDocs.map((d) => ({
+        id: String(d.id),
+        type: docTypeById.get(d.documentTypeId ?? -1)?.name ?? "Documento",
+        fileName: d.name,
+        uploadedBy: "—",
+        date: (d.createdAt ?? "").slice(0, 10) || "—",
+        validationStatus: "pending" as const,
+      })),
+    [rawDocs, docTypeById],
+  );
+
+  const verificationItems = useMemo<VerificationInboxItem[]>(
+    () => inboxFolders.map(toInboxItem),
+    [inboxFolders],
+  );
+
+  const filteredVerificationItems = useMemo(() => {
+    const q = verificationSearch.trim().toLowerCase();
+    if (!q) return verificationItems;
+    const base = verificationItems.filter(
+      (v) => v.name.toLowerCase().includes(q) || v.details.toLowerCase().includes(q),
+    );
+    const seen = new Set(base.map((v) => v.id));
+    const extra = ciResults.filter((f) => !seen.has(String(f.id))).map(toInboxItem);
+    return [...base, ...extra];
+  }, [verificationItems, verificationSearch, ciResults]);
+
+  const documentTypeItems = useMemo<DocumentTypeItem[]>(
+    () =>
+      docTypes.map((t) => {
+        const level = academicLevels.find((l) => l.id === t.academicLevelId)?.name;
+        return {
+          id: String(t.id),
+          name: t.name,
+          description: `${t.required ? "Obligatorio" : "Opcional"} - ${level ?? "Todos"}`,
+        };
+      }),
+    [docTypes, academicLevels],
+  );
+
+  const documentTypesForSelect = useMemo(
+    () => docTypes.map((t) => ({ value: String(t.id), label: t.name })),
+    [docTypes],
+  );
+
+  const expedientData: ExpedientSelectCardData | null = useMemo(
+    () => (selectedFolder ? toExpedientData(selectedFolder) : null),
+    [selectedFolder],
+  );
+
+  const selectedExpedientLabel = selectedFolder
+    ? `${selectedFolder.folderType} - ${selectedFolder.studentName}`
+    : undefined;
+
+  const generalStatus = selectedFolder && /APROB|VALID/i.test(selectedFolder.status ?? "")
+    ? ("validated" as const)
+    : ("pending" as const);
+
+  const handleOpenVerification = useCallback(
+    (id: string) => {
+      const folder =
+        inboxFolders.find((f) => String(f.id) === id) ??
+        ciResults.find((f) => String(f.id) === id);
+      if (folder) {
+        selectFolder(folder);
+        return;
+      }
+      const numeric = Number(id);
+      if (Number.isFinite(numeric)) void refreshFolderDetail(numeric);
+    },
+    [inboxFolders, ciResults, selectFolder, refreshFolderDetail],
+  );
+
+  const handleLogout = useCallback(() => {
+    clearSession();
+    navigate("/");
+  }, [navigate]);
 
   const handleNewType = useCallback(() => {
     setEditingDocumentType(null);
     setDocumentTypeModalOpen(true);
   }, []);
 
-  const handleEditType = useCallback((id: string) => {
-    const type = documentTypes.find((t) => t.id === id) ?? null;
-    setEditingDocumentType(type);
-    setDocumentTypeModalOpen(true);
-  }, [documentTypes]);
+  const handleEditType = useCallback(
+    (id: string) => {
+      const type = documentTypeItems.find((t) => t.id === id) ?? null;
+      setEditingDocumentType(type);
+      setDocumentTypeModalOpen(true);
+    },
+    [documentTypeItems],
+  );
 
   const handleDocumentTypeSubmit = useCallback(
-    (data: { name: string; nivel: string; obligatoriedad: string; description: string }) => {
-      const desc = data.obligatoriedad
-        ? `${data.obligatoriedad === "obligatorio" ? "Obligatorio" : "Opcional"} - ${
-            data.nivel === "todos" ? "Todos" : data.nivel === "pregrado" ? "Pregrado" : "Postgrado"
-          }`
-        : data.description;
-      if (editingDocumentType) {
-        setDocumentTypes((prev) =>
-          prev.map((t) =>
-            t.id === editingDocumentType.id
-              ? { ...t, name: data.name, description: desc }
-              : t
-          )
-        );
-      } else {
-        const newId = String(Math.max(...documentTypes.map((t) => parseInt(t.id, 10)), 0) + 1);
-        setDocumentTypes((prev) => [
-          ...prev,
-          { id: newId, name: data.name, description: desc },
-        ]);
+    async (data: { name: string; nivel: string; obligatoriedad: string; description: string }) => {
+      const name = data.name.trim();
+      if (!name) {
+        showIncomplete("El nombre del tipo de documento es obligatorio.");
+        return;
+      }
+      const required = data.obligatoriedad === "obligatorio";
+      const academicLevelId =
+        data.nivel === "todos"
+          ? undefined
+          : academicLevels.find((l) => l.name.toLowerCase() === data.nivel)?.id;
+      try {
+        if (editingDocumentType) {
+          await catalogService.updateDocumentType(
+            Number(editingDocumentType.id),
+            name,
+            required,
+            academicLevelId,
+          );
+        } else {
+          await catalogService.createDocumentType(name, required, academicLevelId);
+        }
+        setDocTypes(await catalogService.documentTypes());
+      } catch (err) {
+        if (err instanceof ApiError) {
+          if (err.status === 401) {
+            unauthorized();
+            return;
+          }
+          if (err.status === 409 || /duplic|existe|mismo nombre/i.test(err.message)) {
+            showDuplicateType(err.message);
+            return;
+          }
+        }
+        showApiError(err, showSaveError, "No se pudo guardar el tipo de documento.");
       }
     },
-    [editingDocumentType, documentTypes]
+    [editingDocumentType, academicLevels, unauthorized, showApiError, showSaveError, showDuplicateType, showIncomplete],
   );
 
   const handleDeleteType = useCallback((id: string) => {
@@ -236,26 +369,112 @@ export const DocumentManagementPage = () => {
     setConfirmDeleteTypeOpen(true);
   }, []);
 
-  const handleConfirmDeleteType = useCallback(() => {
-    if (deletingTypeId) {
-      setDocumentTypes((prev) => prev.filter((t) => t.id !== deletingTypeId));
+  const handleConfirmDeleteType = useCallback(async () => {
+    if (!deletingTypeId) return;
+    try {
+      await catalogService.deleteDocumentType(Number(deletingTypeId));
+      setDocTypes(await catalogService.documentTypes());
       setConfirmDeleteTypeOpen(false);
       setDeletingTypeId(null);
+    } catch (err) {
+      showApiError(err, showSaveError, "No se pudo eliminar el tipo de documento.");
     }
-  }, [deletingTypeId]);
+  }, [deletingTypeId, showApiError, showSaveError]);
+
+  const handleViewDocument = useCallback(
+    async (id: string) => {
+      const doc = rawDocs.find((d) => d.id === Number(id));
+      try {
+        const blob = await recordsService.downloadDocument(Number(id));
+        const url = URL.createObjectURL(blob);
+        if (doc) setViewingDocument({ id, fileName: doc.name });
+        globalThis.open(url, "_blank", "noopener");
+        globalThis.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      } catch (err) {
+        showApiError(err, showDocNotAvailable, "El documento seleccionado no esta disponible");
+      }
+    },
+    [rawDocs, showApiError, showDocNotAvailable],
+  );
 
   const handleDeleteDocument = useCallback((id: string) => {
     setDeletingDocId(id);
     setConfirmDeleteDocOpen(true);
   }, []);
 
-  const handleConfirmDeleteDocument = useCallback(() => {
-    if (deletingDocId) {
-      setDocuments((prev) => prev.filter((d) => d.id !== deletingDocId));
+  const handleConfirmDeleteDocument = useCallback(async () => {
+    if (!deletingDocId || !selectedFolder) {
       setConfirmDeleteDocOpen(false);
       setDeletingDocId(null);
+      return;
     }
-  }, [deletingDocId]);
+    try {
+      await recordsService.deleteDocument(Number(deletingDocId));
+      setRawDocs(await recordsService.listDocuments(selectedFolder.id));
+      if (viewingDocument?.id === deletingDocId) setViewingDocument(null);
+      setConfirmDeleteDocOpen(false);
+      setDeletingDocId(null);
+    } catch (err) {
+      showApiError(err, showSaveError, "No se pudo eliminar el documento.");
+    }
+  }, [deletingDocId, selectedFolder, viewingDocument, showApiError, showSaveError]);
+
+  const handleUpload = useCallback(
+    async (file: File | null, typeId: string) => {
+      if (!selectedFolder) {
+        showRecordNotFound("Seleccione un expediente antes de subir documentos.");
+        return;
+      }
+      if (!file) {
+        showIncomplete("Seleccione un archivo antes de subir.");
+        return;
+      }
+      if (typeId === "") {
+        setUploadTypeError(true);
+        showIncomplete("Seleccione el tipo de documento.");
+        return;
+      }
+      try {
+        await recordsService.uploadDocument(selectedFolder.id, file, Number(typeId));
+        setRawDocs(await recordsService.listDocuments(selectedFolder.id));
+      } catch (err) {
+        if (err instanceof ApiError) {
+          if (err.status === 401) {
+            unauthorized();
+            return;
+          }
+          if (
+            err.status === 413 ||
+            err.code === "FILE_SIZE_EXCEEDED" ||
+            /tamaño|size/i.test(err.message)
+          ) {
+            showFileSizeError(err.message);
+            return;
+          }
+          if (err.code === "INVALID_FORMAT" || /formato|format/i.test(err.message)) {
+            showFormatError(err.message);
+            return;
+          }
+          if (err.code === "DUPLICATE_DOCUMENT" || /duplic/i.test(err.message)) {
+            showDuplicateDoc(err.message);
+            return;
+          }
+        }
+        showApiError(err, showSaveError, "No se pudo subir el documento.");
+      }
+    },
+    [
+      selectedFolder,
+      unauthorized,
+      showApiError,
+      showSaveError,
+      showRecordNotFound,
+      showIncomplete,
+      showFileSizeError,
+      showFormatError,
+      showDuplicateDoc,
+    ],
+  );
 
   return (
     <DashboardTemplate
@@ -268,44 +487,10 @@ export const DocumentManagementPage = () => {
       onPrivacyClick={() => {}}
     >
       <div className="document-management-page">
-        {/* TEMPORAL: Botón de prueba - ELIMINAR después */}
-        <div style={{ position: "fixed", top: "5rem", right: "1rem", zIndex: 1000, background: "#fff3cd", padding: "1rem", borderRadius: "4px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
-          <strong>🧪 Prueba:</strong>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.5rem" }}>
-            <Button variant="secondary" size="small" onClick={handleTestDocumentNotAvailable}>
-              3. Documento no disponible
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestSaveError}>
-              7. Error al guardar
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestCannotApprove}>
-              8. No se puede aprobar
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestIncompleteData2}>
-              17. Datos incompletos (v2)
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestDuplicateDocType}>
-              18. Tipo documento duplicado
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestRecordNotFound2}>
-              19. Expediente no encontrado
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestFormatNotAllowed}>
-              20. Formato no permitido
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestFileSizeExceeded}>
-              21. Tamaño excedido
-            </Button>
-            <Button variant="secondary" size="small" onClick={handleTestDuplicateDocument}>
-              22. Documento duplicado
-            </Button>
-          </div>
-        </div>
-        
         <aside className="document-management-page__bandeja">
           <VerificationInbox
             title="Bandeja de verificación"
-            pendingCount={2}
+            pendingCount={verificationItems.length}
             approvedToday="0"
             avgValidationTime="—"
             items={filteredVerificationItems}
@@ -325,16 +510,10 @@ export const DocumentManagementPage = () => {
           />
           <ExpedientDocumentsCard
             title="Documentos del expediente"
-            generalStatus="pending"
+            generalStatus={generalStatus}
             documents={documents}
-            onViewDocument={(id) => {
-              const doc = documents.find((d) => d.id === id);
-              if (!doc || doc.validationStatus === "pending") {
-                setDocumentNotAvailableAlert(true);
-              } else {
-                console.log("Ver documento", id);
-              }
-            }}
+            viewingDocument={viewingDocument}
+            onViewDocument={(id) => void handleViewDocument(id)}
             onObservation={(id) => console.log("Observación", id)}
             onDeleteDocument={handleDeleteDocument}
           />
@@ -342,7 +521,7 @@ export const DocumentManagementPage = () => {
         <div className="document-management-page__right">
           <DocumentTypesCard
             title="Tipos de documento"
-            types={documentTypes}
+            types={documentTypeItems}
             onNewType={handleNewType}
             onEdit={handleEditType}
             onDelete={handleDeleteType}
@@ -358,9 +537,7 @@ export const DocumentManagementPage = () => {
             selectedTypeError={uploadTypeError}
             quickRules={QUICK_RULES}
             quickRulesTitle="Reglas rápidas"
-            onUpload={(_file, typeId) => {
-              setUploadTypeError(typeId === "");
-            }}
+            onUpload={(file, typeId) => void handleUpload(file, typeId)}
             onTypeChange={(id) => {
               setSelectedTypeId(id);
               setUploadTypeError(false);
@@ -372,27 +549,27 @@ export const DocumentManagementPage = () => {
         open={documentTypeModalOpen}
         onClose={() => setDocumentTypeModalOpen(false)}
         documentType={editingDocumentType}
-        onSubmit={handleDocumentTypeSubmit}
+        onSubmit={(data) => void handleDocumentTypeSubmit(data)}
       />
       <ConfirmModal
         open={confirmDeleteTypeOpen}
         onCancel={() => { setConfirmDeleteTypeOpen(false); setDeletingTypeId(null); }}
         label="Eliminar"
         message="¿Seguro que desea eliminar?"
-        onConfirm={handleConfirmDeleteType}
+        onConfirm={() => void handleConfirmDeleteType()}
       />
       <ConfirmModal
         open={confirmDeleteDocOpen}
         onCancel={() => { setConfirmDeleteDocOpen(false); setDeletingDocId(null); }}
         label="Eliminar"
         message="¿Seguro que desea eliminar el documento?"
-        onConfirm={handleConfirmDeleteDocument}
+        onConfirm={() => void handleConfirmDeleteDocument()}
       />
       <AlertModal
         open={documentNotAvailableAlert}
         type="warning"
         title="Documento no disponible"
-        message="El documento seleccionado no esta disponible"
+        message={documentNotAvailableMessage}
         buttonLabel="Cerrar"
         onClose={() => setDocumentNotAvailableAlert(false)}
       />
@@ -400,35 +577,15 @@ export const DocumentManagementPage = () => {
         open={saveErrorAlert}
         type="error"
         title="Error al guardar expediente"
-        message="Ocurrió un error al guardar en la base de datos."
+        message={saveErrorMessage}
         buttonLabel="Cerrar"
         onClose={() => setSaveErrorAlert(false)}
-      />
-      <AlertModal
-        open={cannotApproveAlert}
-        type="warning"
-        title="No se puede aprobar"
-        message="Faltan documentos obligatorios para el expediente."
-        buttonLabel="Cerrar"
-        onClose={() => setCannotApproveAlert(false)}
-        actions={
-          <Button
-            variant="secondary"
-            size="medium"
-            onClick={() => {
-              setCannotApproveAlert(false);
-              console.log("Ver documentos faltantes");
-            }}
-          >
-            Ver faltantes
-          </Button>
-        }
       />
       <AlertModal
         open={incompleteDataAlert2}
         type="warning"
         title="Datos incompletos o inválidos"
-        message="Rellena toda la información requerida"
+        message={incompleteDataMessage}
         buttonLabel="Corregir"
         onClose={() => setIncompleteDataAlert2(false)}
       />
@@ -436,17 +593,14 @@ export const DocumentManagementPage = () => {
         open={duplicateDocTypeAlert}
         type="warning"
         title="Tipo de documento duplicado"
-        message="Se encontró un tipo de documento con el mismo nombre"
+        message={duplicateDocTypeMessage}
         buttonLabel="Cancelar"
         onClose={() => setDuplicateDocTypeAlert(false)}
         actions={
           <Button
             variant="secondary"
             size="medium"
-            onClick={() => {
-              setDuplicateDocTypeAlert(false);
-              console.log("Corregir nombre");
-            }}
+            onClick={() => setDuplicateDocTypeAlert(false)}
           >
             Corregir
           </Button>
@@ -456,7 +610,7 @@ export const DocumentManagementPage = () => {
         open={recordNotFoundAlert2}
         type="warning"
         title="Expediente no encontrado"
-        message="No existe el expediente indicado."
+        message={recordNotFoundMessage}
         buttonLabel="Cerrar"
         onClose={() => setRecordNotFoundAlert2(false)}
       />
@@ -464,7 +618,7 @@ export const DocumentManagementPage = () => {
         open={formatNotAllowedAlert}
         type="error"
         title="Formato no permitido"
-        message="Solo se permiten PDF, JPG y PNG."
+        message={formatNotAllowedMessage}
         buttonLabel="Cerrar"
         onClose={() => setFormatNotAllowedAlert(false)}
       />
@@ -472,7 +626,7 @@ export const DocumentManagementPage = () => {
         open={fileSizeExceededAlert}
         type="error"
         title="Tamaño excedido"
-        message="El archivo supera el límite permitido. Ejemplo: límite 10 MB por archivo."
+        message={fileSizeExceededMessage}
         buttonLabel="Cerrar"
         onClose={() => setFileSizeExceededAlert(false)}
       />
@@ -480,17 +634,14 @@ export const DocumentManagementPage = () => {
         open={duplicateDocumentAlert}
         type="warning"
         title="Documento duplicado"
-        message="Se encontró un documento del mismo tipo. ¿Deseas reemplazarlo?"
+        message={duplicateDocumentMessage}
         buttonLabel="Cancelar"
         onClose={() => setDuplicateDocumentAlert(false)}
         actions={
           <Button
             variant="secondary"
             size="medium"
-            onClick={() => {
-              setDuplicateDocumentAlert(false);
-              console.log("Reemplazar documento");
-            }}
+            onClick={() => setDuplicateDocumentAlert(false)}
           >
             Reemplazar
           </Button>
