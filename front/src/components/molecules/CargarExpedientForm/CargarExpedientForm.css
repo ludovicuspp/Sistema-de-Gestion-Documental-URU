@@ -36,6 +36,22 @@
   border-color: #284483;
 }
 
+.cargar-expedient-form__select {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: #374151;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+}
+
+.cargar-expedient-form__select:focus {
+  outline: none;
+  border-color: #284483;
+}
+
 .cargar-expedient-form__file-name {
   font-size: 0.8125rem;
   color: #6b7280;

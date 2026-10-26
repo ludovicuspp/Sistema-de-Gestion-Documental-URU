@@ -27,6 +27,7 @@ security:
 
 clients:
   students-url: ${STUDENTS_SERVICE_URL:http://students-service:8083}
+  catalog-url: ${CATALOG_SERVICE_URL:http://catalog-service:8082}
 
 storage:
   base-path: ${STORAGE_PATH:/data/documents}

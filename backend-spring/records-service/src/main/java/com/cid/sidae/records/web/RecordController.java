@@ -3,6 +3,7 @@ package com.cid.sidae.records.web;
 import com.cid.sidae.commons.api.ApiException;
 import com.cid.sidae.commons.api.ApiResponse;
 import com.cid.sidae.commons.security.AuthenticatedUser;
+import com.cid.sidae.records.client.CatalogClient;
 import com.cid.sidae.records.client.StudentClient;
 import com.cid.sidae.records.domain.DocumentEntry;
 import com.cid.sidae.records.domain.RecordFolder;
@@ -49,6 +50,7 @@ public class RecordController {
     private final RecordObservationRepository observations;
     private final RecordHistoryRepository history;
     private final StudentClient students;
+    private final CatalogClient catalog;
     private final DocumentStorage storage;
 
     public RecordController(
@@ -57,12 +59,14 @@ public class RecordController {
             RecordObservationRepository observations,
             RecordHistoryRepository history,
             StudentClient students,
+            CatalogClient catalog,
             DocumentStorage storage) {
         this.folders = folders;
         this.documents = documents;
         this.observations = observations;
         this.history = history;
         this.students = students;
+        this.catalog = catalog;
         this.storage = storage;
     }
 
@@ -132,11 +136,15 @@ public class RecordController {
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<FolderResponse> update(@PathVariable Long id, @Valid @RequestBody FolderUpdateRequest request) {
+    public ApiResponse<FolderResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody FolderUpdateRequest request,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         RecordFolder folder = findFolder(id);
         if ("APROBADO".equalsIgnoreCase(folder.getStatus())) {
             throw ApiException.forbidden("No se puede modificar un expediente aprobado.");
         }
+        assertEditableStudent(folder, authorization);
         AuthenticatedUser current = AuthenticatedUser.current();
         folder.setDescription(request.description());
         folder.setShelf(request.shelf());
@@ -149,8 +157,11 @@ public class RecordController {
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public ApiResponse<Void> delete(
+            @PathVariable Long id,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         RecordFolder folder = findFolder(id);
+        assertEditableStudent(folder, authorization);
         AuthenticatedUser current = AuthenticatedUser.current();
         folder.setActive(false);
         folder.setUpdatedAt(Instant.now());
@@ -177,22 +188,16 @@ public class RecordController {
         if (file == null || file.isEmpty()) {
             throw ApiException.badRequest("EMPTY_FILE", "Debe adjuntar un archivo.");
         }
-        String contentType = file.getContentType();
-        if (contentType != null
-                && !contentType.equals("application/pdf")
-                && !contentType.startsWith("image/")) {
-            throw ApiException.badRequest("INVALID_FORMAT", "Solo se permiten PDF o imagenes.");
-        }
 
         AuthenticatedUser current = AuthenticatedUser.current();
-        String storedPath = storage.store(file);
+        DocumentStorage.StoredFile stored = storage.store(file);
 
         DocumentEntry document = new DocumentEntry();
         document.setGuidId(UUID.randomUUID());
         document.setFolderId(folder.getId());
         document.setName(file.getOriginalFilename() == null ? "documento" : file.getOriginalFilename());
-        document.setStoredPath(storedPath);
-        document.setContentType(contentType);
+        document.setStoredPath(stored.path());
+        document.setContentType(stored.contentType());
         document.setFileSize(file.getSize());
         if (documentTypeId != null && !documentTypeId.isBlank()) {
             document.setDocumentTypeId(Integer.valueOf(documentTypeId));
@@ -232,7 +237,10 @@ public class RecordController {
 
     @PostMapping("/{id}/verify")
     @PreAuthorize("hasRole('Administrador') or hasRole('Verificador')")
-    public ApiResponse<FolderResponse> verify(@PathVariable Long id, @Valid @RequestBody VerifyRequest request) {
+    public ApiResponse<FolderResponse> verify(
+            @PathVariable Long id,
+            @Valid @RequestBody VerifyRequest request,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         RecordFolder folder = findFolder(id);
         AuthenticatedUser current = AuthenticatedUser.current();
 
@@ -240,9 +248,13 @@ public class RecordController {
             throw ApiException.badRequest("OBSERVATION_REQUIRED",
                     "Las observaciones son obligatorias cuando se rechaza un expediente.");
         }
-        if (request.approved() && documents.findByFolderIdAndActiveTrueOrderByCreatedAt(id).isEmpty()) {
+        List<DocumentEntry> folderDocuments = documents.findByFolderIdAndActiveTrueOrderByCreatedAt(id);
+        if (request.approved() && folderDocuments.isEmpty()) {
             throw ApiException.badRequest("EMPTY_FOLDER",
                     "No se puede aprobar un expediente sin documentos cargados.");
+        }
+        if (request.approved()) {
+            assertRequiredDocuments(folder, folderDocuments, authorization);
         }
 
         folder.setStatus(request.approved() ? "APROBADO" : "RECHAZADO");
@@ -306,6 +318,54 @@ public class RecordController {
         return folders.findById(id)
                 .filter(RecordFolder::isActive)
                 .orElseThrow(() -> ApiException.notFound("Expediente no encontrado."));
+    }
+
+    /** RST-05: el expediente de un estudiante egresado no se modifica ni se elimina. */
+    private void assertEditableStudent(RecordFolder folder, String authorization) {
+        StudentClient.StudentDto student = students.findByCi(folder.getStudentCi(), authorization);
+        if ("EGRESADO".equalsIgnoreCase(student.status())) {
+            throw ApiException.forbidden("No se puede modificar un expediente de un estudiante egresado (RST-05).");
+        }
+    }
+
+    /** CU-23: para aprobar se exigen los tipos de documento obligatorios del nivel del estudiante. */
+    private void assertRequiredDocuments(
+            RecordFolder folder, List<DocumentEntry> folderDocuments, String authorization) {
+
+        StudentClient.StudentDto student = students.findByCi(folder.getStudentCi(), authorization);
+        Integer levelId = student.academicLevelId() != null
+                ? student.academicLevelId()
+                : resolveLevelIdByType(student.type(), authorization);
+
+        java.util.Set<Integer> present = folderDocuments.stream()
+                .map(DocumentEntry::getDocumentTypeId)
+                .filter(typeId -> typeId != null)
+                .collect(Collectors.toSet());
+
+        List<String> missing = catalog.documentTypes(authorization).stream()
+                .filter(type -> type.required()
+                        && (type.academicLevelId() == null || type.academicLevelId().equals(levelId)))
+                .filter(type -> !present.contains(type.id()))
+                .map(CatalogClient.DocumentTypeDto::name)
+                .sorted()
+                .toList();
+
+        if (!missing.isEmpty()) {
+            throw ApiException.badRequest("MISSING_REQUIRED_DOCS",
+                    "Faltan documentos obligatorios: " + String.join(", ", missing) + ".");
+        }
+    }
+
+    private Integer resolveLevelIdByType(String type, String authorization) {
+        String wanted = "POSTGRADO".equalsIgnoreCase(type) ? "Postgrado" : "Pregrado";
+        return catalog.academicLevels(authorization).stream()
+                .filter(level -> level.name().equalsIgnoreCase(wanted))
+                .map(CatalogClient.LevelDto::id)
+                .findFirst()
+                .orElseThrow(() -> new ApiException(
+                        org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+                        "CATALOG_MISCONFIGURED",
+                        "No se pudo determinar el nivel academico del estudiante."));
     }
 
     private RecordObservation saveObservation(Long folderId, Long documentId, String content, AuthenticatedUser author) {

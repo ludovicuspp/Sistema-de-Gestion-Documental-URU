@@ -263,7 +263,7 @@ export const AssistantRecordManagementPage = () => {
       }
       try {
         if (data.file) {
-          await recordsService.uploadDocument(Number(selectedId), data.file);
+          await recordsService.uploadDocument(Number(selectedId), data.file, Number(data.documentTypeId));
         }
         if (data.recordLocation) {
           await recordsService.update(Number(selectedId), parseLocation(data.recordLocation));

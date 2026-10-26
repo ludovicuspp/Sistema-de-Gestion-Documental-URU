@@ -5,6 +5,8 @@ import { RecordSearchCard } from "@/components/organisms/RecordSearchCard";
 import { RecordDetailCard } from "@/components/organisms/RecordDetailCard";
 import { ConfirmModal } from "@/components/molecules/ConfirmModal";
 import { Modal } from "@/components/molecules/Modal";
+import { CargarExpedientForm } from "@/components/molecules/CargarExpedientForm";
+import type { CargarExpedientFormData } from "@/components/molecules/CargarExpedientForm";
 import { RecordFormModal } from "@/components/molecules/RecordFormModal";
 import type { RecordFormData } from "@/components/molecules/RecordFormModal";
 import { AlertModal } from "@/components/molecules/AlertModal";
@@ -115,6 +117,7 @@ export const RecordManagementPage = () => {
   const [observationModalOpen, setObservationModalOpen] = useState(false);
   const [observationDocumentId, setObservationDocumentId] = useState<number | null>(null);
   const [observationText, setObservationText] = useState("");
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   const fetchList = useCallback(async () => {
     try {
@@ -212,21 +215,23 @@ export const RecordManagementPage = () => {
 
   const handleUploadRecord = useCallback(() => {
     if (selectedId == null) return;
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".pdf,application/pdf";
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
+    setUploadModalOpen(true);
+  }, [selectedId]);
+
+  const handleUploadSubmit = useCallback(
+    async (data: CargarExpedientFormData) => {
+      if (selectedId == null || !data.file || !data.documentTypeId) return;
       try {
-        await recordsService.uploadDocument(selectedId, file);
+        await recordsService.uploadDocument(selectedId, data.file, Number(data.documentTypeId));
+        setUploadModalOpen(false);
         await loadDetail(selectedId);
       } catch (err) {
+        setUploadModalOpen(false);
         setError(errorMessage(err, navigate));
       }
-    };
-    input.click();
-  }, [selectedId, loadDetail, navigate]);
+    },
+    [selectedId, loadDetail, navigate]
+  );
 
   const handleEdit = useCallback(() => {
     if (selectedId != null) {
@@ -429,6 +434,19 @@ export const RecordManagementPage = () => {
         buttonLabel="Cerrar"
         onClose={() => setError(null)}
       />
+      <Modal
+        open={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        variant="form"
+        label="Cargar documento"
+        size="md"
+      >
+        <CargarExpedientForm
+          showLocation={false}
+          onSubmit={(data) => void handleUploadSubmit(data)}
+          onCancel={() => setUploadModalOpen(false)}
+        />
+      </Modal>
       <Modal
         open={observationModalOpen}
         onClose={() => setObservationModalOpen(false)}

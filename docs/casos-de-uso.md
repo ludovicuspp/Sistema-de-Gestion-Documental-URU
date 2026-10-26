@@ -37,7 +37,7 @@ Total definidos: **30 CU** (21 con flujo detallado). Actores: Administrador, Ver
 | CU-20 | Iniciar sesión (Verificador) | Alta | Cubierto por CU-01 | Cubierto por CU-01 |
 | CU-21 | Ver expedientes registrados | Alta | Parcial (CU-02) | `records-service` `GET /records` |
 | CU-22 | Ver historial de modificaciones | Alta | No implementado (no hay tabla historia) | `records-service` `GET /records/{id}/history` |
-| CU-23 | Validar carga de expedientes | Muy Alta | No implementado | `records-service` `POST /records/{id}/verify` |
+| CU-23 | Validar carga de expedientes | Muy Alta | No implementado | `records-service` `POST /records/{id}/verify` + obligatorios por nivel (Fase A) |
 | CU-24 | Agregar observaciones | Alta | Parcial: CRUD de observaciones sin vínculo a documento | `records-service` `POST /records/{id}/observations` |
 | CU-25 | Subir documento (Verificador) | Alta | Parcial (CU-08) | Igual que CU-08 con rol |
 | CU-26 | Iniciar sesión (Asistente) | Alta | Cubierto por CU-01 | Cubierto por CU-01 |
@@ -48,10 +48,10 @@ Total definidos: **30 CU** (21 con flujo detallado). Actores: Administrador, Ver
 
 ## Brechas funcionales que bloquean el cierre
 
-1. Integración real del front con la API (hoy 100% mock).
-2. Verificación de documentos obligatorios por tipo de estudiante (CU-23) contra el catálogo.
+1. Integración real del front con la API — CERRADA (front 100% cableado, sin mocks).
+2. ~~Verificación de documentos obligatorios por tipo de estudiante (CU-23) contra el catálogo.~~ CERRADA Fase A: `verify` exige obligatorios por nivel + tipo obligatorio al subir.
 3. Historial de auditoría inmutable (CU-22) — el .NET solo tiene observaciones.
-4. Regla RST-05 (egresado no editable/eliminable) aplicada en expedientes, no solo estudiantes.
+4. ~~Regla RST-05 (egresado no editable/eliminable) aplicada en expedientes, no solo estudiantes.~~ CERRADA Fase A: `PUT/DELETE /records` devuelven 403 para egresados.
 5. Notificación por correo real (CU-19) y plantillas.
 6. Importación masiva de estudiantes y reportes exportables (PDF/Excel).
 7. Migración de datos existentes (.NET/FluentMigrator → Flyway).

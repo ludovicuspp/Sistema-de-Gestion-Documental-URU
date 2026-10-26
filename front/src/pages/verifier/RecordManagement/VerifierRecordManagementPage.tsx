@@ -244,7 +244,7 @@ export const VerifierRecordManagementPage = () => {
       }
       try {
         if (data.file) {
-          await recordsService.uploadDocument(selectedId, data.file);
+          await recordsService.uploadDocument(selectedId, data.file, Number(data.documentTypeId));
         }
         if (data.recordLocation) {
           await recordsService.update(selectedId, parseLocation(data.recordLocation));

@@ -45,6 +45,7 @@ public class StudentClient {
             String lastName,
             String status,
             String type,
+            Integer academicLevelId,
             boolean active) {
 
         public String fullName() {
