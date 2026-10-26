@@ -1,0 +1,252 @@
+name: sidae
+
+x-service-env: &service-env
+  SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-sidae}
+  SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-sidae}
+  JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-please-32-bytes-minimum}
+  JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-28800000}
+
+x-service-base: &service-base
+  restart: unless-stopped
+  networks:
+    - sidae-net
+  depends_on:
+    db:
+      condition: service_healthy
+  environment:
+    <<: *service-env
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sidae-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sidae}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sidae}
+      POSTGRES_DB: ${POSTGRES_DB:-sidae}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sidae} -d ${POSTGRES_DB:-sidae}"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    networks:
+      - sidae-net
+
+  auth-service:
+    <<: *service-base
+    build:
+      context: ./backend-spring
+      args:
+        SERVICE: auth-service
+    container_name: sidae-auth
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sidae_auth
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@uru.edu.ve}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!}
+    ports:
+      - "${AUTH_PORT:-8081}:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  catalog-service:
+    <<: *service-base
+    build:
+      context: ./backend-spring
+      args:
+        SERVICE: catalog-service
+    container_name: sidae-catalog
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sidae_catalog
+    ports:
+      - "${CATALOG_PORT:-8082}:8082"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  students-service:
+    <<: *service-base
+    build:
+      context: ./backend-spring
+      args:
+        SERVICE: students-service
+    container_name: sidae-students
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sidae_students
+    ports:
+      - "${STUDENTS_PORT:-8083}:8083"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  records-service:
+    <<: *service-base
+    build:
+      context: ./backend-spring
+      args:
+        SERVICE: records-service
+    container_name: sidae-records
+    # El servicio escribe archivos en el volumen; corre como root para
+    # evitar problemas de permisos del volumen nombrado en dev.
+    user: root
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sidae_records
+      STUDENTS_SERVICE_URL: http://students-service:8083
+      STORAGE_PATH: /data/documents
+    volumes:
+      - records_storage:/data/documents
+    ports:
+      - "${RECORDS_PORT:-8084}:8084"
+    depends_on:
+      db:
+        condition: service_healthy
+      students-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  requests-service:
+    <<: *service-base
+    build:
+      context: ./backend-spring
+      args:
+        SERVICE: requests-service
+    container_name: sidae-requests
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sidae_requests
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_FROM: ${MAIL_FROM:-no-reply@uru.edu.ve}
+      MAIL_ENABLED: ${MAIL_ENABLED:-true}
+    ports:
+      - "${REQUESTS_PORT:-8085}:8085"
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  tasks-service:
+    <<: *service-base
+    build:
+      context: ./backend-spring
+      args:
+        SERVICE: tasks-service
+    container_name: sidae-tasks
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sidae_tasks
+    ports:
+      - "${TASKS_PORT:-8086}:8086"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8086/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  reports-service:
+    <<: *service-base
+    build:
+      context: ./backend-spring
+      args:
+        SERVICE: reports-service
+    container_name: sidae-reports
+    environment:
+      <<: *service-env
+      RECORDS_SERVICE_URL: http://records-service:8084
+      REQUESTS_SERVICE_URL: http://requests-service:8085
+      STUDENTS_SERVICE_URL: http://students-service:8083
+      TASKS_SERVICE_URL: http://tasks-service:8086
+    ports:
+      - "${REPORTS_PORT:-8087}:8087"
+    depends_on:
+      db:
+        condition: service_healthy
+      records-service:
+        condition: service_started
+      requests-service:
+        condition: service_started
+      students-service:
+        condition: service_started
+      tasks-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8087/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: sidae-mailpit
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+    networks:
+      - sidae-net
+
+  front:
+    build:
+      context: ./front
+    container_name: sidae-front
+    restart: unless-stopped
+    ports:
+      - "${FRONT_PORT:-8080}:80"
+    depends_on:
+      auth-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      students-service:
+        condition: service_started
+      records-service:
+        condition: service_started
+      requests-service:
+        condition: service_started
+      tasks-service:
+        condition: service_started
+      reports-service:
+        condition: service_started
+    networks:
+      - sidae-net
+
+networks:
+  sidae-net:
+    driver: bridge
+
+volumes:
+  pgdata:
+  records_storage:

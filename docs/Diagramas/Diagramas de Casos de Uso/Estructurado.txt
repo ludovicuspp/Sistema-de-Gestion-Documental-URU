@@ -1,0 +1,88 @@
+@startuml
+skinparam packageStyle rectangle
+left to right direction
+
+actor Administrador
+actor Verificador
+actor Asistente
+actor Estudiante
+
+usecase "CU-01 Iniciar sesión" as CU01
+usecase "CU-02 Consultar expedientes por estudiante" as CU02
+usecase "CU-03 Crear expediente" as CU03
+usecase "CU-04 Editar expediente" as CU04
+usecase "CU-05 Eliminar expediente" as CU05 
+usecase "CU-06 Crear tipo de documento" as CU06
+usecase "CU-07 Eliminar tipo de documento" as CU07
+usecase "CU-08 Subir documento" as CU08
+usecase "CU-09 Crear usuario" as CU09
+usecase "CU-10 Eliminar usuario" as CU10
+usecase "CU-11 Consultar lista de usuarios" as CU11
+usecase "CU-12 Consultar estudiantes" as CU12
+usecase "CU-13 Crear estudiante" as CU13
+usecase "CU-14 Editar estudiante"  as CU14
+usecase "CU-15 Eliminar estudiante"  as CU15
+usecase "CU-16 Crear tarea"  as CU16
+usecase "CU-17 Eliminar tarea" as CU17
+usecase "CU-18 Enviar solicitud de documentos" as CU18
+usecase "CU-19 Recibir respuesta por correo" as CU19
+usecase "CU-22 Ver historial de modificaciones" as CU22
+usecase "CU-23 Validar carga de expedientes" as CU23
+usecase "CU-24 Agregar observaciones" as CU24
+usecase "CU-30 Estadisticas" as CU30
+
+Administrador --> CU01
+Administrador --> CU02
+Administrador --> CU03
+Administrador --> CU04
+Administrador --> CU05
+Administrador --> CU06
+Administrador --> CU07
+Administrador --> CU08
+Administrador --> CU09
+Administrador --> CU10
+Administrador --> CU11
+Administrador --> CU12
+Administrador --> CU13
+Administrador --> CU14
+Administrador --> CU15
+Administrador --> CU16
+Administrador --> CU17
+Administrador --> CU22
+Administrador --> CU23
+Administrador --> CU30
+
+Asistente --> CU01
+Asistente --> CU02
+Asistente --> CU03
+Asistente --> CU08
+
+Verificador --> CU01
+Verificador --> CU02
+Verificador --> CU03
+Verificador --> CU04
+Verificador --> CU05
+Verificador --> CU08
+Verificador --> CU11
+Verificador --> CU12
+Verificador --> CU22
+Verificador --> CU23
+
+Estudiante --> CU18
+CU18 --> CU19 : <<include>> 
+
+CU03 --> CU08 : <<include>>
+
+CU04 --> CU08 : <<extende>>
+CU04 --> CU24 : <<extends>>
+CU05 --> CU24 : <<extends>>
+CU07 --> CU24 : <<extends>>
+CU09 --> CU24 : <<extends>>
+CU10 --> CU24 : <<extends>>
+CU13 --> CU24 : <<extends>>
+CU14 --> CU24 : <<extends>>
+CU15 --> CU24 : <<extends>>
+CU23 --> CU24 : <<extends>>
+
+
+@enduml

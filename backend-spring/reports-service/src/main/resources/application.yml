@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: reports-service
+
+server:
+  port: ${SERVER_PORT:8087}
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-change-me-please-32-bytes-minimum}
+    expiration-ms: ${JWT_EXPIRATION_MS:28800000}
+
+clients:
+  records-url: ${RECORDS_SERVICE_URL:http://records-service:8084}
+  requests-url: ${REQUESTS_SERVICE_URL:http://requests-service:8085}
+  students-url: ${STUDENTS_SERVICE_URL:http://students-service:8083}
+  tasks-url: ${TASKS_SERVICE_URL:http://tasks-service:8086}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,15 +1,22 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthTemplate } from "@/components/templates/AuthTemplate";
 import { LoginForm } from "@/components/molecules/LoginForm";
+import { ApiError } from "@/services/api/http";
+import { authService } from "@/services/api/authService";
+
+const HOME_BY_ROLE: Record<string, string> = {
+  Administrador: "/admin",
+  Verificador: "/verifier",
+  Asistente: "/assistant",
+  Estudiante: "/solicitud-expediente",
+};
 
 /**
- * Login page (Auth).
- *
- * Full login page that integrates the auth template with the login form
- * and handles authentication logic.
+ * Login page (Auth). CU-01.
  */
 export const LoginPage = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
@@ -18,18 +25,15 @@ export const LoginPage = () => {
     setError(undefined);
 
     try {
-      // TODO: Implement real authentication logic
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      if (email && password) {
-        console.log("Login attempt:", { email, password });
-        // navigate('/admin');
-      } else {
-        setError("Credenciales inválidas");
-      }
+      const response = await authService.login(email, password);
+      navigate(HOME_BY_ROLE[response.role] ?? "/admin", { replace: true });
     } catch (err) {
-      setError("Error al iniciar sesión. Por favor, intente nuevamente.");
-      console.error("Login error:", err);
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError("Error al iniciar sesión. Por favor, intente nuevamente.");
+        console.error("Login error:", err);
+      }
     } finally {
       setLoading(false);
     }
@@ -50,7 +54,7 @@ export const LoginPage = () => {
         <LoginForm onSubmit={handleLogin} loading={loading} error={error} />
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
           <Link to="/solicitud-expediente" style={{ fontSize: "0.875rem", color: "#284483" }}>
-            Ir al formulario de estudiante (demo)
+            Ir al formulario de estudiante
           </Link>
           <Link to="/admin" style={{ fontSize: "0.875rem", color: "#284483" }}>
             Ir al panel admin (demo)

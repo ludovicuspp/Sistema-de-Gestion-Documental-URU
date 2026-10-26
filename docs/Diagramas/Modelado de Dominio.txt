@@ -1,0 +1,63 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+' Clases
+class User {
+  +id: int
+  +name: string
+  +email: string
+  +role: string
+}
+
+class Student {
+  +id: int
+  +name: string
+  +cedula: string
+  +status: string
+}
+
+class Folder {
+  +id: int
+  +created_at: Date
+  +type: string
+}
+
+class Document {
+  +id: int
+  +name: string
+  +type: string
+  +filePath: string
+}
+
+class Ubication {
+  +id: int
+  +shelf: string
+  +box: string
+  +row: string
+  +observations: string
+}
+
+class Request {
+  +id: int
+  +date: Date
+  +status: string
+}
+
+class Task {
+  +id: int
+  +date: Date
+  +status: string
+  +description: string
+  +user: user
+}
+
+' Relaciones entre clases
+User "1" -- "1" Task : Asigna
+User "1" -- "0..1" Student : CRUD
+User "1" -- "1" Request : RU
+Student "1" -- "1..*" Folder : posee
+Student "1" -- "0..1" Request : realiza
+Folder "1" -- "1..*" Document : contiene
+Folder "1" -- "0..1" Ubication : está almacenado en
+Task "1" -- "1" User : Asignada
+@enduml

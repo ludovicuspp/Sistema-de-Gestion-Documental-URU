@@ -1,0 +1,21 @@
+# Entorno local
+.env
+.env.local
+*.local
+
+# Java / Maven
+**/target/
+*.log
+
+# Node
+node_modules/
+
+# IDE / sistema
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Datos locales
+infra/postgres/data/

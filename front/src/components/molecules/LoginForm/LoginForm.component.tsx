@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Input } from "@/components/atoms/Input";
 import { Button } from "@/components/atoms/Button";
 import { Link } from "@/components/atoms/Link";
-import "./LoginForm.css";
+import "./loginform.css";
 
 export interface LoginFormProps {
   /**

@@ -48,9 +48,13 @@ export const RecordFormModal = ({
   const [recordLocation, setRecordLocation] = useState("");
 
   const getRecordType = (r: RecordData) =>
-    "recordType" in r ? r.recordType : r.expedientType;
+    "expedientType" in r
+      ? (r as ExpedientDetailData).expedientType
+      : (r as RecordDetailData).recordType;
   const getRecordLocation = (r: RecordData) =>
-    "recordLocation" in r ? r.recordLocation : r.expedientLocation;
+    "expedientLocation" in r
+      ? (r as ExpedientDetailData).expedientLocation
+      : (r as RecordDetailData).recordLocation;
 
   useEffect(() => {
     if (open) {

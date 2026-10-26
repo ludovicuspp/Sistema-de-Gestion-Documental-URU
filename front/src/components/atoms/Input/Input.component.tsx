@@ -1,5 +1,5 @@
 import { type InputHTMLAttributes, forwardRef } from "react";
-import "./Input.css";
+import "./input.css";
 
 export type InputSize = "small" | "medium" | "large";
 

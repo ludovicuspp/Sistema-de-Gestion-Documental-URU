@@ -79,11 +79,11 @@ export const VerifierStudentManagementPage = () => {
     console.log("Refrescar");
   }, []);
 
-  const handleViewExpedientes = useCallback((id: string) => {
+  const handleViewExpedientes = useCallback(() => {
     navigate("/verifier/records");
   }, [navigate]);
 
-  const handleNewExpediente = useCallback((id: string) => {
+  const handleNewExpediente = useCallback(() => {
     navigate("/verifier/records");
   }, [navigate]);
 

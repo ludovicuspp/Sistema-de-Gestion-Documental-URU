@@ -1,7 +1,7 @@
 import { Header } from "@/components/organisms/Header";
 import { Footer } from "@/components/organisms/Footer";
 import backgroundImage from "@/assets/img/uru-background.jpg";
-import "./AuthTemplate.css";
+import "./authtemplate.css";
 
 export interface AuthTemplateProps {
   /**

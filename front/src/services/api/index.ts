@@ -14,3 +14,7 @@ export { activityService } from "./activityService";
 export type { ActivityEntry } from "./activityService";
 export { indicatorsService } from "./indicatorsService";
 export type { IndicatorsState, SummaryToday } from "./indicatorsService";
+export { authService } from "./authService";
+export type { AuthResponse, MeResponse } from "./authService";
+export { ApiError, apiFetch, clearSession, getSessionUser, getToken, saveSession } from "./http";
+export type { ApiResponse, SessionUser } from "./http";

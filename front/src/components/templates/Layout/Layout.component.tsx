@@ -1,4 +1,4 @@
-import "./Layout.css";
+import "./layout.css";
 
 export interface LayoutProps {
   /**
