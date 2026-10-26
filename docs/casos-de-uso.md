@@ -8,6 +8,7 @@ Total definidos: **30 CU** (21 con flujo detallado). Actores: Administrador, Ver
 - **Verificado punta a punta el 2026-10-26 (stack Docker):** login admin → crear estudiante → crear expediente → subir PDF → aprobar con observaciones → historial (3 eventos) → solicitud pública → seguimiento por código → COMPLETADA → correo en Mailpit → `GET /reports/summary` agregado → catálogo (9 tipos) → tarea. Front servido en `:8080` con proxy `/api/v1/*` a los servicios.
 - **CU-01 completo de punta a punta** (front `LoginPage` → `auth-service` → JWT; redirección por rol).
 - **Front 100% cableado a la API real** (2026-10-26): eliminados todos los servicios mock (`activityService`, `documentsService`, `indicatorsService`, `remindersService`) y todos los `MOCK_*` de las páginas. Las 20 páginas de gestión/dashboards/pública consumen los servicios; feed global de actividad vía `GET /records/history/recent`; recordatorios derivados de tareas pendientes; creación de usuarios con contraseña temporal aleatoria mostrada al admin.
+- **Identidad completa (Fase D, 2026-10-27):** registro público (`/registro`), recuperación con token de un solo uso (`/restablecer`, expira en 1 h) y cambio de contraseña (`/account` para los 3 roles); correos HTML con marca URU (solicitud lista + recuperación); plantillas en `commons` sin dependencias nuevas.
 - El backend .NET queda como referencia histórica (CU-01 completo, ~8 CU parciales).
 - La nueva implementación Spring Boot (rama `dev`) cubre el núcleo; ver columna "Spring".
 
@@ -52,6 +53,6 @@ Total definidos: **30 CU** (21 con flujo detallado). Actores: Administrador, Ver
 2. ~~Verificación de documentos obligatorios por tipo de estudiante (CU-23) contra el catálogo.~~ CERRADA Fase A: `verify` exige obligatorios por nivel + tipo obligatorio al subir.
 3. Historial de auditoría inmutable (CU-22) — el .NET solo tiene observaciones.
 4. ~~Regla RST-05 (egresado no editable/eliminable) aplicada en expedientes, no solo estudiantes.~~ CERRADA Fase A: `PUT/DELETE /records` devuelven 403 para egresados.
-5. Notificación por correo real (CU-19) y plantillas.
+5. ~~Notificación por correo real (CU-19) y plantillas.~~ Plantillas HTML listas (Fase D); falta SMTP real de producción (Fase F).
 6. ~~Importación masiva de estudiantes y reportes exportables (PDF/Excel).~~ CERRADA Fase C: `POST /students/import` (upsert CSV por CI, RST-05) + 10 exports en reports-service (xlsx/pdf/csv por dominio + resumen pdf) + botones cableados.
 7. Migración de datos existentes (.NET/FluentMigrator → Flyway).

@@ -1,10 +1,12 @@
 package com.cid.sidae.requests.service;
 
+import com.cid.sidae.commons.mail.EmailTemplates;
+import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -32,18 +34,12 @@ public class NotificationService {
             return;
         }
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(from);
-            message.setTo(to);
-            message.setSubject("Solicitud de documentos lista - CID URU");
-            message.setText("""
-                    Estimado(a) %s:
-
-                    Su solicitud con codigo de seguimiento %s ha sido procesada.
-                    Puede retirar sus documentos en el Centro de Informacion y Documentacion (CID) de la URU.
-
-                    Universidad Rafael Urdaneta
-                    """.formatted(fullName, trackingCode));
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setFrom(from);
+            helper.setTo(to);
+            helper.setSubject(EmailTemplates.requestReadySubject());
+            helper.setText(EmailTemplates.requestReadyBody(fullName, trackingCode), true);
             mailSender.send(message);
         } catch (Exception ex) {
             log.error("No fue posible enviar el correo de la solicitud {}", trackingCode, ex);

@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 import { Layout } from "@/components/templates/Layout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { LoginPage } from "@/pages/auth";
+import { LoginPage, RegisterPage, ResetPasswordPage } from "@/pages/auth";
 import {
   AdminDashboardPage,
   AdminConfigurationPage,
@@ -24,6 +24,7 @@ import {
   AssistantConfigurationPage,
 } from "@/pages/assistant";
 import { ExpedientRequestPage } from "@/pages/public";
+import { AccountPage } from "@/pages/account";
 
 /**
  * Routes grouped by role/functionality:
@@ -43,6 +44,32 @@ const router = createBrowserRouter([
   {
     path: "/solicitud-expediente",
     element: <ExpedientRequestPage />,
+  },
+  {
+    path: "/registro",
+    element: (
+      <Layout>
+        <RegisterPage />
+      </Layout>
+    ),
+  },
+  {
+    path: "/restablecer",
+    element: (
+      <Layout>
+        <ResetPasswordPage />
+      </Layout>
+    ),
+  },
+  {
+    path: "/account",
+    element: (
+      <ErrorBoundary>
+        <Layout>
+          <AccountPage />
+        </Layout>
+      </ErrorBoundary>
+    ),
   },
   {
     path: "/admin/users",

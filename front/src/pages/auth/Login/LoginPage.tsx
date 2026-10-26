@@ -53,6 +53,12 @@ export const LoginPage = () => {
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
         <LoginForm onSubmit={handleLogin} loading={loading} error={error} />
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
+          <Link to="/registro" style={{ fontSize: "0.875rem", color: "#284483" }}>
+            Crear cuenta
+          </Link>
+          <Link to="/restablecer" style={{ fontSize: "0.875rem", color: "#284483" }}>
+            Olvidé mi contraseña
+          </Link>
           <Link to="/solicitud-expediente" style={{ fontSize: "0.875rem", color: "#284483" }}>
             Ir al formulario de estudiante
           </Link>

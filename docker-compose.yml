@@ -50,6 +50,11 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sidae_auth
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@uru.edu.ve}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!}
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_FROM: ${MAIL_FROM:-no-reply@uru.edu.ve}
+      MAIL_ENABLED: ${MAIL_ENABLED:-true}
+      FRONT_URL: http://localhost:${FRONT_PORT:-8080}
     ports:
       - "${AUTH_PORT:-8081}:8081"
     healthcheck:

@@ -15,6 +15,12 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  mail:
+    host: ${MAIL_HOST:mailpit}
+    port: ${MAIL_PORT:1025}
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
 
 server:
   port: ${SERVER_PORT:8081}
@@ -28,6 +34,11 @@ auth:
   default-register-role: ${AUTH_DEFAULT_ROLE:Usuario}
   bootstrap-email: ${ADMIN_EMAIL:admin@uru.edu.ve}
   bootstrap-password: ${ADMIN_PASSWORD:Admin123!}
+  front-url: ${FRONT_URL:http://localhost:8080}
+
+notifications:
+  from: ${MAIL_FROM:no-reply@uru.edu.ve}
+  enabled: ${MAIL_ENABLED:true}
 
 management:
   endpoints:

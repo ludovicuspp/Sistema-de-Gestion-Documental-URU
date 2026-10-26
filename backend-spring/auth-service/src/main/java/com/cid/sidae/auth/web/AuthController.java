@@ -3,10 +3,14 @@ package com.cid.sidae.auth.web;
 import com.cid.sidae.auth.domain.User;
 import com.cid.sidae.auth.repo.RoleRepository;
 import com.cid.sidae.auth.repo.UserRepository;
+import com.cid.sidae.auth.service.PasswordResetService;
 import com.cid.sidae.auth.web.AuthDtos.AuthResponse;
+import com.cid.sidae.auth.web.AuthDtos.ChangePasswordRequest;
+import com.cid.sidae.auth.web.AuthDtos.ForgotPasswordRequest;
 import com.cid.sidae.auth.web.AuthDtos.LoginRequest;
 import com.cid.sidae.auth.web.AuthDtos.MeResponse;
 import com.cid.sidae.auth.web.AuthDtos.RegisterRequest;
+import com.cid.sidae.auth.web.AuthDtos.ResetPasswordRequest;
 import com.cid.sidae.commons.api.ApiException;
 import com.cid.sidae.commons.api.ApiResponse;
 import com.cid.sidae.commons.security.AuthenticatedUser;
@@ -31,6 +35,7 @@ public class AuthController {
     private final RoleRepository roles;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final PasswordResetService passwordResetService;
     private final String defaultRegisterRole;
 
     public AuthController(
@@ -38,11 +43,13 @@ public class AuthController {
             RoleRepository roles,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
+            PasswordResetService passwordResetService,
             @Value("${auth.default-register-role:Usuario}") String defaultRegisterRole) {
         this.users = users;
         this.roles = roles;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.passwordResetService = passwordResetService;
         this.defaultRegisterRole = defaultRegisterRole;
     }
 
@@ -90,5 +97,25 @@ public class AuthController {
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Usuario no autorizado."));
         return ApiResponse.ok(new MeResponse(
                 user.getId(), user.getEmail(), user.getUsername(), user.getRole().getName(), user.isActive()));
+    }
+
+    /** Siempre 200 para no revelar si el email existe. */
+    @PostMapping("/forgot-password")
+    public ApiResponse<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestReset(request.email());
+        return ApiResponse.ok(null);
+    }
+
+    @PostMapping("/reset-password")
+    public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request.token(), request.newPassword());
+        return ApiResponse.ok(null);
+    }
+
+    @PostMapping("/change-password")
+    public ApiResponse<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        AuthenticatedUser current = AuthenticatedUser.current();
+        passwordResetService.changePassword(current.id(), request.currentPassword(), request.newPassword());
+        return ApiResponse.ok(null);
     }
 }

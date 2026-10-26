@@ -33,6 +33,19 @@ public final class AuthDtos {
             @NotBlank String role) {
     }
 
+    public record ForgotPasswordRequest(@NotBlank @Email String email) {
+    }
+
+    public record ResetPasswordRequest(
+            @NotBlank String token,
+            @NotBlank @Size(min = 8, max = 72) String newPassword) {
+    }
+
+    public record ChangePasswordRequest(
+            @NotBlank String currentPassword,
+            @NotBlank @Size(min = 8, max = 72) String newPassword) {
+    }
+
     public record UserResponse(
             Long id, String email, String username, String role, boolean active, String createdAt) {
     }

@@ -119,6 +119,7 @@ const ADMIN_MODULES: SidebarNavItem[] = [
   { label: "Reportes", icon: <IconBarChart />, to: "/admin/reports" },
   { label: "Configuración", icon: <IconSettings />, to: "/admin/config" },
   { label: "Solicitudes", icon: <IconInbox />, to: "/admin/requests" },
+  { label: "Mi cuenta", icon: <IconUsers />, to: "/account" },
 ];
 
 /** Sidebar modules for Verifier role. */
@@ -128,6 +129,7 @@ export const VERIFIER_SIDEBAR_MODULES: SidebarNavItem[] = [
   { label: "Expedientes", icon: <IconFolder />, to: "/verifier/records" },
   { label: "Documentos", icon: <IconFile />, to: "/verifier/documents" },
   { label: "Tareas", icon: <IconCheckSquare />, to: "/verifier/tasks" },
+  { label: "Mi cuenta", icon: <IconUsers />, to: "/account" },
 ];
 
 /** Sidebar modules for Assistant role. */
@@ -138,6 +140,7 @@ export const ASSISTANT_SIDEBAR_MODULES: SidebarNavItem[] = [
   { label: "Tareas", icon: <IconCheckSquare />, to: "/assistant/tasks" },
   { label: "Atajos", icon: <IconShortcut />, to: "/assistant/shortcuts" },
   { label: "Configuración", icon: <IconSettings />, to: "/assistant/config" },
+  { label: "Mi cuenta", icon: <IconUsers />, to: "/account" },
 ];
 
 /**
